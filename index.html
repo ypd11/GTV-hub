@@ -68,6 +68,44 @@
         <div id="category-list" style="padding: 0 4%;"></div>
     </section>
 
+
+    <!-- People Discovery -->
+    <section id="people-view" class="view-container people-view" style="display:none;">
+        <div class="people-hero">
+            <div class="people-hero-glow"></div>
+            <div class="people-eyebrow"><span class="material-icons">auto_awesome</span> THE PEOPLE BEHIND THE STORIES</div>
+            <h1>Discover <span>People.</span></h1>
+            <p>Meet the actors, filmmakers and creative minds behind the movies and shows you love.</p>
+            <div class="people-search-wrap">
+                <span class="material-icons">search</span>
+                <input id="people-search-input" type="search" placeholder="Search actors, directors, writers..." autocomplete="off">
+                <button id="people-search-clear" type="button" aria-label="Clear search"><span class="material-icons">close</span></button>
+            </div>
+        </div>
+        <div class="people-content">
+            <div id="people-discover-content">
+                <div class="people-section-heading"><div><span class="people-kicker">EXPLORE</span><h2>Browse by craft</h2></div></div>
+                <div class="people-departments">
+                    <button class="people-department active" data-department="Popular"><span class="material-icons">stars</span><span>Popular</span></button>
+                    <button class="people-department" data-department="Acting"><span class="material-icons">theater_comedy</span><span>Actors</span></button>
+                    <button class="people-department" data-department="Directing"><span class="material-icons">movie_creation</span><span>Directors</span></button>
+                    <button class="people-department" data-department="Writing"><span class="material-icons">edit_note</span><span>Writers</span></button>
+                    <button class="people-department" data-department="Production"><span class="material-icons">movie_filter</span><span>Producers</span></button>
+                    <button class="people-department" data-department="Crew"><span class="material-icons">groups</span><span>Crew</span></button>
+                </div>
+                <div class="people-section-heading"><div><span class="people-kicker">IN THE SPOTLIGHT</span><h2>Popular people</h2></div><span class="people-section-note">Updated by TMDB</span></div>
+                <div id="people-popular-grid" class="people-grid"><div class="people-loading"><div class="spinner"></div></div></div>
+            </div>
+            <div id="people-search-content" style="display:none;">
+                <div class="people-section-heading"><div><span class="people-kicker">SEARCH RESULTS</span><h2 id="people-results-title">People</h2></div><span id="people-results-count" class="people-section-note"></span></div>
+                <div id="people-results-grid" class="people-grid"></div>
+            </div>
+        </div>
+    </section>
+    <section id="person-profile-view" class="view-container person-profile-view" style="display:none;">
+        <div id="person-profile-content"></div>
+    </section>
+
     <!-- Player View -->
     <section id="player-container" class="video-container" style="display:none;">
         <button id="close-player" class="back-btn-overlay">
