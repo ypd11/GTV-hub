@@ -226,11 +226,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Small hint shown whenever GTV Hub enters fullscreen.
+    const fullscreenHint = document.createElement('div');
+    fullscreenHint.id = 'player-fullscreen-hint';
+    fullscreenHint.className = 'player-fullscreen-hint';
+    fullscreenHint.textContent = 'Press Esc to exit fullscreen';
+    fullscreenHint.setAttribute('role', 'status');
+    fullscreenHint.setAttribute('aria-live', 'polite');
+    playerCont.appendChild(fullscreenHint);
+
+    let fullscreenHintTimer = null;
     const updateFullscreenButton = () => {
         const isFullscreen = document.fullscreenElement === playerCont || document.webkitFullscreenElement === playerCont;
         fullscreenBtn.innerHTML = '<span class="material-icons">' + (isFullscreen ? 'fullscreen_exit' : 'fullscreen') + '</span>';
         fullscreenBtn.title = isFullscreen ? 'Exit Fullscreen' : 'Fullscreen';
         fullscreenBtn.setAttribute('aria-label', isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen');
+
+        if (isFullscreen) {
+            fullscreenHint.classList.add('visible');
+            if (fullscreenHintTimer) clearTimeout(fullscreenHintTimer);
+            fullscreenHintTimer = setTimeout(() => fullscreenHint.classList.remove('visible'), 3500);
+        } else {
+            fullscreenHint.classList.remove('visible');
+            if (fullscreenHintTimer) clearTimeout(fullscreenHintTimer);
+        }
     };
 
     document.addEventListener('fullscreenchange', updateFullscreenButton);
@@ -282,18 +301,25 @@ document.addEventListener('DOMContentLoaded', () => {
     
     playerCont.insertBefore(header, playerCont.firstChild);
 
-    // Auto-hide GTV Hub player controls after inactivity.
+    // Auto-hide GTV Hub controls. Cross-origin iframe movement cannot be
+    // tracked, so keep controls visible while the pointer is inside the frame.
     let controlsHideTimer = null;
-    const showPlayerControls = () => {
-        playerCont.classList.remove('controls-hidden');
+    let pointerOverStreamFrame = false;
+
+    const scheduleControlsHide = () => {
         if (controlsHideTimer) clearTimeout(controlsHideTimer);
         controlsHideTimer = setTimeout(() => {
             const dropdownOpen = document.getElementById('server-dropdown-menu')?.classList.contains('active');
             const focusInsideHeader = header.contains(document.activeElement);
-            if (!dropdownOpen && !focusInsideHeader) {
+            if (!pointerOverStreamFrame && !dropdownOpen && !focusInsideHeader) {
                 playerCont.classList.add('controls-hidden');
             }
         }, 2500);
+    };
+
+    const showPlayerControls = () => {
+        playerCont.classList.remove('controls-hidden');
+        scheduleControlsHide();
     };
 
     playerCont.addEventListener('mousemove', showPlayerControls);
@@ -302,14 +328,21 @@ document.addEventListener('DOMContentLoaded', () => {
     playerCont.addEventListener('click', showPlayerControls);
     playerCont.addEventListener('keydown', showPlayerControls);
 
-    // Cross-origin iframe events cannot be inspected; detect pointer entry/exit only.
+    // The browser only exposes iframe boundary events, not pointer movement inside it.
     window.showGtvPlayerControls = showPlayerControls;
     window.bindGtvPlayerFrameEvents = () => {
         const streamFrame = document.getElementById('stream-frame');
         if (streamFrame && !streamFrame.dataset.controlsEventsBound) {
             streamFrame.dataset.controlsEventsBound = 'true';
-            streamFrame.addEventListener('mouseenter', showPlayerControls);
-            streamFrame.addEventListener('mouseleave', showPlayerControls);
+            streamFrame.addEventListener('mouseenter', () => {
+                pointerOverStreamFrame = true;
+                if (controlsHideTimer) clearTimeout(controlsHideTimer);
+                playerCont.classList.remove('controls-hidden');
+            });
+            streamFrame.addEventListener('mouseleave', () => {
+                pointerOverStreamFrame = false;
+                showPlayerControls();
+            });
         }
     };
     window.bindGtvPlayerFrameEvents();
