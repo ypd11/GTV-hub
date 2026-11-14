@@ -2308,6 +2308,8 @@ window.openDetails = async (id, type, isHistory = false) => {
     setElementVisible(dashboard, false);
     setElementVisible(detailsView, true, 'block');
     setElementVisible(categoryView, false);
+    setElementVisible(document.getElementById('people-view'), false);
+    setElementVisible(document.getElementById('person-profile-view'), false);
     window.scrollTo(0,0);
     detailsContent.innerHTML = getSkeletonHtml('hero');
 
@@ -3498,7 +3500,11 @@ function captureAndPushState() {
     // Save current view state to stack before navigating away
     // Note: We do NOT push to browser history here, the new view handles that.
 
-    if (document.getElementById('person-profile-view')?.style.display === 'block') {\n        state = { view: 'person', id: peopleCurrentProfileId, scroll: window.scrollY };\n    } else if (document.getElementById('people-view')?.style.display === 'block') {\n        state = { view: 'people', scroll: window.scrollY, query: peopleCurrentQuery };\n    } else if (detailsView.style.display === 'block') {
+    if (document.getElementById('person-profile-view')?.style.display === 'block') {
+        state = { view: 'person', id: peopleCurrentProfileId, scroll: window.scrollY };
+    } else if (document.getElementById('people-view')?.style.display === 'block') {
+        state = { view: 'people', scroll: window.scrollY, query: peopleCurrentQuery };
+    } else if (detailsView.style.display === 'block') {
         if (currentDetailsData) {
             state = {
                 view: 'details',
@@ -3536,6 +3542,8 @@ window.handleBack = () => {
         setElementVisible(dashboard, true, 'block');
         setElementVisible(detailsView, false);
         setElementVisible(categoryView, false);
+        setElementVisible(document.getElementById('people-view'), false);
+        setElementVisible(document.getElementById('person-profile-view'), false);
         document.getElementById('hero-section').style.display = 'flex';
         resetUrl();
         return;
@@ -3554,6 +3562,8 @@ window.handleBack = () => {
         setElementVisible(dashboard, false);
         setElementVisible(detailsView, false);
         setElementVisible(categoryView, true, 'block');
+        setElementVisible(document.getElementById('people-view'), false);
+        setElementVisible(document.getElementById('person-profile-view'), false);
         
         document.getElementById('category-title').textContent = state.title;
         
@@ -3569,6 +3579,12 @@ window.handleBack = () => {
         
         window.scrollTo(0, state.scroll);
         resetUrl(); // Categories don't have deep links yet
+    } else if (state.view === 'people') {
+        openPeople(true);
+        if (state.query) { document.getElementById('people-search-input').value = state.query; searchPeople(state.query); }
+        window.scrollTo(0, state.scroll || 0);
+    } else if (state.view === 'person') {
+        openPersonProfile(state.id, true);
     } else if (state.view === 'details') {
         openDetails(state.id, state.type, true);
     }
@@ -3579,6 +3595,8 @@ function prepareCategoryView() {
     setElementVisible(dashboard, false);
     setElementVisible(detailsView, false);
     setElementVisible(categoryView, true, 'block');
+    setElementVisible(document.getElementById('people-view'), false);
+    setElementVisible(document.getElementById('person-profile-view'), false);
     setElementVisible(playerContainer, false);
     window.scrollTo(0, 0);
     // Push history for category view since captureAndPushState no longer does it
