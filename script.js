@@ -578,15 +578,6 @@ function setupNewNavigation() {
             peopleInput.focus();
         });
     }
-    document.querySelectorAll('.people-department').forEach(button => {
-        button.addEventListener('click', () => {
-            document.querySelectorAll('.people-department').forEach(item => item.classList.remove('active'));
-            button.classList.add('active');
-            peopleDepartment = button.dataset.department;
-            loadPopularPeople(peopleDepartment);
-        });
-    });
-
     input.addEventListener('input', (e) => {
         if (e.target.value.trim().length === 0) renderSearchHistory();
         else handleSearchInput(e);
@@ -639,11 +630,15 @@ window.closeSearchModal = () => {
 window.handleSearchResultClick = (query, id, type) => {
     saveSearchQuery(query);
     closeSearchModal();
-
-    if (type !== currentTab && (type === 'movie' || type === 'tv')) {
-        switchTab(type);
+    if (type === 'person') {
+        openPeople();
+        const peopleInput = document.getElementById('people-search-input');
+        if (peopleInput) peopleInput.value = query;
+        searchPeople(query);
+        openPersonProfile(id);
+        return;
     }
-    
+    if (type !== currentTab && (type === 'movie' || type === 'tv')) switchTab(type);
     openDetails(id, type);
 };
 
@@ -687,25 +682,22 @@ async function handleSearchInput(e) {
 }
 
 function generateSearchItemsHtml(results) {
-    return results.filter(item => !excludedContent.includes(item.id.toString()) && item.poster_path).map(item => {
-        if (item.media_type === 'person') return '';
+    return (results || []).filter(item => {
+        if (item.media_type === 'person') return true;
+        return !excludedContent.includes(String(item.id)) && item.poster_path;
+    }).map(item => {
         const type = item.media_type || 'movie';
-        const year = (item.release_date || item.first_air_date || '').split('-')[0] || 'N/A';
         const title = item.title || item.name || 'Untitled';
-        
-        const imgContent = `<img class="search-result-poster" src="${IMG_BASE + item.poster_path}" alt="${escapeHtml(title)}" onerror="this.onerror=null; this.src='./icon.png';">`;
-        
+        const imagePath = type === 'person' ? item.profile_path : item.poster_path;
+        const year = (item.release_date || item.first_air_date || '').split('-')[0] || '';
+        const imageClass = type === 'person' ? 'search-result-person' : 'search-result-poster';
+        const imgContent = imagePath
+            ? '<img class="' + imageClass + '" src="' + IMG_BASE + imagePath + '" alt="' + escapeHtml(title) + '" onerror="this.onerror=null; this.src=\'./icon.png\';">'
+            : '<div class="search-result-person-placeholder"><span class="material-icons">' + (type === 'person' ? 'person' : 'movie') + '</span></div>';
         const safeQuery = escapeInlineJsString(currentSearchQuery);
-
-        return `
-            <div class="search-result-item" onclick="handleSearchResultClick('${safeQuery}', '${item.id}', '${type}')" style="cursor:pointer;">
-                ${imgContent}
-                <div class="search-result-info">
-                    <h4>${escapeHtml(title)}</h4>
-                    <p>${type.toUpperCase()} • ${year}</p>
-                </div>
-            </div>
-        `;
+        const meta = type === 'person' ? (item.known_for_department || 'Person') : type.toUpperCase() + (year ? ' • ' + year : '');
+        return '<div class="search-result-item" onclick="handleSearchResultClick(\'' + safeQuery + '\', \'' + item.id + '\', \'' + type + '\')" style="cursor:pointer;">' +
+            imgContent + '<div class="search-result-info"><h4>' + escapeHtml(title) + '</h4><p>' + escapeHtml(meta) + '</p></div></div>';
     }).join('');
 }
 
@@ -2167,27 +2159,19 @@ window.openPeople = (isHistory = false) => {
     if (!document.getElementById('people-popular-grid').dataset.loaded) loadPopularPeople();
 };
 
-async function loadPopularPeople(department = peopleDepartment) {
+async function loadPopularPeople() {
     const grid = document.getElementById('people-popular-grid');
     if (!grid) return;
     grid.innerHTML = '<div class="people-loading"><div class="spinner"></div></div>';
     try {
-        const endpoint = department === 'Popular'
-            ? 'person/popular'
-            : 'person/popular';
-        const response = await fetch(`${TMDB_BASE}/${endpoint}?api_key=${TMDB_KEY}&language=en-US&page=1`);
+        const response = await fetch(TMDB_BASE + '/person/popular?api_key=' + TMDB_KEY + '&language=en-US&page=1');
         if (!response.ok) throw new Error('Could not load people');
         const data = await response.json();
-        let people = data.results || [];
-        if (department !== 'Popular') {
-            const departmentMap = { Acting: 'Acting', Directing: 'Directing', Writing: 'Writing', Production: 'Production' };
-            if (departmentMap[department]) people = people.filter(person => person.known_for_department === departmentMap[department]);
-            if (department === 'Crew') people = people.filter(person => ['Camera','Sound','Editing','Art','Costume & Make-Up','Visual Effects'].includes(person.known_for_department));
-        }
-        grid.innerHTML = people.length ? people.map(renderPersonCard).join('') : '<div class="people-empty">No popular people found in this department yet.</div>';
+        const actors = (data.results || []).filter(person => person.known_for_department === 'Acting');
+        grid.innerHTML = actors.length ? actors.map(renderPersonCard).join('') : '<div class="people-empty">No popular actors found right now.</div>';
         grid.dataset.loaded = 'true';
     } catch (error) {
-        grid.innerHTML = '<div class="people-empty">We could not load people right now. Please try again.</div>';
+        grid.innerHTML = '<div class="people-empty">We could not load actors right now. Please try again.</div>';
     }
 }
 
@@ -2229,6 +2213,37 @@ async function searchPeople(query) {
         grid.innerHTML = '<div class="people-empty">Search is temporarily unavailable. Please try again.</div>';
     }
 }
+
+
+window.openPersonPhoto = (src, alt) => {
+    let viewer = document.getElementById('person-photo-viewer');
+    if (!viewer) {
+        viewer = document.createElement('div');
+        viewer.id = 'person-photo-viewer';
+        viewer.className = 'person-photo-viewer';
+        viewer.innerHTML = '<button class="person-photo-close" type="button" aria-label="Close photo"><span class="material-icons">close</span></button><img class="person-photo-full" alt=""><div class="person-photo-caption"></div>';
+        viewer.addEventListener('click', event => {
+            if (event.target === viewer || event.target.closest('.person-photo-close')) closePersonPhoto();
+        });
+        document.body.appendChild(viewer);
+    }
+    viewer.querySelector('.person-photo-full').src = src;
+    viewer.querySelector('.person-photo-full').alt = alt || 'Person photo';
+    viewer.querySelector('.person-photo-caption').textContent = alt || '';
+    viewer.classList.add('active');
+    document.body.classList.add('no-scroll');
+};
+
+window.closePersonPhoto = () => {
+    const viewer = document.getElementById('person-photo-viewer');
+    if (!viewer) return;
+    viewer.classList.remove('active');
+    document.body.classList.remove('no-scroll');
+};
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closePersonPhoto();
+});
 
 window.openPersonProfile = async (id, isHistory = false) => {
     if (!isHistory) {
@@ -2274,7 +2289,7 @@ window.openPersonProfile = async (id, isHistory = false) => {
         const gallery = person.images?.profiles || [];
         root.innerHTML = `
             <div class="person-profile-hero" ${portrait ? `style="--person-backdrop:url('${portrait}')"` : ''}>
-                <button class="people-back-btn" onclick="handleBack()"><span class="material-icons">arrow_back</span> People</button>
+                <button class="hero-icon-btn page-back-btn people-profile-back" onclick="handleBack()" aria-label="Back"><span class="material-icons">arrow_back</span></button>
                 <div class="person-profile-main">
                     <div class="person-profile-portrait">${portrait ? `<img src="${portrait}" alt="${safeName}">` : '<span class="material-icons">person</span>'}</div>
                     <div class="person-profile-heading"><span class="people-kicker">${knownFor.toUpperCase()}</span><h1>${safeName}</h1><div class="person-profile-facts">${years ? `<span><span class="material-icons">cake</span>${escapeHtml(years)}${ageText}</span>` : ''}${person.place_of_birth ? `<span><span class="material-icons">place</span>${escapeHtml(person.place_of_birth)}</span>` : ''}</div></div>
@@ -2282,7 +2297,7 @@ window.openPersonProfile = async (id, isHistory = false) => {
             </div>
             <div class="person-profile-body">
                 <section class="person-bio-section"><div class="people-section-heading"><div><span class="people-kicker">THE STORY</span><h2>Biography</h2></div></div><p class="person-biography">${biography}</p>${person.homepage ? `<a class="person-homepage" href="${escapeHtml(person.homepage)}" target="_blank" rel="noopener">Official website <span class="material-icons">open_in_new</span></a>` : ''}</section>
-                ${gallery.length > 1 ? `<section class="person-gallery-section"><div class="people-section-heading"><div><span class="people-kicker">BEHIND THE LENS</span><h2>Photos</h2></div></div><div class="person-gallery">${gallery.slice(0,8).map(photo => `<img src="${IMG_BASE + photo.file_path}" alt="${safeName}" loading="lazy">`).join('')}</div></section>` : ''}
+                ${gallery.length > 0 ? `<section class="person-gallery-section"><div class="people-section-heading"><div><span class="people-kicker">BEHIND THE LENS</span><h2>Photos</h2></div></div><div class="person-gallery">${gallery.slice(0,12).map((photo, index) => `<button class="person-photo-button" type="button" onclick="openPersonPhoto('${IMG_HERO + photo.file_path}', '${escapeInlineJsString(person.name || 'Person')} photo ${index + 1}')" aria-label="View photo ${index + 1}"><img src="${IMG_BASE + photo.file_path}" alt="${safeName}" loading="lazy"><span class="material-icons">zoom_in</span></button>`).join('')}</div></section>` : ''}
                 <section class="person-works-section"><div class="people-section-heading"><div><span class="people-kicker">A CAREER IN FILM & TV</span><h2>Known for</h2></div><span class="people-section-note">${credits.length} credits</span></div><div class="person-works-grid">${popular.length ? popular.map(creditCard).join('') : '<div class="people-empty">No credited works found.</div>'}</div></section>
                 <section class="person-works-section"><div class="people-section-heading"><div><span class="people-kicker">COMPLETE CREDITS</span><h2>Filmography</h2></div></div><div class="person-filmography">${credits.length ? credits.map(item => `<button class="person-credit-row" onclick="openDetails(${Number(item.id)}, '${item.media_type}')"><span class="person-credit-year">${(item.release_date || item.first_air_date || '').slice(0,4) || '—'}</span><span class="person-credit-title">${escapeHtml(item.title || item.name || 'Untitled')}</span><span class="person-credit-role">${escapeHtml(item.credit_role)}</span><span class="person-credit-type">${item.media_type === 'tv' ? 'TV' : 'Movie'}</span><span class="material-icons">chevron_right</span></button>`).join('') : '<div class="people-empty">No credits available.</div>'}</div></section>
             </div>`;
