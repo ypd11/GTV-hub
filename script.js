@@ -336,6 +336,23 @@ document.addEventListener('DOMContentLoaded', () => {
     playerCont.addEventListener('click', showPlayerControls);
     playerCont.addEventListener('keydown', showPlayerControls);
 
+    // F toggles GTV Hub fullscreen while the player is open.
+    document.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() !== 'f' || e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
+
+        const activeElement = document.activeElement;
+        const isEditing = activeElement && (
+            activeElement.isContentEditable ||
+            /^(INPUT|TEXTAREA|SELECT)$/.test(activeElement.tagName)
+        );
+        if (isEditing || playerCont.style.display === 'none') return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        showPlayerControls();
+        fullscreenBtn.click();
+    }, true);
+
     // The browser only exposes iframe boundary events, not pointer movement inside it.
     window.showGtvPlayerControls = showPlayerControls;
     window.bindGtvPlayerFrameEvents = () => {
