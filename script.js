@@ -202,6 +202,41 @@ document.addEventListener('DOMContentLoaded', () => {
     hideBtn.title = 'Hide Content';
     rightActions.appendChild(hideBtn);
 
+    // Fullscreen button (independent of the embedded server UI)
+    const fullscreenBtn = document.createElement('button');
+    fullscreenBtn.id = 'player-fullscreen-btn';
+    fullscreenBtn.className = 'hero-icon-btn';
+    fullscreenBtn.innerHTML = '<span class="material-icons">fullscreen</span>';
+    fullscreenBtn.title = 'Fullscreen';
+    fullscreenBtn.setAttribute('aria-label', 'Enter fullscreen');
+    fullscreenBtn.onclick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        try {
+            if (document.fullscreenElement === playerCont || document.webkitFullscreenElement === playerCont) {
+                if (document.exitFullscreen) await document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            } else {
+                if (playerCont.requestFullscreen) await playerCont.requestFullscreen();
+                else if (playerCont.webkitRequestFullscreen) playerCont.webkitRequestFullscreen();
+            }
+        } catch (error) {
+            console.warn('GTV Hub: fullscreen request was denied.', error);
+        }
+    };
+
+    const updateFullscreenButton = () => {
+        const isFullscreen = document.fullscreenElement === playerCont || document.webkitFullscreenElement === playerCont;
+        fullscreenBtn.innerHTML = '<span class="material-icons">' + (isFullscreen ? 'fullscreen_exit' : 'fullscreen') + '</span>';
+        fullscreenBtn.title = isFullscreen ? 'Exit Fullscreen' : 'Fullscreen';
+        fullscreenBtn.setAttribute('aria-label', isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen');
+    };
+
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+    rightActions.appendChild(fullscreenBtn);
+
     // Server Selector Dropdown
     const serverContainer = document.createElement('div');
     serverContainer.className = 'server-select-container';
