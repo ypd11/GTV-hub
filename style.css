@@ -2490,7 +2490,8 @@ body {
     transition:opacity .2s ease,visibility .2s ease;
 }
 .person-photo-viewer.active { opacity:1; visibility:visible; }
-.person-photo-full { display:block; max-width:min(100%,1500px); max-height:calc(100vh - 120px); object-fit:contain; border-radius:5px; box-shadow:0 18px 70px rgba(0,0,0,.55); }
+.person-photo-full { display:block; max-width:min(100%,1500px); max-height:calc(100vh - 120px); object-fit:contain; border-radius:5px; box-shadow:0 18px 70px rgba(0,0,0,.55); opacity:0; transition:opacity .16s ease; }
+.person-photo-full.loaded { opacity:1; }
 .person-photo-caption { color:#aeb8c5; font-size:.82rem; text-align:center; }
 .person-photo-close {
     position:absolute; top:max(18px,env(safe-area-inset-top)); right:max(18px,env(safe-area-inset-right));
