@@ -2256,7 +2256,7 @@ window.openPersonProfile = async (id, isHistory = false) => {
     const root = document.getElementById('person-profile-content');
     root.innerHTML = '<div class="people-profile-loading"><div class="spinner"></div><span>Loading profile...</span></div>';
     try {
-        const response = await fetch(`${TMDB_BASE}/person/${id}?api_key=${TMDB_KEY}&language=en-US&append_to_response=movie_credits,tv_credits,images`);
+        const response = await fetch(`${TMDB_BASE}/person/${id}?api_key=${TMDB_KEY}&language=en-US&append_to_response=movie_credits,tv_credits,images,external_ids`);
         if (!response.ok) throw new Error('Profile unavailable');
         const person = await response.json();
         const safeName = escapeHtml(person.name || 'Unknown');
@@ -2287,6 +2287,14 @@ window.openPersonProfile = async (id, isHistory = false) => {
             </button>`;
         };
         const gallery = person.images?.profiles || [];
+        const wikipediaUrl = 'https://en.wikipedia.org/w/index.php?search=' + encodeURIComponent(person.name || '');
+        const imdbId = person.external_ids?.imdb_id;
+        const imdbUrl = imdbId && /^nm\\d+$/.test(imdbId) ? 'https://www.imdb.com/name/' + encodeURIComponent(imdbId) + '/' : '';
+        const externalLinksHtml = `
+            <div class="person-external-links">
+                <a class="person-external-link wikipedia-link" href="${wikipediaUrl}" target="_blank" rel="noopener noreferrer"><span class="material-icons">menu_book</span> Wikipedia <span class="material-icons external-arrow">open_in_new</span></a>
+                ${imdbUrl ? `<a class="person-external-link imdb-link" href="${imdbUrl}" target="_blank" rel="noopener noreferrer"><span class="material-icons">movie</span> IMDb <span class="material-icons external-arrow">open_in_new</span></a>` : ''}
+            </div>`;
         root.innerHTML = `
             <div class="person-profile-hero" ${portrait ? `style="--person-backdrop:url('${portrait}')"` : ''}>
                 <button class="hero-icon-btn page-back-btn people-profile-back" onclick="handleBack()" aria-label="Back"><span class="material-icons">arrow_back</span></button>
@@ -2296,7 +2304,7 @@ window.openPersonProfile = async (id, isHistory = false) => {
                 </div>
             </div>
             <div class="person-profile-body">
-                <section class="person-bio-section"><div class="people-section-heading"><div><span class="people-kicker">THE STORY</span><h2>Biography</h2></div></div><p class="person-biography">${biography}</p>${person.homepage ? `<a class="person-homepage" href="${escapeHtml(person.homepage)}" target="_blank" rel="noopener">Official website <span class="material-icons">open_in_new</span></a>` : ''}</section>
+                <section class="person-bio-section"><div class="people-section-heading"><div><span class="people-kicker">THE STORY</span><h2>Biography</h2></div></div><p class="person-biography">${biography}</p><div class="person-resource-links">${externalLinksHtml}${person.homepage ? `<a class="person-homepage" href="${escapeHtml(person.homepage)}" target="_blank" rel="noopener noreferrer">Official website <span class="material-icons">open_in_new</span></a>` : ''}</div></section>
                 ${gallery.length > 0 ? `<section class="person-gallery-section"><div class="people-section-heading"><div><span class="people-kicker">BEHIND THE LENS</span><h2>Photos</h2></div></div><div class="person-gallery">${gallery.slice(0,12).map((photo, index) => `<button class="person-photo-button" type="button" onclick="openPersonPhoto('${IMG_HERO + photo.file_path}', '${escapeInlineJsString(person.name || 'Person')} photo ${index + 1}')" aria-label="View photo ${index + 1}"><img src="${IMG_BASE + photo.file_path}" alt="${safeName}" loading="lazy"><span class="material-icons">zoom_in</span></button>`).join('')}</div></section>` : ''}
                 <section class="person-works-section"><div class="people-section-heading"><div><span class="people-kicker">A CAREER IN FILM & TV</span><h2>Known for</h2></div><span class="people-section-note">${credits.length} credits</span></div><div class="person-works-grid">${popular.length ? popular.map(creditCard).join('') : '<div class="people-empty">No credited works found.</div>'}</div></section>
                 <section class="person-works-section"><div class="people-section-heading"><div><span class="people-kicker">COMPLETE CREDITS</span><h2>Filmography</h2></div></div><div class="person-filmography">${credits.length ? credits.map(item => `<button class="person-credit-row" onclick="openDetails(${Number(item.id)}, '${item.media_type}')"><span class="person-credit-year">${(item.release_date || item.first_air_date || '').slice(0,4) || '—'}</span><span class="person-credit-title">${escapeHtml(item.title || item.name || 'Untitled')}</span><span class="person-credit-role">${escapeHtml(item.credit_role)}</span><span class="person-credit-type">${item.media_type === 'tv' ? 'TV' : 'Movie'}</span><span class="material-icons">chevron_right</span></button>`).join('') : '<div class="people-empty">No credits available.</div>'}</div></section>
