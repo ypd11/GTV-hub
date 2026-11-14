@@ -2181,7 +2181,7 @@ function renderPersonCard(person) {
     const knownTitles = (person.known_for || []).slice(0, 2).map(item => item.title || item.name).filter(Boolean).join(' · ');
     const image = person.profile_path ? IMG_BASE + person.profile_path : '';
     return `<button class="person-card" type="button" onclick="openPersonProfile(${Number(person.id)})">
-        <span class="person-card-image">${image ? `<img src="${image}" alt="" loading="lazy">` : '<span class="material-icons">person</span>'}<span class="person-card-arrow material-icons">north_east</span></span>
+        <span class="person-card-image">${image ? `<img src="${image}" alt="" loading="lazy">` : '<span class="material-icons">person</span>'}</span>
         <span class="person-card-name">${name}</span><span class="person-card-role">${knownFor}</span>
         ${knownTitles ? `<span class="person-card-known">${escapeHtml(knownTitles)}</span>` : ''}
     </button>`;
