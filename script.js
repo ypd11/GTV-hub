@@ -282,6 +282,39 @@ document.addEventListener('DOMContentLoaded', () => {
     
     playerCont.insertBefore(header, playerCont.firstChild);
 
+    // Auto-hide GTV Hub player controls after inactivity.
+    let controlsHideTimer = null;
+    const showPlayerControls = () => {
+        playerCont.classList.remove('controls-hidden');
+        if (controlsHideTimer) clearTimeout(controlsHideTimer);
+        controlsHideTimer = setTimeout(() => {
+            const dropdownOpen = document.getElementById('server-dropdown-menu')?.classList.contains('active');
+            const focusInsideHeader = header.contains(document.activeElement);
+            if (!dropdownOpen && !focusInsideHeader) {
+                playerCont.classList.add('controls-hidden');
+            }
+        }, 2500);
+    };
+
+    playerCont.addEventListener('mousemove', showPlayerControls);
+    playerCont.addEventListener('pointermove', showPlayerControls);
+    playerCont.addEventListener('touchstart', showPlayerControls, { passive: true });
+    playerCont.addEventListener('click', showPlayerControls);
+    playerCont.addEventListener('keydown', showPlayerControls);
+
+    // Cross-origin iframe events cannot be inspected; detect pointer entry/exit only.
+    const streamFrame = document.getElementById('stream-frame');
+    if (streamFrame) {
+        streamFrame.addEventListener('mouseenter', showPlayerControls);
+        streamFrame.addEventListener('mouseleave', showPlayerControls);
+    }
+
+    header.addEventListener('mouseenter', () => {
+        if (controlsHideTimer) clearTimeout(controlsHideTimer);
+        playerCont.classList.remove('controls-hidden');
+    });
+    header.addEventListener('mouseleave', showPlayerControls);
+
     // Inject Cast Modal HTML
     const modalHtml = `
     <div id="cast-modal-overlay" class="modal-overlay" onclick="closeCastModal(event)">
