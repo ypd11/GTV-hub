@@ -2513,3 +2513,24 @@ body {
     .person-photo-button { width:135px; height:92px; }
 }
 @media(hover:none) { .person-photo-button>.material-icons { opacity:1; } }
+
+
+/* External research links on people profiles */
+.person-resource-links { display:flex;flex-wrap:wrap;align-items:center;gap:11px;margin-top:20px; }
+.person-external-links { display:flex;flex-wrap:wrap;gap:9px; }
+.person-external-link {
+    display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;
+    border:1px solid rgba(126,187,233,.24);border-radius:8px;
+    background:rgba(126,187,233,.08);color:#c4e2f8;text-decoration:none;
+    font:600 .82rem 'Outfit',sans-serif;transition:background .2s,border-color .2s,transform .2s;
+}
+.person-external-link>.material-icons { font-size:18px; }
+.person-external-link .external-arrow { margin-left:2px;font-size:15px;color:#8ca9c0; }
+.person-external-link:hover { transform:translateY(-2px);background:rgba(126,187,233,.16);border-color:rgba(126,187,233,.5);color:#fff; }
+.person-external-link.imdb-link { border-color:rgba(245,197,24,.25);background:rgba(245,197,24,.07);color:#f4d76c; }
+.person-external-link.imdb-link:hover { border-color:rgba(245,197,24,.5);background:rgba(245,197,24,.14); }
+.person-resource-links .person-homepage { margin-top:0; }
+@media(max-width:600px) {
+    .person-resource-links { align-items:flex-start; }
+    .person-external-link { min-height:42px;padding:0 11px;font-size:.78rem; }
+}
