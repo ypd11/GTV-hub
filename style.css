@@ -2459,8 +2459,16 @@ body {
 
 
 /* People refinements */
-.people-profile-back { top:95px; left:4%; z-index:3; }
-.people-profile-back:hover { transform:translateY(-2px); }
+.people-profile-back {
+    position: absolute;
+    top: 95px !important;
+    left: 4% !important;
+    z-index: 20;
+    display: inline-flex;
+    visibility: visible;
+    opacity: 1;
+}
+.people-profile-back:hover { transform:translateY(-3px); }
 .person-gallery { align-items:flex-start; }
 .person-photo-button {
     position:relative; flex:0 0 auto; width:150px; height:100px; padding:0;
@@ -2493,7 +2501,7 @@ body {
 .search-result-person-placeholder { width:58px; height:76px; flex:0 0 58px; display:grid; place-items:center; border-radius:6px; background:#202833; color:#8793a2; }
 .search-result-person-placeholder .material-icons { font-size:30px; }
 @media(max-width:768px) {
-    .people-profile-back { top:82px; left:5%; }
+    .people-profile-back { position:absolute; top:85px !important; left:15px !important; z-index:20; }
     .person-profile-hero { padding-top:145px; }
     .person-profile-main { align-items:flex-start; }
     .person-profile-heading { min-width:0; }
