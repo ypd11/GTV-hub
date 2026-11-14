@@ -2289,7 +2289,7 @@ window.openPersonProfile = async (id, isHistory = false) => {
         const gallery = person.images?.profiles || [];
         const wikipediaUrl = 'https://en.wikipedia.org/w/index.php?search=' + encodeURIComponent(person.name || '');
         const imdbId = person.external_ids?.imdb_id;
-        const imdbUrl = imdbId && /^nm\\d+$/.test(imdbId) ? 'https://www.imdb.com/name/' + encodeURIComponent(imdbId) + '/' : '';
+        const imdbUrl = imdbId && /^nm\d+$/.test(imdbId) ? 'https://www.imdb.com/name/' + encodeURIComponent(imdbId) + '/' : '';
         const externalLinksHtml = `
             <div class="person-external-links">
                 <a class="person-external-link wikipedia-link" href="${wikipediaUrl}" target="_blank" rel="noopener noreferrer"><span class="material-icons">menu_book</span> Wikipedia <span class="material-icons external-arrow">open_in_new</span></a>
