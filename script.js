@@ -508,6 +508,13 @@ function setupNewNavigation() {
     if(currentTab === 'tv') tvBtn.classList.add('active');
     navLinks.appendChild(tvBtn);
 
+    // People discovery
+    const peopleBtn = document.createElement('div');
+    peopleBtn.className = 'nav-item';
+    peopleBtn.textContent = 'People';
+    peopleBtn.onclick = openPeople;
+    navLinks.appendChild(peopleBtn);
+
     // Search Button
     const searchBtn = document.createElement('div');
     searchBtn.className = 'nav-item nav-search-btn';
@@ -558,6 +565,28 @@ function setupNewNavigation() {
     
     // Setup Search Listener
     const input = document.getElementById('modal-search-input');
+    const peopleInput = document.getElementById('people-search-input');
+    if (peopleInput) {
+        peopleInput.addEventListener('input', () => {
+            clearTimeout(peopleSearchTimer);
+            const value = peopleInput.value;
+            peopleSearchTimer = setTimeout(() => searchPeople(value), 350);
+        });
+        document.getElementById('people-search-clear').addEventListener('click', () => {
+            peopleInput.value = '';
+            searchPeople('');
+            peopleInput.focus();
+        });
+    }
+    document.querySelectorAll('.people-department').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.people-department').forEach(item => item.classList.remove('active'));
+            button.classList.add('active');
+            peopleDepartment = button.dataset.department;
+            loadPopularPeople(peopleDepartment);
+        });
+    });
+
     input.addEventListener('input', (e) => {
         if (e.target.value.trim().length === 0) renderSearchHistory();
         else handleSearchInput(e);
@@ -2110,6 +2139,158 @@ window.closeConfirmModal = () => {
     itemToRemoveId = null;
 };
 
+
+let peopleDepartment = 'Popular';
+let peopleSearchTimer = null;
+let peopleCurrentQuery = '';
+let peopleCurrentProfileId = null;
+
+function setPeopleView(view) {
+    setElementVisible(dashboard, view === 'dashboard', 'block');
+    setElementVisible(detailsView, view === 'details', 'block');
+    setElementVisible(categoryView, view === 'category', 'block');
+    setElementVisible(document.getElementById('people-view'), view === 'people', 'block');
+    setElementVisible(document.getElementById('person-profile-view'), view === 'person', 'block');
+    setElementVisible(playerContainer, false);
+}
+
+window.openPeople = (isHistory = false) => {
+    if (!isHistory) {
+        captureAndPushState();
+        history.pushState({ view: 'people' }, '', window.location.pathname + '?people');
+    }
+    setPeopleView('people');
+    window.scrollTo(0, 0);
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const peopleNav = [...document.querySelectorAll('.nav-item')].find(el => el.textContent.trim() === 'People');
+    if (peopleNav) peopleNav.classList.add('active');
+    if (!document.getElementById('people-popular-grid').dataset.loaded) loadPopularPeople();
+};
+
+async function loadPopularPeople(department = peopleDepartment) {
+    const grid = document.getElementById('people-popular-grid');
+    if (!grid) return;
+    grid.innerHTML = '<div class="people-loading"><div class="spinner"></div></div>';
+    try {
+        const endpoint = department === 'Popular'
+            ? 'person/popular'
+            : 'person/popular';
+        const response = await fetch(`${TMDB_BASE}/${endpoint}?api_key=${TMDB_KEY}&language=en-US&page=1`);
+        if (!response.ok) throw new Error('Could not load people');
+        const data = await response.json();
+        let people = data.results || [];
+        if (department !== 'Popular') {
+            const departmentMap = { Acting: 'Acting', Directing: 'Directing', Writing: 'Writing', Production: 'Production' };
+            if (departmentMap[department]) people = people.filter(person => person.known_for_department === departmentMap[department]);
+            if (department === 'Crew') people = people.filter(person => ['Camera','Sound','Editing','Art','Costume & Make-Up','Visual Effects'].includes(person.known_for_department));
+        }
+        grid.innerHTML = people.length ? people.map(renderPersonCard).join('') : '<div class="people-empty">No popular people found in this department yet.</div>';
+        grid.dataset.loaded = 'true';
+    } catch (error) {
+        grid.innerHTML = '<div class="people-empty">We could not load people right now. Please try again.</div>';
+    }
+}
+
+function renderPersonCard(person) {
+    const name = escapeHtml(person.name || 'Unknown');
+    const knownFor = escapeHtml(person.known_for_department || 'Film & TV');
+    const knownTitles = (person.known_for || []).slice(0, 2).map(item => item.title || item.name).filter(Boolean).join(' · ');
+    const image = person.profile_path ? IMG_BASE + person.profile_path : '';
+    return `<button class="person-card" type="button" onclick="openPersonProfile(${Number(person.id)})">
+        <span class="person-card-image">${image ? `<img src="${image}" alt="" loading="lazy">` : '<span class="material-icons">person</span>'}<span class="person-card-arrow material-icons">north_east</span></span>
+        <span class="person-card-name">${name}</span><span class="person-card-role">${knownFor}</span>
+        ${knownTitles ? `<span class="person-card-known">${escapeHtml(knownTitles)}</span>` : ''}
+    </button>`;
+}
+
+async function searchPeople(query) {
+    const resultsPanel = document.getElementById('people-search-content');
+    const discoverPanel = document.getElementById('people-discover-content');
+    const grid = document.getElementById('people-results-grid');
+    peopleCurrentQuery = query.trim();
+    if (!peopleCurrentQuery) {
+        resultsPanel.style.display = 'none';
+        discoverPanel.style.display = 'block';
+        return;
+    }
+    discoverPanel.style.display = 'none';
+    resultsPanel.style.display = 'block';
+    document.getElementById('people-results-title').textContent = 'Searching...';
+    document.getElementById('people-results-count').textContent = '';
+    grid.innerHTML = '<div class="people-loading"><div class="spinner"></div></div>';
+    try {
+        const response = await fetch(`${TMDB_BASE}/search/person?api_key=${TMDB_KEY}&language=en-US&query=${encodeURIComponent(peopleCurrentQuery)}&include_adult=false&page=1`);
+        if (!response.ok) throw new Error('Search failed');
+        const data = await response.json();
+        document.getElementById('people-results-title').textContent = 'People matching “' + peopleCurrentQuery.replace(/[<>]/g, '') + '”';
+        document.getElementById('people-results-count').textContent = (data.total_results || 0) + ' results';
+        grid.innerHTML = data.results && data.results.length ? data.results.map(renderPersonCard).join('') : '<div class="people-empty">No people found. Try another name.</div>';
+    } catch (error) {
+        grid.innerHTML = '<div class="people-empty">Search is temporarily unavailable. Please try again.</div>';
+    }
+}
+
+window.openPersonProfile = async (id, isHistory = false) => {
+    if (!isHistory) {
+        captureAndPushState();
+        history.pushState({ view: 'person', id }, '', window.location.pathname + '?person=' + id);
+    }
+    peopleCurrentProfileId = id;
+    setPeopleView('person');
+    window.scrollTo(0, 0);
+    const root = document.getElementById('person-profile-content');
+    root.innerHTML = '<div class="people-profile-loading"><div class="spinner"></div><span>Loading profile...</span></div>';
+    try {
+        const response = await fetch(`${TMDB_BASE}/person/${id}?api_key=${TMDB_KEY}&language=en-US&append_to_response=movie_credits,tv_credits,images`);
+        if (!response.ok) throw new Error('Profile unavailable');
+        const person = await response.json();
+        const safeName = escapeHtml(person.name || 'Unknown');
+        const biography = person.biography ? escapeHtml(person.biography) : 'No biography is available for this person yet.';
+        const knownFor = escapeHtml(person.known_for_department || 'Film & Television');
+        const born = person.birthday ? new Date(person.birthday + 'T00:00:00').toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }) : '';
+        const died = person.deathday ? new Date(person.deathday + 'T00:00:00').toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }) : '';
+        const years = born ? (died ? born + ' – ' + died : born) : '';
+        const ageText = person.birthday && !person.deathday ? ' · ' + Math.max(0, Math.floor((Date.now() - new Date(person.birthday).getTime()) / 31557600000)) + ' years old' : '';
+        const portrait = person.profile_path ? IMG_HERO + person.profile_path : '';
+        const allCredits = [
+            ...(person.movie_credits?.cast || []).map(item => ({...item, media_type:'movie', credit_role: item.character ? 'As ' + item.character : 'Cast'})),
+            ...(person.tv_credits?.cast || []).map(item => ({...item, media_type:'tv', credit_role: item.character ? 'As ' + item.character : 'Cast'})),
+            ...(person.movie_credits?.crew || []).map(item => ({...item, media_type:'movie', credit_role: item.job || item.department || 'Crew'})),
+            ...(person.tv_credits?.crew || []).map(item => ({...item, media_type:'tv', credit_role: item.job || item.department || 'Crew'}))
+        ];
+        const unique = new Map();
+        allCredits.forEach(item => { if (item.id && !unique.has(item.media_type + '-' + item.id)) unique.set(item.media_type + '-' + item.id, item); });
+        const credits = [...unique.values()].sort((a,b) => (b.release_date || b.first_air_date || '').localeCompare(a.release_date || a.first_air_date || ''));
+        const popular = [...credits].sort((a,b) => (b.popularity || 0) - (a.popularity || 0)).slice(0, 8);
+        const creditCard = item => {
+            const title = escapeHtml(item.title || item.name || 'Untitled');
+            const poster = item.poster_path ? IMG_BASE + item.poster_path : '';
+            const year = (item.release_date || item.first_air_date || '').slice(0,4);
+            return `<button class="person-work-card" onclick="openDetails(${Number(item.id)}, '${item.media_type}')">
+                <span class="person-work-poster">${poster ? `<img src="${poster}" alt="" loading="lazy">` : '<span class="material-icons">movie</span>'}</span>
+                <span class="person-work-title">${title}</span><span class="person-work-meta">${year || 'Release date unknown'} · ${item.media_type === 'tv' ? 'TV' : 'Movie'}</span>
+            </button>`;
+        };
+        const gallery = person.images?.profiles || [];
+        root.innerHTML = `
+            <div class="person-profile-hero" ${portrait ? `style="--person-backdrop:url('${portrait}')"` : ''}>
+                <button class="people-back-btn" onclick="handleBack()"><span class="material-icons">arrow_back</span> People</button>
+                <div class="person-profile-main">
+                    <div class="person-profile-portrait">${portrait ? `<img src="${portrait}" alt="${safeName}">` : '<span class="material-icons">person</span>'}</div>
+                    <div class="person-profile-heading"><span class="people-kicker">${knownFor.toUpperCase()}</span><h1>${safeName}</h1><div class="person-profile-facts">${years ? `<span><span class="material-icons">cake</span>${escapeHtml(years)}${ageText}</span>` : ''}${person.place_of_birth ? `<span><span class="material-icons">place</span>${escapeHtml(person.place_of_birth)}</span>` : ''}</div></div>
+                </div>
+            </div>
+            <div class="person-profile-body">
+                <section class="person-bio-section"><div class="people-section-heading"><div><span class="people-kicker">THE STORY</span><h2>Biography</h2></div></div><p class="person-biography">${biography}</p>${person.homepage ? `<a class="person-homepage" href="${escapeHtml(person.homepage)}" target="_blank" rel="noopener">Official website <span class="material-icons">open_in_new</span></a>` : ''}</section>
+                ${gallery.length > 1 ? `<section class="person-gallery-section"><div class="people-section-heading"><div><span class="people-kicker">BEHIND THE LENS</span><h2>Photos</h2></div></div><div class="person-gallery">${gallery.slice(0,8).map(photo => `<img src="${IMG_BASE + photo.file_path}" alt="${safeName}" loading="lazy">`).join('')}</div></section>` : ''}
+                <section class="person-works-section"><div class="people-section-heading"><div><span class="people-kicker">A CAREER IN FILM & TV</span><h2>Known for</h2></div><span class="people-section-note">${credits.length} credits</span></div><div class="person-works-grid">${popular.length ? popular.map(creditCard).join('') : '<div class="people-empty">No credited works found.</div>'}</div></section>
+                <section class="person-works-section"><div class="people-section-heading"><div><span class="people-kicker">COMPLETE CREDITS</span><h2>Filmography</h2></div></div><div class="person-filmography">${credits.length ? credits.map(item => `<button class="person-credit-row" onclick="openDetails(${Number(item.id)}, '${item.media_type}')"><span class="person-credit-year">${(item.release_date || item.first_air_date || '').slice(0,4) || '—'}</span><span class="person-credit-title">${escapeHtml(item.title || item.name || 'Untitled')}</span><span class="person-credit-role">${escapeHtml(item.credit_role)}</span><span class="person-credit-type">${item.media_type === 'tv' ? 'TV' : 'Movie'}</span><span class="material-icons">chevron_right</span></button>`).join('') : '<div class="people-empty">No credits available.</div>'}</div></section>
+            </div>`;
+    } catch (error) {
+        root.innerHTML = '<div class="people-empty profile-error"><span class="material-icons">cloud_off</span><h2>Profile unavailable</h2><p>We could not retrieve this profile. Please try again.</p><button onclick="openPersonProfile(' + Number(id) + ', true)">Try again</button></div>';
+    }
+};
+
 window.switchTab = (tab) => {
     currentTab = tab;
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -3317,7 +3498,7 @@ function captureAndPushState() {
     // Save current view state to stack before navigating away
     // Note: We do NOT push to browser history here, the new view handles that.
 
-    if (detailsView.style.display === 'block') {
+    if (document.getElementById('person-profile-view')?.style.display === 'block') {\n        state = { view: 'person', id: peopleCurrentProfileId, scroll: window.scrollY };\n    } else if (document.getElementById('people-view')?.style.display === 'block') {\n        state = { view: 'people', scroll: window.scrollY, query: peopleCurrentQuery };\n    } else if (detailsView.style.display === 'block') {
         if (currentDetailsData) {
             state = {
                 view: 'details',
