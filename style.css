@@ -840,6 +840,15 @@ body {
     position: absolute;
     top: 0;
     pointer-events: none;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.video-container.controls-hidden .player-header {
+    opacity: 0;
+    transform: translateY(-12px);
+    pointer-events: none;
 }
 
 .player-header > * { pointer-events: auto; }
