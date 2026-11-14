@@ -303,11 +303,16 @@ document.addEventListener('DOMContentLoaded', () => {
     playerCont.addEventListener('keydown', showPlayerControls);
 
     // Cross-origin iframe events cannot be inspected; detect pointer entry/exit only.
-    const streamFrame = document.getElementById('stream-frame');
-    if (streamFrame) {
-        streamFrame.addEventListener('mouseenter', showPlayerControls);
-        streamFrame.addEventListener('mouseleave', showPlayerControls);
-    }
+    window.showGtvPlayerControls = showPlayerControls;
+    window.bindGtvPlayerFrameEvents = () => {
+        const streamFrame = document.getElementById('stream-frame');
+        if (streamFrame && !streamFrame.dataset.controlsEventsBound) {
+            streamFrame.dataset.controlsEventsBound = 'true';
+            streamFrame.addEventListener('mouseenter', showPlayerControls);
+            streamFrame.addEventListener('mouseleave', showPlayerControls);
+        }
+    };
+    window.bindGtvPlayerFrameEvents();
 
     header.addEventListener('mouseenter', () => {
         if (controlsHideTimer) clearTimeout(controlsHideTimer);
@@ -2379,6 +2384,8 @@ window.playItem = async (id, type, season = 1, episode = 1) => {
     window.currentPlayInfo = { id, type, season, episode };
     
     setElementVisible(playerContainer, true, 'flex');
+    playerContainer.classList.remove('controls-hidden');
+    if (window.showGtvPlayerControls) window.showGtvPlayerControls();
     document.body.style.overflow = 'hidden';
     const itemData = await addToHistory(id, type);
     
@@ -2478,6 +2485,7 @@ window.loadPlayerSource = () => {
     iframe.setAttribute('scrolling', 'no');
 
     iframe.src = embedUrl;
+    if (window.bindGtvPlayerFrameEvents) window.bindGtvPlayerFrameEvents();
 
     // Update Dropdown Active State (Sync UI)
     const options = document.querySelectorAll('.server-option');
@@ -2556,6 +2564,7 @@ function closePlayer() {
     iframe = newIframe; // Update the global reference to the new iframe
 
     setElementVisible(playerContainer, false);
+    playerContainer.classList.remove('controls-hidden');
     document.body.style.overflow = '';
 }
 
