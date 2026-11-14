@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#111111">
+    <meta name="google" content="notranslate">
+    <title>GTV hub - Movies & TV Shows</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" href="./icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="./icon.png">
+    <link rel="stylesheet" href="style.css?v=10">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="notranslate">
+
+<nav class="top-nav">
+    <div class="nav-left">
+        <div class="brand-logo" onclick="switchTab('movie')">GTV<span> hub</span></div>
+        <div class="nav-links">
+            <div class="nav-item active" id="nav-movie" onclick="switchTab('movie')">Movies</div>
+            <div class="nav-item" id="nav-tv" onclick="switchTab('tv')">TV Shows</div>
+            <div class="nav-item" onclick="openCategories()">Categories</div>
+        </div>
+    </div>
+    <div class="nav-right">
+        <div class="search-container">
+            <input id="search" placeholder="What are you looking for?" autocomplete="off">
+            <button class="search-icon-btn" onclick="toggleSearch()"><span class="material-icons">search</span></button>
+            <div id="search-suggestions" class="suggestions-box"></div>
+        </div>
+    </div>
+</nav>
+
+<!-- Profile Selection View -->
+<section id="profile-view" style="display:none;">
+    <div class="profile-container">
+        <div class="brand-logo profile-brand">GTV<span> hub</span></div>
+        <h2 id="profile-title">Who is watching?</h2>
+        <div id="profile-list" class="profile-list"></div>
+        <button id="manage-profiles-btn" class="more-info-btn" onclick="toggleManageProfiles()">Manage Profiles</button>
+    </div>
+</section>
+
+<div id="content">
+    <!-- Dashboard View -->
+    <main id="dashboard" class="view-container">
+        <section id="hero-section"></section>
+        <div id="rows-container">
+            <div class="loading-state">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Details View -->
+    <section id="details-view" class="view-container" style="display:none;">
+        <div id="details-content"></div>
+    </section>
+
+    <!-- Category List View (See All) -->
+    <section id="category-view" class="view-container" style="display:none; padding-top: 80px;">
+        <div class="category-header-block" style="padding: 0 4%; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+            <button class="back-btn-simple" onclick="closeCategoryView()"><span class="material-icons">arrow_back</span></button>
+            <h1 id="category-title">Category</h1>
+        </div>
+        <div id="category-list" style="padding: 0 4%;"></div>
+    </section>
+
+    <!-- Player View -->
+    <section id="player-container" class="video-container" style="display:none;">
+        <button id="close-player" class="back-btn-overlay">
+            <span class="material-icons">arrow_back</span> Back
+        </button>
+        <iframe id="stream-frame" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+    </section>
+</div>
+
+<script src="script.js?v=10"></script>
+</body>
+</html>
