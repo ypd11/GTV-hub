@@ -2227,10 +2227,20 @@ window.openPersonPhoto = (src, alt) => {
         });
         document.body.appendChild(viewer);
     }
-    viewer.querySelector('.person-photo-full').src = src;
-    viewer.querySelector('.person-photo-full').alt = alt || 'Person photo';
+    const photo = viewer.querySelector('.person-photo-full');
+    photo.classList.remove('loaded');
+    photo.removeAttribute('src');
+    photo.dataset.photoSrc = src;
+    photo.alt = alt || 'Person photo';
+    photo.onload = () => {
+        if (photo.dataset.photoSrc === src) photo.classList.add('loaded');
+    };
+    photo.onerror = () => {
+        if (photo.dataset.photoSrc === src) photo.classList.remove('loaded');
+    };
     viewer.querySelector('.person-photo-caption').textContent = alt || '';
     viewer.classList.add('active');
+    photo.src = src;
     document.body.classList.add('no-scroll');
 };
 
@@ -2238,6 +2248,12 @@ window.closePersonPhoto = () => {
     const viewer = document.getElementById('person-photo-viewer');
     if (!viewer) return;
     viewer.classList.remove('active');
+    const photo = viewer.querySelector('.person-photo-full');
+    photo.dataset.photoSrc = '';
+    photo.onload = null;
+    photo.onerror = null;
+    photo.classList.remove('loaded');
+    photo.removeAttribute('src');
     document.body.classList.remove('no-scroll');
 };
 
