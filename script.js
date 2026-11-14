@@ -252,8 +252,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    document.addEventListener('fullscreenchange', updateFullscreenButton);
-    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+    const handlePlayerFullscreenChange = () => {
+        updateFullscreenButton();
+        if (document.fullscreenElement === playerCont || document.webkitFullscreenElement === playerCont) {
+            showPlayerControls();
+        }
+    };
+    document.addEventListener('fullscreenchange', handlePlayerFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handlePlayerFullscreenChange);
     rightActions.appendChild(fullscreenBtn);
 
     // Server Selector Dropdown
@@ -301,8 +307,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     playerCont.insertBefore(header, playerCont.firstChild);
 
-    // Auto-hide GTV Hub controls. Cross-origin iframe movement cannot be
-    // tracked, so keep controls visible while the pointer is inside the frame.
+    // Auto-hide GTV Hub controls, including while the pointer remains over
+    // the cross-origin video iframe (whose internal pointer movement is inaccessible).
     let controlsHideTimer = null;
     const scheduleControlsHide = () => {
         if (controlsHideTimer) clearTimeout(controlsHideTimer);
