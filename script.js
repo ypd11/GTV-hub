@@ -2292,6 +2292,11 @@ window.openPersonProfile = async (id, isHistory = false) => {
 };
 
 window.switchTab = (tab) => {
+    setElementVisible(document.getElementById('people-view'), false);
+    setElementVisible(document.getElementById('person-profile-view'), false);
+    setElementVisible(detailsView, false);
+    setElementVisible(categoryView, false);
+    setElementVisible(dashboard, true, 'block');
     currentTab = tab;
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     const activeBtn = document.getElementById(`nav-${tab}`);
