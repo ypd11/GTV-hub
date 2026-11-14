@@ -851,16 +851,6 @@ body {
     pointer-events: none;
 }
 
-/* Touch browsers cannot report interactions made inside a cross-origin iframe.
-   Keep GTV Hub controls available on touch-first devices. */
-@media (hover: none), (pointer: coarse) {
-    .video-container.controls-hidden .player-header {
-        opacity: 1;
-        transform: translateY(0);
-        pointer-events: none;
-    }
-}
-
 /* Fullscreen keyboard shortcut hint */
 .player-fullscreen-hint {
     position: absolute;
