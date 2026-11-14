@@ -304,14 +304,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auto-hide GTV Hub controls. Cross-origin iframe movement cannot be
     // tracked, so keep controls visible while the pointer is inside the frame.
     let controlsHideTimer = null;
-    let pointerOverStreamFrame = false;
-
     const scheduleControlsHide = () => {
         if (controlsHideTimer) clearTimeout(controlsHideTimer);
         controlsHideTimer = setTimeout(() => {
             const dropdownOpen = document.getElementById('server-dropdown-menu')?.classList.contains('active');
             const focusInsideHeader = header.contains(document.activeElement);
-            if (!pointerOverStreamFrame && !dropdownOpen && !focusInsideHeader) {
+            if (!dropdownOpen && !focusInsideHeader) {
                 playerCont.classList.add('controls-hidden');
             }
         }, 2500);
@@ -334,15 +332,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const streamFrame = document.getElementById('stream-frame');
         if (streamFrame && !streamFrame.dataset.controlsEventsBound) {
             streamFrame.dataset.controlsEventsBound = 'true';
-            streamFrame.addEventListener('mouseenter', () => {
-                pointerOverStreamFrame = true;
-                if (controlsHideTimer) clearTimeout(controlsHideTimer);
-                playerCont.classList.remove('controls-hidden');
-            });
-            streamFrame.addEventListener('mouseleave', () => {
-                pointerOverStreamFrame = false;
-                showPlayerControls();
-            });
+            streamFrame.addEventListener('mouseenter', showPlayerControls);
+            streamFrame.addEventListener('mouseleave', showPlayerControls);
         }
     };
     window.bindGtvPlayerFrameEvents();
