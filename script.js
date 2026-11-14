@@ -86,6 +86,7 @@ const playerContainer = document.getElementById('player-container');
 let iframe = document.getElementById('stream-frame');
 
 let currentTab = localStorage.getItem('gtv_default_tab') || 'movie';
+let activeNavigationSection = currentTab;
 let currentCategoryPage = 1;
 let currentCategoryApiUrl = '';
 let currentSearchPage = 1;
@@ -497,7 +498,8 @@ function setupNewNavigation() {
     moviesBtn.className = 'nav-item';
     moviesBtn.textContent = 'Movies';
     moviesBtn.onclick = () => switchTab('movie');
-    if(currentTab === 'movie') moviesBtn.classList.add('active');
+    moviesBtn.id = 'nav-movie';
+    if(activeNavigationSection === 'movie') moviesBtn.classList.add('active');
     navLinks.appendChild(moviesBtn);
 
     // TV Shows
@@ -505,14 +507,17 @@ function setupNewNavigation() {
     tvBtn.className = 'nav-item';
     tvBtn.textContent = 'TV Shows';
     tvBtn.onclick = () => switchTab('tv');
-    if(currentTab === 'tv') tvBtn.classList.add('active');
+    tvBtn.id = 'nav-tv';
+    if(activeNavigationSection === 'tv') tvBtn.classList.add('active');
     navLinks.appendChild(tvBtn);
 
     // People discovery
     const peopleBtn = document.createElement('div');
     peopleBtn.className = 'nav-item';
     peopleBtn.textContent = 'People';
+    peopleBtn.id = 'nav-people';
     peopleBtn.onclick = openPeople;
+    if(activeNavigationSection === 'people') peopleBtn.classList.add('active');
     navLinks.appendChild(peopleBtn);
 
     // Search Button
@@ -2152,10 +2157,9 @@ window.openPeople = (isHistory = false) => {
         history.pushState({ view: 'people' }, '', window.location.pathname + '?people');
     }
     setPeopleView('people');
+    activeNavigationSection = 'people';
+    setupNewNavigation();
     window.scrollTo(0, 0);
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    const peopleNav = [...document.querySelectorAll('.nav-item')].find(el => el.textContent.trim() === 'People');
-    if (peopleNav) peopleNav.classList.add('active');
     if (!document.getElementById('people-popular-grid').dataset.loaded) loadPopularPeople();
 };
 
@@ -2337,10 +2341,8 @@ window.switchTab = (tab) => {
     setElementVisible(categoryView, false);
     setElementVisible(dashboard, true, 'block');
     currentTab = tab;
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    const activeBtn = document.getElementById(`nav-${tab}`);
-    if(activeBtn) activeBtn.classList.add('active');
-    // Re-run nav setup to update active state visual
+    activeNavigationSection = tab;
+    // Rebuild navigation with the correct section highlighted.
     setupNewNavigation();
     loadDashboard();
     window.scrollTo(0, 0);
@@ -3596,6 +3598,8 @@ window.handleBack = () => {
     const state = navigationStack.pop();
     
     if (state.view === 'dashboard') {
+        activeNavigationSection = currentTab;
+        setupNewNavigation();
         setElementVisible(dashboard, true, 'block');
         setElementVisible(detailsView, false);
         setElementVisible(categoryView, false);
@@ -3603,6 +3607,8 @@ window.handleBack = () => {
         resetUrl();
         window.scrollTo(0, state.scroll);
     } else if (state.view === 'category') {
+        activeNavigationSection = currentTab;
+        setupNewNavigation();
         setElementVisible(dashboard, false);
         setElementVisible(detailsView, false);
         setElementVisible(categoryView, true, 'block');
@@ -3630,6 +3636,8 @@ window.handleBack = () => {
     } else if (state.view === 'person') {
         openPersonProfile(state.id, true);
     } else if (state.view === 'details') {
+        activeNavigationSection = state.type || currentTab;
+        setupNewNavigation();
         openDetails(state.id, state.type, true);
     }
 };
