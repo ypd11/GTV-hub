@@ -314,9 +314,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (controlsHideTimer) clearTimeout(controlsHideTimer);
         controlsHideTimer = setTimeout(() => {
             const dropdownOpen = document.getElementById('server-dropdown-menu')?.classList.contains('active');
-            const focusInsideHeader = header.contains(document.activeElement);
-            if (!dropdownOpen && !focusInsideHeader) {
+            if (!dropdownOpen) {
                 playerCont.classList.add('controls-hidden');
+                // Prevent a focused toolbar button (for example, the fullscreen
+                // button) from keeping the controls visible indefinitely.
+                if (header.contains(document.activeElement)) {
+                    document.activeElement.blur();
+                }
             }
         }, 2500);
     };
