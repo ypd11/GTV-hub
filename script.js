@@ -118,6 +118,7 @@ if (savedSource && playerSources.includes(savedSource)) {
 let currentSourceIdx = 0;
 let isManualBack = false;
 let pendingDeepLink = null;
+let currentPersonCredits = { knownFor: [], filmography: [] };
 
 if (localStorage.getItem('gtv_reduced_motion') === 'true') {
     document.body.classList.add('reduced-motion');
@@ -2353,13 +2354,121 @@ window.openPersonProfile = async (id, isHistory = false) => {
             <div class="person-profile-body">
                 <section class="person-bio-section"><div class="people-section-heading"><div><span class="people-kicker">THE STORY</span><h2>Biography</h2></div></div><p class="person-biography">${biography}</p><div class="person-resource-links">${externalLinksHtml}${person.homepage ? `<a class="person-homepage" href="${escapeHtml(person.homepage)}" target="_blank" rel="noopener noreferrer">Official website <span class="material-icons">open_in_new</span></a>` : ''}</div></section>
                 ${gallery.length > 0 ? `<section class="person-gallery-section"><div class="people-section-heading"><div><span class="people-kicker">BEHIND THE LENS</span><h2>Photos</h2></div></div><div class="person-gallery">${gallery.slice(0,12).map((photo, index) => `<button class="person-photo-button" type="button" onclick="openPersonPhoto('${IMG_HERO + photo.file_path}', '${escapeInlineJsString(person.name || 'Person')} photo ${index + 1}')" aria-label="View photo ${index + 1}"><img src="${IMG_BASE + photo.file_path}" alt="${safeName}" loading="lazy"><span class="material-icons">zoom_in</span></button>`).join('')}</div></section>` : ''}
-                <section class="person-works-section"><div class="people-section-heading"><div><span class="people-kicker">A CAREER IN FILM & TV</span><h2>Known for</h2></div><span class="people-section-note">${credits.length} credits</span></div><div class="person-works-grid">${popular.length ? popular.map(creditCard).join('') : '<div class="people-empty">No credited works found.</div>'}</div></section>
-                <section class="person-works-section"><div class="people-section-heading"><div><span class="people-kicker">COMPLETE CREDITS</span><h2>Filmography</h2></div></div><div class="person-filmography">${credits.length ? credits.map(item => `<button class="person-credit-row" onclick="openDetails(${Number(item.id)}, '${item.media_type}')"><span class="person-credit-year">${(item.release_date || item.first_air_date || '').slice(0,4) || '—'}</span><span class="person-credit-title">${escapeHtml(item.title || item.name || 'Untitled')}</span><span class="person-credit-role">${escapeHtml(item.credit_role)}</span><span class="person-credit-type">${item.media_type === 'tv' ? 'TV' : 'Movie'}</span><span class="material-icons">chevron_right</span></button>`).join('') : '<div class="people-empty">No credits available.</div>'}</div></section>
+                <section class="person-works-section">
+                    <div class="people-section-heading">
+                        <div><span class="people-kicker">A CAREER IN FILM & TV</span><h2>Known for</h2></div>
+                        <button class="person-see-all-btn" type="button" onclick="openPersonCredits('knownFor')">See All <span class="material-icons">arrow_forward</span></button>
+                    </div>
+                    <div class="person-works-grid">${popular.length ? popular.map(creditCard).join('') : '<div class="people-empty">No credited works found.</div>'}</div>
+                </section>
+                <section class="person-works-section">
+                    <div class="people-section-heading">
+                        <div><span class="people-kicker">COMPLETE CREDITS</span><h2>Filmography</h2></div>
+                        <button class="person-see-all-btn" type="button" onclick="openPersonCredits('filmography')">See All <span class="material-icons">arrow_forward</span></button>
+                    </div>
+                    <div class="person-filmography">${credits.length ? credits.slice(0, 10).map(item => `<button class="person-credit-row" onclick="openDetails(${Number(item.id)}, '${item.media_type}')"><span class="person-credit-year">${(item.release_date || item.first_air_date || '').slice(0,4) || '—'}</span><span class="person-credit-title">${escapeHtml(item.title || item.name || 'Untitled')}</span><span class="person-credit-role">${escapeHtml(item.credit_role)}</span><span class="person-credit-type">${item.media_type === 'tv' ? 'TV' : 'Movie'}</span><span class="material-icons">chevron_right</span></button>`).join('') : '<div class="people-empty">No credits available.</div>'}</div>
+                </section>
             </div>`;
     } catch (error) {
         root.innerHTML = '<div class="people-empty profile-error"><span class="material-icons">cloud_off</span><h2>Profile unavailable</h2><p>We could not retrieve this profile. Please try again.</p><button onclick="openPersonProfile(' + Number(id) + ', true)">Try again</button></div>';
     }
 };
+
+
+window.closePersonCredits = () => {
+    const modal = document.getElementById('person-credits-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.classList.remove('no-scroll');
+    }
+};
+
+window.openPersonCredits = (kind) => {
+    const isKnownFor = kind === 'knownFor';
+    const items = isKnownFor ? currentPersonCredits.knownFor : currentPersonCredits.filmography;
+    if (!items || !items.length) return;
+
+    let modal = document.getElementById('person-credits-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'person-credits-modal';
+        modal.className = 'person-credits-modal';
+        modal.innerHTML = '<div class="person-credits-dialog" role="dialog" aria-modal="true" aria-labelledby="person-credits-title"><div class="person-credits-header"><div><span class="people-kicker" id="person-credits-kicker"></span><h2 id="person-credits-title"></h2><p id="person-credits-description"></p></div><button class="person-credits-close" type="button" aria-label="Close"><span class="material-icons">close</span></button></div><div class="person-credits-tools"><label class="person-credits-search"><span class="material-icons">search</span><input id="person-credits-search" type="search" placeholder="Search titles or roles..." autocomplete="off><kbd>⌘ K</kbd></label><div class="person-credits-filters" role="group" aria-label="Filter credits"><button type="button" class="active" data-filter="all">All</button><button type="button" data-filter="movie">Movies</button><button type="button" data-filter="tv">TV Shows</button></div></div><div class="person-credits-results-bar"><span id="person-credits-count"></span><span>Sorted by <strong id="person-credits-sort"></strong></span></div><div id="person-credits-results" class="person-credits-results"></div></div>';
+        document.body.appendChild(modal);
+        modal.addEventListener('click', event => {
+            if (event.target === modal || event.target.closest('.person-credits-close')) closePersonCredits();
+        });
+        modal.querySelector('#person-credits-search').addEventListener('input', renderPersonCreditsResults);
+        modal.querySelector('.person-credits-filters').addEventListener('click', event => {
+            const button = event.target.closest('[data-filter]');
+            if (!button) return;
+            modal.querySelectorAll('[data-filter]').forEach(item => item.classList.toggle('active', item === button));
+            renderPersonCreditsResults();
+        });
+        modal.querySelector('#person-credits-results').addEventListener('click', event => {
+            const item = event.target.closest('[data-credit-id]');
+            if (!item) return;
+            const id = Number(item.dataset.creditId);
+            const type = item.dataset.mediaType;
+            closePersonCredits();
+            openDetails(id, type);
+        });
+        modal.querySelector('#person-credits-search').addEventListener('keydown', event => {
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+                event.preventDefault();
+                event.currentTarget.focus();
+            }
+        });
+    }
+
+    modal.dataset.kind = kind;
+    modal.querySelector('#person-credits-kicker').textContent = isKnownFor ? 'FEATURED WORKS' : 'COMPLETE CREDITS';
+    modal.querySelector('#person-credits-title').textContent = isKnownFor ? 'Known for' : 'Filmography';
+    modal.querySelector('#person-credits-description').textContent = isKnownFor ? 'Explore the productions that define this person’s career.' : 'Browse every credited movie and TV appearance.';
+    modal.querySelector('#person-credits-sort').textContent = isKnownFor ? 'Popularity' : 'Release date';
+    modal.querySelector('#person-credits-search').value = '';
+    modal.querySelectorAll('[data-filter]').forEach(button => button.classList.toggle('active', button.dataset.filter === 'all'));
+    modal.classList.add('active');
+    document.body.classList.add('no-scroll');
+    renderPersonCreditsResults();
+    requestAnimationFrame(() => modal.querySelector('#person-credits-search').focus());
+};
+
+function renderPersonCreditsResults() {
+    const modal = document.getElementById('person-credits-modal');
+    if (!modal || !modal.classList.contains('active')) return;
+    const isKnownFor = modal.dataset.kind === 'knownFor';
+    const source = isKnownFor ? currentPersonCredits.knownFor : currentPersonCredits.filmography;
+    const query = modal.querySelector('#person-credits-search').value.trim().toLocaleLowerCase();
+    const filter = modal.querySelector('[data-filter].active')?.dataset.filter || 'all';
+    const filtered = source.filter(item => {
+        if (filter !== 'all' && item.media_type !== filter) return false;
+        const title = item.title || item.name || '';
+        const year = (item.release_date || item.first_air_date || '').slice(0, 4);
+        const role = item.credit_role || '';
+        return !query || (title + ' ' + year + ' ' + role).toLocaleLowerCase().includes(query);
+    });
+    modal.querySelector('#person-credits-count').textContent = filtered.length + (filtered.length === 1 ? ' result' : ' results');
+    const results = modal.querySelector('#person-credits-results');
+    if (!filtered.length) {
+        results.innerHTML = '<div class="person-credits-empty"><span class="material-icons">search_off</span><strong>No matching titles</strong><span>Try another search or change the filters.</span></div>';
+        return;
+    }
+    if (isKnownFor) {
+        results.innerHTML = '<div class="person-credits-grid">' + filtered.map(item => {
+            const title = escapeHtml(item.title || item.name || 'Untitled');
+            const poster = item.poster_path ? IMG_BASE + item.poster_path : '';
+            const year = (item.release_date || item.first_air_date || '').slice(0, 4);
+            return '<button class="person-work-card" type="button" data-credit-id="' + Number(item.id) + '" data-media-type="' + item.media_type + '"><span class="person-work-poster">' + (poster ? '<img src="' + poster + '" alt="" loading="lazy">' : '<span class="material-icons">movie</span>') + '</span><span class="person-work-title">' + title + '</span><span class="person-work-meta">' + (year || 'Release date unknown') + ' · ' + (item.media_type === 'tv' ? 'TV' : 'Movie') + '</span></button>';
+        }).join('') + '</div>';
+    } else {
+        results.innerHTML = '<div class="person-filmography person-credits-list">' + filtered.map(item => {
+            const title = escapeHtml(item.title || item.name || 'Untitled');
+            const year = (item.release_date || item.first_air_date || '').slice(0, 4) || '—';
+            return '<button class="person-credit-row" type="button" data-credit-id="' + Number(item.id) + '" data-media-type="' + item.media_type + '"><span class="person-credit-year">' + year + '</span><span class="person-credit-title">' + title + '</span><span class="person-credit-role">' + escapeHtml(item.credit_role || '') + '</span><span class="person-credit-type">' + (item.media_type === 'tv' ? 'TV' : 'Movie') + '</span><span class="material-icons">chevron_right</span></button>';
+        }).join('') + '</div>';
+    }
+}
 
 window.switchTab = (tab) => {
     setElementVisible(document.getElementById('people-view'), false);
