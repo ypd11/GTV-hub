@@ -2328,6 +2328,11 @@ window.openPersonProfile = async (id, isHistory = false) => {
         allCredits.forEach(item => { if (item.id && !unique.has(item.media_type + '-' + item.id)) unique.set(item.media_type + '-' + item.id, item); });
         const credits = [...unique.values()].sort((a,b) => (b.release_date || b.first_air_date || '').localeCompare(a.release_date || a.first_air_date || ''));
         const popular = [...credits].sort((a,b) => (b.popularity || 0) - (a.popularity || 0)).slice(0, 8);
+        // Keep the complete collections available to the See All explorers.
+        currentPersonCredits = {
+            knownFor: [...credits].sort((a,b) => (b.popularity || 0) - (a.popularity || 0)),
+            filmography: credits
+        };
         const creditCard = item => {
             const title = escapeHtml(item.title || item.name || 'Untitled');
             const poster = item.poster_path ? IMG_BASE + item.poster_path : '';
@@ -2360,7 +2365,7 @@ window.openPersonProfile = async (id, isHistory = false) => {
                 <section class="person-works-section">
                     <div class="people-section-heading">
                         <div><span class="people-kicker">A CAREER IN FILM & TV</span><h2>Known for</h2></div>
-                        <button class="person-see-all-btn" type="button" onclick="openPersonCredits('knownFor')">See All <span class="material-icons">arrow_forward</span></button>
+                        <button class="see-all-btn" type="button" onclick="openPersonCredits('knownFor')">See All <span class="material-icons">arrow_forward</span></button>
                     </div>
                     <div class="person-works-grid">${popular.length ? popular.map(creditCard).join('') : '<div class="people-empty">No credited works found.</div>'}</div>
                 </section>
@@ -2396,7 +2401,7 @@ window.openPersonCredits = (kind) => {
         modal = document.createElement('div');
         modal.id = 'person-credits-modal';
         modal.className = 'person-credits-modal';
-        modal.innerHTML = '<div class="person-credits-dialog" role="dialog" aria-modal="true" aria-labelledby="person-credits-title"><div class="person-credits-header"><div><span class="people-kicker" id="person-credits-kicker"></span><h2 id="person-credits-title"></h2><p id="person-credits-description"></p></div><button class="person-credits-close" type="button" aria-label="Close"><span class="material-icons">close</span></button></div><div class="person-credits-tools"><label class="person-credits-search"><span class="material-icons">search</span><input id="person-credits-search" type="search" placeholder="Search titles or roles..." autocomplete="off><kbd>Ctrl K</kbd></label><div class="person-credits-filters" role="group" aria-label="Filter credits"><button type="button" class="active" data-filter="all">All</button><button type="button" data-filter="movie">Movies</button><button type="button" data-filter="tv">TV Shows</button></div></div><div class="person-credits-results-bar"><span id="person-credits-count"></span><span>Sorted by <strong id="person-credits-sort"></strong></span></div><div id="person-credits-results" class="person-credits-results"></div></div>';
+        modal.innerHTML = '<div class="person-credits-dialog" role="dialog" aria-modal="true" aria-labelledby="person-credits-title"><div class="person-credits-header"><div><span class="people-kicker" id="person-credits-kicker"></span><h2 id="person-credits-title"></h2><p id="person-credits-description"></p></div><button class="person-credits-close" type="button" aria-label="Close"><span class="material-icons">close</span></button></div><div class="person-credits-tools"><label class="person-credits-search"><span class="material-icons">search</span><input id="person-credits-search" type="search" placeholder="Search titles or roles..." autocomplete="off"><kbd>Ctrl K</kbd></label><div class="person-credits-filters" role="group" aria-label="Filter credits"><button type="button" class="active" data-filter="all">All</button><button type="button" data-filter="movie">Movies</button><button type="button" data-filter="tv">TV Shows</button></div></div><div class="person-credits-results-bar"><span id="person-credits-count"></span><span>Sorted by <strong id="person-credits-sort"></strong></span></div><div id="person-credits-results" class="person-credits-results"></div></div>';
         document.body.appendChild(modal);
         modal.addEventListener('click', event => {
             if (event.target === modal || event.target.closest('.person-credits-close')) closePersonCredits();
