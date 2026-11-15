@@ -3593,7 +3593,9 @@ function captureAndPushState() {
             currentQuery: currentSearchQuery,
             resultsScroll: searchResults?.scrollTop || 0,
             baseView,
-            baseScroll: window.scrollY
+            baseScroll: window.scrollY,
+            tab: currentTab,
+            navigationSection: activeNavigationSection
         };
     } else if (document.getElementById('person-profile-view')?.style.display === 'block') {
         state = { view: 'person', id: peopleCurrentProfileId, scroll: window.scrollY };
@@ -3647,6 +3649,9 @@ window.handleBack = () => {
     const state = navigationStack.pop();
     
     if (state.view === 'search') {
+        currentTab = state.tab || currentTab;
+        activeNavigationSection = state.navigationSection || currentTab;
+        setupNewNavigation();
         setElementVisible(dashboard, state.baseView === 'dashboard', 'block');
         setElementVisible(detailsView, state.baseView === 'details', 'block');
         setElementVisible(categoryView, state.baseView === 'category', 'block');
