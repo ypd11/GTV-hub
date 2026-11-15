@@ -2290,7 +2290,10 @@ window.closePersonPhoto = () => {
 };
 
 document.addEventListener('keydown', event => {
-    if (event.key === 'Escape') closePersonPhoto();
+    if (event.key === 'Escape') {
+        closePersonPhoto();
+        closePersonCredits();
+    }
 });
 
 window.openPersonProfile = async (id, isHistory = false) => {
@@ -2393,7 +2396,7 @@ window.openPersonCredits = (kind) => {
         modal = document.createElement('div');
         modal.id = 'person-credits-modal';
         modal.className = 'person-credits-modal';
-        modal.innerHTML = '<div class="person-credits-dialog" role="dialog" aria-modal="true" aria-labelledby="person-credits-title"><div class="person-credits-header"><div><span class="people-kicker" id="person-credits-kicker"></span><h2 id="person-credits-title"></h2><p id="person-credits-description"></p></div><button class="person-credits-close" type="button" aria-label="Close"><span class="material-icons">close</span></button></div><div class="person-credits-tools"><label class="person-credits-search"><span class="material-icons">search</span><input id="person-credits-search" type="search" placeholder="Search titles or roles..." autocomplete="off><kbd>⌘ K</kbd></label><div class="person-credits-filters" role="group" aria-label="Filter credits"><button type="button" class="active" data-filter="all">All</button><button type="button" data-filter="movie">Movies</button><button type="button" data-filter="tv">TV Shows</button></div></div><div class="person-credits-results-bar"><span id="person-credits-count"></span><span>Sorted by <strong id="person-credits-sort"></strong></span></div><div id="person-credits-results" class="person-credits-results"></div></div>';
+        modal.innerHTML = '<div class="person-credits-dialog" role="dialog" aria-modal="true" aria-labelledby="person-credits-title"><div class="person-credits-header"><div><span class="people-kicker" id="person-credits-kicker"></span><h2 id="person-credits-title"></h2><p id="person-credits-description"></p></div><button class="person-credits-close" type="button" aria-label="Close"><span class="material-icons">close</span></button></div><div class="person-credits-tools"><label class="person-credits-search"><span class="material-icons">search</span><input id="person-credits-search" type="search" placeholder="Search titles or roles..." autocomplete="off><kbd>Ctrl K</kbd></label><div class="person-credits-filters" role="group" aria-label="Filter credits"><button type="button" class="active" data-filter="all">All</button><button type="button" data-filter="movie">Movies</button><button type="button" data-filter="tv">TV Shows</button></div></div><div class="person-credits-results-bar"><span id="person-credits-count"></span><span>Sorted by <strong id="person-credits-sort"></strong></span></div><div id="person-credits-results" class="person-credits-results"></div></div>';
         document.body.appendChild(modal);
         modal.addEventListener('click', event => {
             if (event.target === modal || event.target.closest('.person-credits-close')) closePersonCredits();
