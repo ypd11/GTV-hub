@@ -106,6 +106,7 @@ let itemToRemoveId = null;
 let currentDetailsData = null;
 let allLoadedCategoryItems = [];
 let navigationStack = [];
+let skipNextNavigationCapture = false;
 let guestSessionId = localStorage.getItem('gtv_guest_session_id');
 let guestSessionExpiry = localStorage.getItem('gtv_guest_session_expiry');
 let searchDebounceTimer;
@@ -623,27 +624,37 @@ window.openSearchModal = () => {
     setTimeout(() => input.focus(), 100);
 };
 
-window.closeSearchModal = () => {
+window.closeSearchModal = (preserveState = false) => {
     const modal = document.getElementById('search-modal-overlay');
     modal.classList.remove('active');
     modal.setAttribute('aria-hidden', 'true');
     modal.inert = true;
-    document.getElementById('modal-search-input').value = '';
-    document.getElementById('modal-search-results').innerHTML = '';
+    if (!preserveState) {
+        document.getElementById('modal-search-input').value = '';
+        document.getElementById('modal-search-results').innerHTML = '';
+    }
 };
 
 window.handleSearchResultClick = (query, id, type) => {
     saveSearchQuery(query);
+
+    // Preserve the complete search overlay before navigating to a result.
+    captureAndPushState();
     closeSearchModal();
+    skipNextNavigationCapture = true;
+
     if (type === 'person') {
-        openPeople();
-        const peopleInput = document.getElementById('people-search-input');
-        if (peopleInput) peopleInput.value = query;
-        searchPeople(query);
+        activeNavigationSection = 'people';
+        setupNewNavigation();
+        setPeopleView('person');
         openPersonProfile(id);
         return;
     }
-    if (type !== currentTab && (type === 'movie' || type === 'tv')) switchTab(type);
+    if (type !== currentTab && (type === 'movie' || type === 'tv')) {
+        currentTab = type;
+        activeNavigationSection = type;
+        setupNewNavigation();
+    }
     openDetails(id, type);
 };
 
@@ -3558,11 +3569,33 @@ function getSkeletonHtml(type) {
 
 // Navigation History Logic
 function captureAndPushState() {
-    let state = null;
-    // Save current view state to stack before navigating away
-    // Note: We do NOT push to browser history here, the new view handles that.
+    if (skipNextNavigationCapture) {
+        skipNextNavigationCapture = false;
+        return;
+    }
 
-    if (document.getElementById('person-profile-view')?.style.display === 'block') {
+    let state = null;
+    // Save current view state to stack before navigating away.
+    // The search overlay sits above the current view, so preserve both layers.
+    const searchModal = document.getElementById('search-modal-overlay');
+    if (searchModal?.classList.contains('active')) {
+        const searchInput = document.getElementById('modal-search-input');
+        const searchResults = document.getElementById('modal-search-results');
+        const baseView = document.getElementById('person-profile-view')?.style.display === 'block' ? 'person' :
+            document.getElementById('people-view')?.style.display === 'block' ? 'people' :
+            detailsView.style.display === 'block' ? 'details' :
+            categoryView.style.display === 'block' ? 'category' : 'dashboard';
+        state = {
+            view: 'search',
+            query: searchInput?.value || '',
+            html: searchResults?.innerHTML || '',
+            page: currentSearchPage,
+            currentQuery: currentSearchQuery,
+            resultsScroll: searchResults?.scrollTop || 0,
+            baseView,
+            baseScroll: window.scrollY
+        };
+    } else if (document.getElementById('person-profile-view')?.style.display === 'block') {
         state = { view: 'person', id: peopleCurrentProfileId, scroll: window.scrollY };
     } else if (document.getElementById('people-view')?.style.display === 'block') {
         state = { view: 'people', scroll: window.scrollY, query: peopleCurrentQuery };
@@ -3613,7 +3646,28 @@ window.handleBack = () => {
 
     const state = navigationStack.pop();
     
-    if (state.view === 'dashboard') {
+    if (state.view === 'search') {
+        setElementVisible(dashboard, state.baseView === 'dashboard', 'block');
+        setElementVisible(detailsView, state.baseView === 'details', 'block');
+        setElementVisible(categoryView, state.baseView === 'category', 'block');
+        setElementVisible(document.getElementById('people-view'), state.baseView === 'people', 'block');
+        setElementVisible(document.getElementById('person-profile-view'), state.baseView === 'person', 'block');
+
+        currentSearchQuery = state.currentQuery || state.query || '';
+        currentSearchPage = state.page || 1;
+        const searchInput = document.getElementById('modal-search-input');
+        const searchResults = document.getElementById('modal-search-results');
+        searchInput.value = state.query || '';
+        searchResults.innerHTML = state.html || '';
+        searchResults.scrollTop = state.resultsScroll || 0;
+
+        const modal = document.getElementById('search-modal-overlay');
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+        modal.inert = false;
+        window.scrollTo(0, state.baseScroll || 0);
+        setTimeout(() => searchInput.focus(), 50);
+    } else if (state.view === 'dashboard') {
         activeNavigationSection = currentTab;
         setupNewNavigation();
         setElementVisible(dashboard, true, 'block');
