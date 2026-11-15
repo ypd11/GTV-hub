@@ -2372,7 +2372,7 @@ window.openPersonProfile = async (id, isHistory = false) => {
                 <section class="person-works-section">
                     <div class="people-section-heading">
                         <div><span class="people-kicker">COMPLETE CREDITS</span><h2>Filmography</h2></div>
-                        <button class="person-see-all-btn" type="button" onclick="openPersonCredits('filmography')">See All <span class="material-icons">arrow_forward</span></button>
+                        <button class="see-all-btn" type="button" onclick="openPersonCredits('filmography')">See All <span class="material-icons">arrow_forward</span></button>
                     </div>
                     <div class="person-filmography">${credits.length ? credits.slice(0, 10).map(item => `<button class="person-credit-row" onclick="openDetails(${Number(item.id)}, '${item.media_type}')"><span class="person-credit-year">${(item.release_date || item.first_air_date || '').slice(0,4) || '—'}</span><span class="person-credit-title">${escapeHtml(item.title || item.name || 'Untitled')}</span><span class="person-credit-role">${escapeHtml(item.credit_role)}</span><span class="person-credit-type">${item.media_type === 'tv' ? 'TV' : 'Movie'}</span><span class="material-icons">chevron_right</span></button>`).join('') : '<div class="people-empty">No credits available.</div>'}</div>
                 </section>
