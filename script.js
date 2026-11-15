@@ -1541,7 +1541,7 @@ window.openCategoryView = (title, items, apiUrl = '') => {
     prepareCategoryView();
     document.getElementById('category-title').textContent = stripHtml(title);
     
-    currentCategoryApiUrl = apiUrl;
+    currentCategoryApiUrl = apiUrl || '';
     currentCategoryPage = 1;
     categoryList.innerHTML = '';
     allLoadedCategoryItems = items; // Store initial items
@@ -1669,10 +1669,15 @@ window.renderCategoryItems = (items) => {
 };
 
 window.loadMoreCategory = async () => {
-    if (!currentCategoryApiUrl) return;
+    const categoryTitle = document.getElementById('category-title')?.textContent?.trim();
+    const isResultsList = categoryView.style.display === 'block' &&
+        !!currentCategoryApiUrl && categoryTitle !== 'Browse Categories';
+    if (!isResultsList) return;
     
     const btn = document.querySelector('#cat-load-more-container button');
-    if(btn) btn.innerText = 'Loading...';
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    btn.innerText = 'Loading...';
 
     currentCategoryPage++;
     const separator = currentCategoryApiUrl.includes('?') ? '&' : '?';
@@ -1684,7 +1689,10 @@ window.loadMoreCategory = async () => {
         
         if (data.results && data.results.length > 0) {
             renderCategoryItems(data.results);
-            if(btn) btn.innerText = 'Load More';
+            if(btn) {
+                btn.innerText = 'Load More';
+                btn.disabled = false;
+            }
         } else {
             if(btn) {
                 btn.innerText = 'No More Content';
@@ -1692,7 +1700,10 @@ window.loadMoreCategory = async () => {
             }
         }
     } catch (e) {
-        if(btn) btn.innerText = 'Error Loading';
+        if(btn) {
+            btn.innerText = 'Error Loading';
+            btn.disabled = false;
+        }
     }
 };
 
@@ -1702,6 +1713,11 @@ window.closeCategoryView = () => {
 
 window.openCategories = async () => {
     prepareCategoryView();
+
+    // The Categories directory is a navigation menu, not a paginated results list.
+    currentCategoryApiUrl = '';
+    currentCategoryPage = 1;
+    allLoadedCategoryItems = [];
 
     const container = document.getElementById('category-list');
     document.getElementById('category-title').innerText = 'Browse Categories';
@@ -3623,9 +3639,17 @@ window.handleBack = () => {
             categoryList.innerHTML = state.html;
         }
         
-        currentCategoryApiUrl = state.apiUrl;
-        currentCategoryPage = state.page;
-        allLoadedCategoryItems = state.items;
+        currentCategoryApiUrl = state.apiUrl || '';
+        currentCategoryPage = state.page || 1;
+        allLoadedCategoryItems = state.items || [];
+
+        // The Load More control belongs only to paginated result lists.
+        // It is appended to categoryView (outside categoryList), so restoring
+        // the Categories directory must explicitly remove the previous list's button.
+        if (!currentCategoryApiUrl || state.title === 'Browse Categories') {
+            const loadMoreContainer = document.getElementById('cat-load-more-container');
+            if (loadMoreContainer) loadMoreContainer.remove();
+        }
         
         window.scrollTo(0, state.scroll);
         resetUrl(); // Categories don't have deep links yet
