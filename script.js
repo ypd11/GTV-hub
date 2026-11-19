@@ -1152,7 +1152,7 @@ window.deleteProfile = (id, event) => {
     event.stopPropagation();
     showModal('Delete Profile?', 'This will permanently delete this profile and all its data (watchlist, history, etc). This cannot be undone.', [
         { text: 'Cancel', secondary: true },
-        { text: 'Delete', className: 'play-btn remove-confirm-btn', action: () => {
+        { text: 'Delete', className: 'play-btn remove-confirm-btn', action: async () => {
             if (cloudProfileMode) {
                 const { error } = await supabaseClient.from('profiles').delete().eq('id', id);
                 if (error) { showToast(error.message); return; }
