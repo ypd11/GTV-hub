@@ -660,32 +660,44 @@ window.handleSearchResultClick = (query, id, type) => {
     openDetails(id, type);
 };
 
+let searchRequestId = 0;
+
 async function handleSearchInput(e) {
     const query = e.target.value.trim();
     const resultsContainer = document.getElementById('modal-search-results');
-    
+
     clearTimeout(searchDebounceTimer);
-    
+    const requestId = ++searchRequestId;
+    currentSearchQuery = query;
+    currentSearchPage = 1;
+
     if (query.length === 0) {
         renderSearchHistory();
         return;
     }
 
     if (query.length < 2) {
-        resultsContainer.innerHTML = '';
+        resultsContainer.innerHTML = '<div class="search-state"><span class="material-icons">keyboard</span><strong>Keep typing</strong><span>Enter at least 2 characters to search.</span></div>';
         return;
     }
 
+    resultsContainer.innerHTML = '<div class="search-state"><span class="search-spinner"></span><strong>Searching</strong><span>Looking across movies, TV shows and people…</span></div>';
+
     searchDebounceTimer = setTimeout(async () => {
-        currentSearchQuery = query;
-        currentSearchPage = 1;
-        
         try {
             const res = await fetch(`${TMDB_BASE}/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}&page=1`);
+            if (!res.ok) throw new Error(`Search request failed: ${res.status}`);
             const data = await res.json();
-            
-            resultsContainer.innerHTML = generateSearchItemsHtml(data.results);
-    
+
+            if (requestId !== searchRequestId || query !== document.getElementById('modal-search-input').value.trim()) return;
+
+            const itemsHtml = generateSearchItemsHtml(data.results);
+            if (!itemsHtml) {
+                resultsContainer.innerHTML = '<div class="search-state"><span class="material-icons">search_off</span><strong>No results found</strong><span>Try a different title, actor or keyword.</span></div>';
+                return;
+            }
+
+            resultsContainer.innerHTML = itemsHtml;
             if (data.total_pages > 1) {
                 const btnHtml = `
                     <div id="search-load-more-btn" style="text-align:center; padding:15px;">
@@ -693,10 +705,12 @@ async function handleSearchInput(e) {
                     </div>`;
                 resultsContainer.insertAdjacentHTML('beforeend', btnHtml);
             }
-        } catch(e) {
-            console.error(e);
+        } catch (error) {
+            if (requestId !== searchRequestId) return;
+            console.error('Search failed:', error);
+            resultsContainer.innerHTML = '<div class="search-state"><span class="material-icons">cloud_off</span><strong>Search unavailable</strong><span>Check your connection and try again.</span></div>';
         }
-    }, 500);
+    }, 350);
 }
 
 function generateSearchItemsHtml(results) {
@@ -723,25 +737,37 @@ window.loadMoreSearch = async () => {
     const btnContainer = document.getElementById('search-load-more-btn');
     if (!btnContainer) return;
     const btn = btnContainer.querySelector('button');
-    btn.innerText = 'Loading...';
-    
-    currentSearchPage++;
-    
+    if (!btn || btn.disabled) return;
+
+    const query = currentSearchQuery;
+    const requestId = searchRequestId;
+    const nextPage = currentSearchPage + 1;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="search-spinner search-spinner-small"></span> Loading';
+
     try {
-        const res = await fetch(`${TMDB_BASE}/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(currentSearchQuery)}&page=${currentSearchPage}`);
+        const res = await fetch(`${TMDB_BASE}/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}&page=${nextPage}`);
+        if (!res.ok) throw new Error(`Search request failed: ${res.status}`);
         const data = await res.json();
-        
+
+        if (requestId !== searchRequestId || query !== currentSearchQuery) return;
+
         const newItems = generateSearchItemsHtml(data.results);
-        btnContainer.insertAdjacentHTML('beforebegin', newItems);
-        
+        if (newItems) btnContainer.insertAdjacentHTML('beforebegin', newItems);
+        currentSearchPage = nextPage;
+
         if (currentSearchPage >= data.total_pages) {
             btnContainer.remove();
         } else {
-            btn.innerText = 'Load More';
+            btn.disabled = false;
+            btn.textContent = 'Load More';
         }
-    } catch(e) {
-        console.error(e);
-        btn.innerText = 'Error';
+    } catch (error) {
+        console.error('Could not load more search results:', error);
+        if (requestId === searchRequestId) {
+            btn.disabled = false;
+            btn.textContent = 'Try Again';
+        }
     }
 };
 
