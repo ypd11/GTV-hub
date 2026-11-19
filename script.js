@@ -470,6 +470,7 @@ let guestMode = false;
 let cloudProfileMode = false;
 let authMode = 'login';
 let cloudDataLoading = false;
+let passwordRecoveryPending = window.location.hash.includes('type=recovery') || new URLSearchParams(window.location.search).get('type') === 'recovery';
 
 function showAuthMessage(message, isError = false) {
     const el = document.getElementById('auth-message');
@@ -579,6 +580,7 @@ async function initializeAuthentication() {
     });
     supabaseClient.auth.onAuthStateChange((event, session) => {
         if (event === 'PASSWORD_RECOVERY' && session) {
+            passwordRecoveryPending = true;
             authUser = session.user;
             renderAuthView('update-password');
         }
@@ -587,7 +589,8 @@ async function initializeAuthentication() {
     if (error) console.warn('Could not restore Supabase session:', error.message);
     if (data && data.session) {
         authUser = data.session.user;
-        await enterAccount();
+        if (passwordRecoveryPending) renderAuthView('update-password');
+        else await enterAccount();
     } else {
         renderAuthView('login');
     }
