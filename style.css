@@ -3070,3 +3070,58 @@ body {
     color: transparent;
     -webkit-text-fill-color: transparent;
 }
+
+
+/* Compact sign-in dialog when authentication is opened from inside the app. */
+.auth-view.auth-dialog {
+    z-index: 6000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+    background: rgba(3, 6, 10, .78);
+    backdrop-filter: blur(12px);
+}
+.auth-dialog .auth-layout {
+    display: block;
+    width: min(100%, 460px);
+    min-height: 0;
+}
+.auth-dialog .auth-aside { display: none; }
+.auth-dialog .auth-main {
+    position: relative;
+    display: block;
+    min-height: 0;
+    padding: 38px 34px 32px;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 18px;
+    background: linear-gradient(155deg, #171c24, #101319 70%);
+    box-shadow: 0 24px 80px rgba(0,0,0,.55);
+}
+.auth-dialog .auth-panel { width: 100%; max-width: 100%; }
+.auth-dialog .auth-mobile-brand { display: block; margin: 0 0 26px; }
+.auth-dialog .auth-heading { margin-bottom: 22px; }
+.auth-dialog .auth-heading h1 { font-size: 1.65rem; }
+.auth-dialog .auth-form input { background: #0d1117; }
+.auth-dialog-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,.07);
+    color: #cbd3dd;
+    cursor: pointer;
+}
+.auth-dialog-close:hover { background: rgba(255,255,255,.14); color: #fff; }
+@media (max-width: 480px) {
+    .auth-view.auth-dialog { padding: 14px; }
+    .auth-dialog .auth-main { padding: 34px 22px 25px; border-radius: 15px; }
+    .auth-dialog .auth-mobile-brand { margin-bottom: 24px; }
+}
