@@ -4134,7 +4134,7 @@ function captureAndPushState() {
             scroll: window.scrollY
         };
     } else if (!state && dashboard.style.display === 'block') {
-        state = { view: 'dashboard', scroll: window.scrollY };
+        state = { view: 'dashboard', scroll: window.scrollY, tab: currentTab, navigationSection: activeNavigationSection };
     }
     
     if (state) {
@@ -4212,7 +4212,8 @@ window.handleBack = (fromPopState = false) => {
         window.scrollTo(0, state.baseScroll || 0);
         setTimeout(() => searchInput.focus(), 50);
     } else if (state.view === 'dashboard') {
-        activeNavigationSection = currentTab;
+        currentTab = state.tab || currentTab;
+        activeNavigationSection = state.navigationSection || currentTab;
         setupNewNavigation();
         setElementVisible(dashboard, true, 'block');
         setElementVisible(detailsView, false);
