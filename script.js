@@ -498,8 +498,8 @@ function renderAuthView(mode = 'login', message = '', isError = false) {
     document.getElementById('auth-confirm-wrap').style.display = signup ? 'block' : 'none';
     document.getElementById('auth-confirm-password').required = signup;
     document.getElementById('auth-submit').textContent = reset ? 'Send reset link' : (signup ? 'Create Account' : 'Sign In');
-    document.getElementById('auth-mode-toggle').style.display = reset ? 'none' : '';
-    document.getElementById('auth-mode-toggle').textContent = signup ? 'Already have an account? Sign in' : 'Create an account';
+    document.getElementById('auth-mode-toggle').style.display = '';
+    document.getElementById('auth-mode-toggle').textContent = reset ? 'Back to sign in' : (signup ? 'Already have an account? Sign in' : 'Create an account');
     document.getElementById('auth-reset-link').style.display = (!signup && !reset) ? '' : 'none';
     document.querySelector('.auth-divider').style.display = reset ? 'none' : '';
     document.querySelector('.auth-guest-btn').style.display = reset ? 'none' : '';
@@ -507,7 +507,7 @@ function renderAuthView(mode = 'login', message = '', isError = false) {
 }
 
 window.toggleAuthMode = () => {
-    renderAuthView(authMode === 'signup' ? 'login' : 'signup');
+    renderAuthView(authMode === 'signup' || authMode === 'reset' ? 'login' : 'signup');
 };
 
 window.submitAuthForm = async (event) => {
