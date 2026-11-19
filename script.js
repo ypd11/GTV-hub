@@ -1222,7 +1222,8 @@ async function loadDashboard() {
         createRow(genre1Name, genre1.results, `${TMDB_BASE}/discover/${currentTab}?api_key=${TMDB_KEY}&with_genres=${genre1Id}`);
 
         const genre2Id = 35; // Comedy
-        const genre2Res = await fetch(`${TMDB_BASE}/discover/${currentTab}?api_key=${TMDB_KEY}&with_genres=${regionParam ? `&with_genres=${genre2Id}` : `&with_genres=${genre2Id}`}`)).json();
+        const genre2Res = await fetch(`${TMDB_BASE}/discover/${currentTab}?api_key=${TMDB_KEY}&with_genres=${genre2Id}`);
+        const genre2 = await genre2Res.json();
         if (requestId !== dashboardRequestId) return;
         createRow('Comedy Hits', genre2.results, `${TMDB_BASE}/discover/${currentTab}?api_key=${TMDB_KEY}&with_genres=${genre2Id}`);
 
