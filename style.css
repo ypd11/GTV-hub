@@ -3052,3 +3052,21 @@ body {
     color: transparent;
     text-shadow: 0 0 30px rgba(52, 152, 219, 0.3);
 }
+
+
+/* Authentication brand: explicitly mirror the profile screen gradient. */
+#auth-view .auth-aside .auth-brand,
+#auth-view .auth-mobile-brand {
+    background-image: linear-gradient(135deg, #3498db 0%, #9b59b6 100%);
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    text-shadow: 0 0 30px rgba(52, 152, 219, 0.3);
+}
+#auth-view .auth-aside .auth-brand span,
+#auth-view .auth-mobile-brand span {
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
