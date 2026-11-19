@@ -2750,3 +2750,56 @@ body {
     .search-spinner { animation-duration: 2s; }
     .search-modal, .search-modal-overlay, .search-result-item { transition: none; }
 }
+
+
+/* Watchlist browsing controls */
+.watchlist-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 4%;
+    margin: 4px 0 13px;
+}
+.watchlist-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex: 1 1 260px;
+    min-width: 150px;
+    height: 42px;
+    padding: 0 13px;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 9px;
+    background: #1b1f26;
+    color: #8995a3;
+}
+.watchlist-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent); }
+.watchlist-search .material-icons { font-size: 20px; }
+.watchlist-search input {
+    width: 100%; min-width: 0; height: 100%; border: 0; outline: 0;
+    background: transparent; color: #fff; font: 500 .88rem 'Outfit',sans-serif;
+}
+.watchlist-search input::placeholder { color: #77818e; }
+.watchlist-toolbar select {
+    min-width: 135px; height: 42px; padding: 0 30px 0 12px;
+    border: 1px solid rgba(255,255,255,.1); border-radius: 9px;
+    background: #1b1f26; color: #dce3eb; font: 500 .82rem 'Outfit',sans-serif;
+    outline: none; cursor: pointer;
+}
+.watchlist-toolbar select:focus { border-color: var(--accent); }
+.watchlist-results-heading { padding: 0 4%; margin-bottom: 2px; color: #778391; font-size: .76rem; }
+.watchlist-grid { padding-top: 12px; }
+.watchlist-card-meta { margin-top: 4px; color: #8994a2; font-size: .72rem; }
+.watchlist-empty-state {
+    min-height: 250px; padding: 35px 20px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 9px; text-align: center; color: #8792a0;
+}
+.watchlist-empty-state .material-icons { font-size: 38px; color: #65788d; }
+.watchlist-empty-state strong { color: #e7edf4; font-size: .98rem; }
+.watchlist-empty-state span:last-child { max-width: 340px; font-size: .82rem; line-height: 1.5; }
+@media(max-width:650px) {
+    .watchlist-toolbar { display: grid; grid-template-columns: 1fr 1fr; padding: 0 4%; gap: 9px; }
+    .watchlist-search { grid-column: 1 / -1; width: 100%; }
+    .watchlist-toolbar select { width: 100%; min-width: 0; }
+}
+@media(prefers-reduced-motion:reduce) { .watchlist-search,.watchlist-toolbar select { transition: none; } }
