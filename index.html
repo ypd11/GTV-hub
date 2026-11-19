@@ -9,7 +9,7 @@
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" href="./icon.png" type="image/png">
     <link rel="apple-touch-icon" href="./icon.png">
-    <link rel="stylesheet" href="style.css?v=29">
+    <link rel="stylesheet" href="style.css?v=31">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons&amp;v=30" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;800&display=swap" rel="stylesheet">
 </head>
@@ -35,31 +35,47 @@
 
 <!-- Account Authentication View -->
 <section id="auth-view" class="auth-view" style="display:none;">
-    <div class="auth-panel">
-        <div class="brand-logo auth-brand">GTV<span> hub</span></div>
-        <div class="auth-heading">
-            <h1 id="auth-title">Welcome to GTV Hub</h1>
-            <p id="auth-subtitle">Sign in to sync your profiles and watchlist across devices.</p>
-        </div>
-        <form id="auth-form" class="auth-form" onsubmit="submitAuthForm(event)">
-            <label for="auth-email">Email address</label>
-            <input id="auth-email" type="email" placeholder="you@example.com" autocomplete="email" required>
-            <label for="auth-password">Password</label>
-            <input id="auth-password" type="password" placeholder="Your password" autocomplete="current-password" required minlength="6">
-            <div id="auth-confirm-wrap" style="display:none;">
-                <label for="auth-confirm-password">Confirm password</label>
-                <input id="auth-confirm-password" type="password" placeholder="Repeat your password" autocomplete="new-password">
+    <div class="auth-layout">
+        <aside class="auth-aside">
+            <div class="brand-logo auth-brand">GTV<span> hub</span></div>
+            <div class="auth-aside-copy">
+                <span class="auth-eyebrow">YOUR ENTERTAINMENT, IN SYNC</span>
+                <h2>Pick up where<br>you left off.</h2>
+                <p>Keep your profiles, watchlist and viewing progress together across your devices.</p>
+                <div class="auth-feature"><span class="material-icons">devices</span><span>One account. Your GTV Hub everywhere.</span></div>
             </div>
-            <p id="auth-message" class="auth-message" role="status" aria-live="polite"></p>
-            <button id="auth-submit" class="play-btn auth-submit" type="submit">Sign In</button>
-        </form>
-        <div class="auth-links">
-            <button id="auth-mode-toggle" type="button" onclick="toggleAuthMode()">Create an account</button>
-            <button id="auth-reset-link" type="button" onclick="sendPasswordReset()">Forgot password?</button>
-        </div>
-        <div class="auth-divider"><span>or</span></div>
-        <button class="more-info-btn auth-guest-btn" type="button" onclick="continueAsGuest()">Continue as Guest</button>
-        <p class="auth-footnote">Guest data stays on this device. Sign in anytime to sync across devices.</p>
+            <div class="auth-aside-orb auth-aside-orb-one"></div>
+            <div class="auth-aside-orb auth-aside-orb-two"></div>
+            <span class="auth-aside-footer">MOVIES · SERIES · YOUR WAY</span>
+        </aside>
+        <main class="auth-main">
+            <div class="auth-panel">
+                <div class="brand-logo auth-mobile-brand">GTV<span> hub</span></div>
+                <div class="auth-heading">
+                    <h1 id="auth-title">Welcome to GTV Hub</h1>
+                    <p id="auth-subtitle">Sign in to sync your profiles and watchlist across devices.</p>
+                </div>
+                <form id="auth-form" class="auth-form" onsubmit="submitAuthForm(event)">
+                    <label for="auth-email">Email address</label>
+                    <input id="auth-email" type="email" placeholder="you@example.com" autocomplete="email" required>
+                    <label for="auth-password">Password</label>
+                    <input id="auth-password" type="password" placeholder="Your password" autocomplete="current-password" required minlength="6">
+                    <div id="auth-confirm-wrap" style="display:none;">
+                        <label for="auth-confirm-password">Confirm password</label>
+                        <input id="auth-confirm-password" type="password" placeholder="Repeat your password" autocomplete="new-password">
+                    </div>
+                    <p id="auth-message" class="auth-message" role="status" aria-live="polite"></p>
+                    <button id="auth-submit" class="play-btn auth-submit" type="submit">Sign In</button>
+                </form>
+                <div class="auth-links">
+                    <button id="auth-mode-toggle" type="button" onclick="toggleAuthMode()">Create an account</button>
+                    <button id="auth-reset-link" type="button" onclick="sendPasswordReset()">Forgot password?</button>
+                </div>
+                <div class="auth-divider"><span>or</span></div>
+                <button class="more-info-btn auth-guest-btn" type="button" onclick="continueAsGuest()">Continue as Guest</button>
+                <p class="auth-footnote">Guest data stays on this device. Sign in anytime to sync across devices.</p>
+            </div>
+        </main>
     </div>
 </section>
 
