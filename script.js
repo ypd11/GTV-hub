@@ -1870,50 +1870,96 @@ window.openGenre = async (id, name) => {
 };
 
 window.renderWatchlistContent = () => {
-    document.getElementById('category-title').innerText = 'My Watchlist';
-    categoryList.innerHTML = '';
-    
-    const existingBtn = document.getElementById('cat-load-more-container');
-    if(existingBtn) existingBtn.remove();
+    const query = (document.getElementById('watchlist-search')?.value || '').trim().toLocaleLowerCase();
+    const typeFilter = document.getElementById('watchlist-type')?.value || 'all';
+    const sort = document.getElementById('watchlist-sort')?.value || 'added';
 
-    if (watchlist.length === 0) {
-        categoryList.innerHTML = '<div style="padding:50px; text-align:center; color:#888;">Your watchlist is empty.</div>';
-        return;
-    }
-
-    categoryList.innerHTML = '<div class="watchlist-grid">' + watchlist.filter(i => i.poster_path).map(item => {
+    let items = watchlist.filter(item => {
         const type = item.media_type || 'movie';
-        const img = IMG_BASE + item.poster_path;
+        const title = item.title || item.name || 'Untitled';
+        return (typeFilter === 'all' || type === typeFilter) &&
+            title.toLocaleLowerCase().includes(query);
+    });
+
+    items.sort((a, b) => {
+        const titleA = a.title || a.name || '';
+        const titleB = b.title || b.name || '';
+        const dateA = a.release_date || a.first_air_date || '';
+        const dateB = b.release_date || b.first_air_date || '';
+        if (sort === 'title') return titleA.localeCompare(titleB);
+        if (sort === 'rating') return (b.vote_average || 0) - (a.vote_average || 0);
+        if (sort === 'newest') return dateB.localeCompare(dateA);
+        if (sort === 'oldest') return dateA.localeCompare(dateB);
+        return 0; // Keep the saved order (newest additions first).
+    });
+
+    const count = document.getElementById('watchlist-count');
+    if (count) count.textContent = `${items.length} of ${watchlist.length} titles`;
+
+    const gridHtml = items.length ? '<div class="watchlist-grid">' + items.map(item => {
+        const type = item.media_type || 'movie';
+        const img = item.poster_path ? IMG_BASE + item.poster_path : './icon.png';
         const titleText = item.title || item.name || 'Untitled';
         const yearVal = (item.release_date || item.first_air_date || '').split('-')[0];
-        const ratingVal = item.vote_average ? item.vote_average.toFixed(1) : null;
+        const ratingVal = item.vote_average ? Number(item.vote_average).toFixed(1) : null;
         const ratingColor = getRatingColor(item.vote_average || 0);
         const ratingHtml = ratingVal && parseFloat(ratingVal) > 0 ? `<div class="poster-rating" style="color:${ratingColor}"><span class="material-icons">star</span> ${ratingVal}</div>` : '';
         return `
             <div class="poster-card" onclick="openDetails('${item.id}', '${type}')">
                 <div class="poster-type">${type === 'tv' ? 'TV SHOW' : 'MOVIE'}</div>
-                <img class="poster-img" src="${img}" alt="${escapeHtml(titleText)}">
+                <img class="poster-img" src="${img}" alt="${escapeHtml(titleText)}" loading="lazy" onerror="this.onerror=null; this.src='./icon.png';">
                 <div class="poster-info">
                     <div class="poster-title">${escapeHtml(titleText)}</div>
+                    <div class="watchlist-card-meta">${escapeHtml(yearVal || 'Year unknown')}</div>
                     ${ratingHtml}
                 </div>
-                <button class="watchlist-remove-btn" onclick="removeFromWatchlist('${item.id}', event)" title="Remove">
+                <button class="watchlist-remove-btn" onclick="removeFromWatchlist('${item.id}', event)" title="Remove from Watchlist" aria-label="Remove ${escapeHtml(titleText)} from Watchlist">
                     <span class="material-icons" style="font-size: 16px;">close</span>
                 </button>
             </div>
         `;
-    }).join('') + '</div>';
-};
+    }).join('') + '</div>' : `
+        <div class="watchlist-empty-state">
+            <span class="material-icons">${watchlist.length ? 'search_off' : 'bookmark_border'}</span>
+            <strong>${watchlist.length ? 'No matching titles' : 'Your watchlist is empty'}</strong>
+            <span>${watchlist.length ? 'Try a different search or filter.' : 'Add movies and TV shows to keep track of what you want to watch.'}</span>
+        </div>
+    `;
 
+    const grid = document.getElementById('watchlist-results');
+    if (grid) grid.innerHTML = gridHtml;
+    else categoryList.insertAdjacentHTML('beforeend', gridHtml);
+};
 window.openWatchlist = () => {
     document.getElementById('nav-dropdown').classList.remove('active');
-    
-    if (watchlist.length === 0) {
-        showModal('My Watchlist', 'Your watchlist is empty. Add movies and TV shows to keep track of what you want to watch.', [{ text: 'OK', secondary: true }]);
-        return;
-    }
-    
     prepareCategoryView();
+    document.getElementById('category-title').innerText = 'My Watchlist';
+
+    const existingBtn = document.getElementById('cat-load-more-container');
+    if (existingBtn) existingBtn.remove();
+
+    categoryList.innerHTML = `
+        <div class="watchlist-toolbar">
+            <label class="watchlist-search">
+                <span class="material-icons">search</span>
+                <input id="watchlist-search" type="search" placeholder="Search your watchlist..." autocomplete="off" oninput="renderWatchlistContent()">
+            </label>
+            <select id="watchlist-type" aria-label="Filter by type" onchange="renderWatchlistContent()">
+                <option value="all">All titles</option>
+                <option value="movie">Movies</option>
+                <option value="tv">TV shows</option>
+            </select>
+            <select id="watchlist-sort" aria-label="Sort watchlist" onchange="renderWatchlistContent()">
+                <option value="added">Recently added</option>
+                <option value="title">Title (A–Z)</option>
+                <option value="rating">Highest rated</option>
+                <option value="newest">Release date (newest)</option>
+                <option value="oldest">Release date (oldest)</option>
+            </select>
+        </div>
+        <div class="watchlist-results-heading"><span id="watchlist-count"></span></div>
+        <div id="watchlist-results"></div>
+    `;
     renderWatchlistContent();
 };
 
