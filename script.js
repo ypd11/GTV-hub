@@ -94,6 +94,7 @@ let currentSearchQuery = '';
 let heroCache = { movie: null, tv: null };
 let sessionRecItems = { movie: { like: null }, tv: { like: null } };
 let heroInterval = null; // For carousel auto-rotation
+let dashboardRequestId = 0;
 
 // User Data (Populated after profile selection)
 let watchlist = [];
@@ -1005,6 +1006,7 @@ window.selectProfile = (id) => {
 };
 
 async function loadDashboard() {
+    const requestId = ++dashboardRequestId;
     resetUrl();
     rowsContainer.innerHTML = getSkeletonHtml('dashboard');
     document.getElementById('hero-section').innerHTML = getSkeletonHtml('hero');
@@ -1021,7 +1023,9 @@ async function loadDashboard() {
 
     try {
         const trendingRes = await fetch(`${TMDB_BASE}/trending/${mode}/week?api_key=${TMDB_KEY}`);
+        if (!trendingRes.ok) throw new Error('Could not load trending titles.');
         const trendingData = await trendingRes.json();
+        if (requestId !== dashboardRequestId) return;
         
         // Check if cached hero array is valid (none excluded)
         if (heroCache[mode] && heroCache[mode].some(i => excludedContent.includes(i.id.toString()))) {
@@ -1047,6 +1051,7 @@ async function loadDashboard() {
                 const topPage = Math.floor(Math.random() * 3) + 1;
                 const topRes = await fetch(`${TMDB_BASE}/${currentTab}/top_rated?api_key=${TMDB_KEY}${regionParam}&page=${topPage}`);
                 const topData = await topRes.json();
+                if (requestId !== dashboardRequestId) return;
                 const topCandidates = topData.results.filter(i => !excludedContent.includes(i.id.toString()) && i.backdrop_path && i.vote_average >= 7.5 && (!slot1 || i.id !== slot1.id));
                 
                 if (topCandidates.length > 0) {
@@ -1061,6 +1066,7 @@ async function loadDashboard() {
                 const rndGenre = genres[Math.floor(Math.random() * genres.length)];
                 const discRes = await fetch(`${TMDB_BASE}/discover/${currentTab}?api_key=${TMDB_KEY}&with_genres=${rndGenre}&sort_by=popularity.desc${regionParam}`);
                 const discData = await discRes.json();
+                if (requestId !== dashboardRequestId) return;
                 const discCandidates = discData.results.filter(i => !excludedContent.includes(i.id.toString()) && i.backdrop_path && !heroItems.some(h => h.id === i.id));
                 
                 if (discCandidates.length > 0) {
@@ -1074,6 +1080,7 @@ async function loadDashboard() {
                 // Use page 2 to avoid duplicates with trending/top rated which are often on page 1
                 const popRes = await fetch(`${TMDB_BASE}/${currentTab}/popular?api_key=${TMDB_KEY}${regionParam}&page=2`);
                 const popData = await popRes.json();
+                if (requestId !== dashboardRequestId) return;
                 const popCandidates = popData.results.filter(i => !excludedContent.includes(i.id.toString()) && i.backdrop_path && !heroItems.some(h => h.id === i.id));
                 
                 if (popCandidates.length > 0) {
@@ -1088,6 +1095,7 @@ async function loadDashboard() {
                 const hypeEndpoint = currentTab === 'movie' ? 'upcoming' : 'on_the_air';
                 const hypeRes = await fetch(`${TMDB_BASE}/${currentTab}/${hypeEndpoint}?api_key=${TMDB_KEY}${regionParam}&page=1`);
                 const hypeData = await hypeRes.json();
+                if (requestId !== dashboardRequestId) return;
                 const hypeCandidates = hypeData.results.filter(i => !excludedContent.includes(i.id.toString()) && i.backdrop_path && !heroItems.some(h => h.id === i.id));
                 
                 if (hypeCandidates.length > 0) {
@@ -1112,6 +1120,7 @@ async function loadDashboard() {
                     return await (await fetch(`${TMDB_BASE}/${mode}/${item.id}?api_key=${TMDB_KEY}&append_to_response=release_dates,content_ratings,images&include_image_language=en,null`)).json();
                 } catch (e) { return item; }
             }));
+            if (requestId !== dashboardRequestId) return;
         }
 
         if (heroCache[mode]) {
@@ -1159,6 +1168,7 @@ async function loadDashboard() {
                     try {
                         const recRes = await fetch(recUrl);
                         const recData = await recRes.json();
+                        if (requestId !== dashboardRequestId) return;
                         if (recData.results && recData.results.length > 0) {
                             recCache.data = recData.results; // Cache results
                             createRow(`Because you liked <span class="row-item-name">"${escapeHtml(sourceItem.title)}"</span>`, recData.results, recUrl);
@@ -1174,39 +1184,59 @@ async function loadDashboard() {
         try {
             const top10Res = await fetch(`${TMDB_BASE}/${currentTab}/top_rated?api_key=${TMDB_KEY}${regionParam}&page=1`);
             const top10Data = await top10Res.json();
+            if (requestId !== dashboardRequestId) return;
             createTop10Row(top10Data.results);
         } catch(e) { console.error("Top 10 Error", e); }
 
         // Populate Rows with 20 items each
         createRow('Trending Now', trendingData.results, `${TMDB_BASE}/trending/${mode}/week?api_key=${TMDB_KEY}`);
-        const top = await (await fetch(`${TMDB_BASE}/${currentTab}/top_rated?api_key=${TMDB_KEY}${regionParam}`)).json();
+        const topRes = await fetch(`${TMDB_BASE}/${currentTab}/top_rated?api_key=${TMDB_KEY}${regionParam}`);
+        if (!topRes.ok) throw new Error('Could not load top rated titles.');
+        const top = await topRes.json();
+        if (requestId !== dashboardRequestId) return;
         createRow('Top Rated', top.results, `${TMDB_BASE}/${currentTab}/top_rated?api_key=${TMDB_KEY}${regionParam}`);
 
         // Add more content rows
-        const popular = await (await fetch(`${TMDB_BASE}/${currentTab}/popular?api_key=${TMDB_KEY}${regionParam}`)).json();
+        const popularRes = await fetch(`${TMDB_BASE}/${currentTab}/popular?api_key=${TMDB_KEY}${regionParam}`);
+        if (!popularRes.ok) throw new Error('Could not load popular titles.');
+        const popular = await popularRes.json();
+        if (requestId !== dashboardRequestId) return;
         createRow('Popular on GTV', popular.results, `${TMDB_BASE}/${currentTab}/popular?api_key=${TMDB_KEY}${regionParam}`);
 
         // Coming Soon / On The Air
         const upcomingEndpoint = currentTab === 'movie' ? 'upcoming' : 'on_the_air';
         const upcomingTitle = currentTab === 'movie' ? 'In Theaters' : 'On TV Now';
         try {
-            const upcoming = await (await fetch(`${TMDB_BASE}/${currentTab}/${upcomingEndpoint}?api_key=${TMDB_KEY}${regionParam}`)).json();
+            const upcomingRes = await fetch(`${TMDB_BASE}/${currentTab}/${upcomingEndpoint}?api_key=${TMDB_KEY}${regionParam}`);
+            const upcoming = await upcomingRes.json();
+            if (requestId !== dashboardRequestId) return;
             if(upcoming.results && upcoming.results.length > 0) createRow(upcomingTitle, upcoming.results, `${TMDB_BASE}/${currentTab}/${upcomingEndpoint}?api_key=${TMDB_KEY}${regionParam}`);
         } catch(e) {}
 
         // Genre specific rows
         const genre1Id = currentTab === 'movie' ? 28 : 10759; // Action / Action & Adventure
         const genre1Name = currentTab === 'movie' ? 'Action Movies' : 'Action & Adventure';
-        const genre1 = await (await fetch(`${TMDB_BASE}/discover/${currentTab}?api_key=${TMDB_KEY}&with_genres=${genre1Id}`)).json();
+        const genre1Res = await fetch(`${TMDB_BASE}/discover/${currentTab}?api_key=${TMDB_KEY}&with_genres=${genre1Id}`);
+        const genre1 = await genre1Res.json();
+        if (requestId !== dashboardRequestId) return;
         createRow(genre1Name, genre1.results, `${TMDB_BASE}/discover/${currentTab}?api_key=${TMDB_KEY}&with_genres=${genre1Id}`);
 
         const genre2Id = 35; // Comedy
-        const genre2 = await (await fetch(`${TMDB_BASE}/discover/${currentTab}?api_key=${TMDB_KEY}&with_genres=${genre2Id}`)).json();
+        const genre2Res = await fetch(`${TMDB_BASE}/discover/${currentTab}?api_key=${TMDB_KEY}&with_genres=${regionParam ? `&with_genres=${genre2Id}` : `&with_genres=${genre2Id}`}`)).json();
+        if (requestId !== dashboardRequestId) return;
         createRow('Comedy Hits', genre2.results, `${TMDB_BASE}/discover/${currentTab}?api_key=${TMDB_KEY}&with_genres=${genre2Id}`);
 
         createFooter();
     } catch (e) {
-        rowsContainer.innerHTML = '<p style="text-align:center; padding:50px;">Failed to load content.</p>';
+        if (requestId !== dashboardRequestId) return;
+        console.error('Dashboard loading failed:', e);
+        rowsContainer.innerHTML = `
+            <div class="dashboard-error-state" role="alert">
+                <span class="material-icons">wifi_off</span>
+                <h2>We couldn't load the dashboard</h2>
+                <p>Check your connection and try again. Your watchlist and profile data are safe.</p>
+                <button class="play-btn" onclick="loadDashboard()"><span class="material-icons">refresh</span> Try Again</button>
+            </div>`;
     }
 }
 
