@@ -484,6 +484,7 @@ let authMode = 'login';
 let cloudDataLoading = false;
 let authDialogMode = false;
 let authReturnToApp = false;
+let authDialogPreviousNoScroll = false;
 let passwordRecoveryPending = window.location.hash.includes('type=recovery') || new URLSearchParams(window.location.search).get('type') === 'recovery';
 
 function showAuthMessage(message, isError = false) {
@@ -530,6 +531,7 @@ function renderAuthView(mode = 'login', message = '', isError = false, asDialog 
 }
 
 window.openAccountSignIn = () => {
+    authDialogPreviousNoScroll = document.body.classList.contains('no-scroll');
     authReturnToApp = true;
     const dropdown = document.getElementById('nav-dropdown');
     if (dropdown) dropdown.classList.remove('active');
@@ -543,11 +545,11 @@ window.closeAccountSignIn = () => {
     document.getElementById('auth-view').classList.remove('auth-dialog');
     authDialogMode = false;
     authReturnToApp = false;
-    document.body.classList.remove('no-scroll');
+    document.body.classList.toggle('no-scroll', authDialogPreviousNoScroll);
 };
 
 window.toggleAuthMode = () => {
-    renderAuthView(authMode === 'signup' || authMode === 'reset' || authMode === 'update-password' ? 'login' : 'signup');
+    renderAuthView(authMode === 'signup' || authMode === 'reset' || authMode === 'update-password' ? 'login' : 'signup', '', false, authDialogMode);
 };
 
 window.submitAuthForm = async (event) => {
@@ -574,7 +576,7 @@ window.submitAuthForm = async (event) => {
                 authUser = data.user;
                 await enterAccount();
             } else {
-                renderAuthView('login', 'Account created. Check your email and confirm your address, then sign in here.');
+                renderAuthView('login', 'Account created. Check your email and confirm your address, then sign in here.', false, authDialogMode);
             }
         } else if (authMode === 'login') {
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
@@ -584,7 +586,7 @@ window.submitAuthForm = async (event) => {
         } else if (authMode === 'reset') {
             const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
             if (error) throw error;
-            renderAuthView('login', 'Password reset email sent. Check your inbox.');
+            renderAuthView('login', 'Password reset email sent. Check your inbox.', false, authDialogMode);
         }
     } catch (error) {
         showAuthMessage(error.message || 'Something went wrong. Please try again.', true);
@@ -595,7 +597,7 @@ window.submitAuthForm = async (event) => {
 
 window.sendPasswordReset = () => {
     const email = document.getElementById('auth-email').value.trim();
-    renderAuthView('reset', email ? 'We’ll send the reset link to ' + email + '.' : 'Enter your email address, then send the reset link.');
+    renderAuthView('reset', email ? 'We’ll send the reset link to ' + email + '.' : 'Enter your email address, then send the reset link.', false, authDialogMode);
     if (email) document.getElementById('auth-email').value = email;
 };
 
