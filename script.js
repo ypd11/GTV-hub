@@ -482,6 +482,8 @@ let guestMode = false;
 let cloudProfileMode = false;
 let authMode = 'login';
 let cloudDataLoading = false;
+let authDialogMode = false;
+let authReturnToApp = false;
 let passwordRecoveryPending = window.location.hash.includes('type=recovery') || new URLSearchParams(window.location.search).get('type') === 'recovery';
 
 function showAuthMessage(message, isError = false) {
@@ -491,13 +493,20 @@ function showAuthMessage(message, isError = false) {
     el.classList.toggle('error', !!isError);
 }
 
-function renderAuthView(mode = 'login', message = '', isError = false) {
+function renderAuthView(mode = 'login', message = '', isError = false, asDialog = false) {
     authMode = mode;
-    setElementVisible(document.getElementById('auth-view'), true, 'flex');
-    setElementVisible(document.getElementById('profile-view'), false);
-    setElementVisible(document.getElementById('dashboard'), false);
-    const nav = document.querySelector('.top-nav');
-    if (nav) nav.style.display = 'none';
+    authDialogMode = !!asDialog;
+    const authView = document.getElementById('auth-view');
+    authView.classList.toggle('auth-dialog', authDialogMode);
+    setElementVisible(authView, true, 'flex');
+    if (!authDialogMode) {
+        setElementVisible(document.getElementById('profile-view'), false);
+        setElementVisible(document.getElementById('dashboard'), false);
+        const nav = document.querySelector('.top-nav');
+        if (nav) nav.style.display = 'none';
+    }
+    const closeButton = document.getElementById('auth-dialog-close');
+    if (closeButton) closeButton.style.display = authDialogMode ? 'flex' : 'none';
     document.body.classList.add('no-scroll');
     const signup = mode === 'signup';
     const reset = mode === 'reset';
@@ -515,10 +524,27 @@ function renderAuthView(mode = 'login', message = '', isError = false) {
     document.getElementById('auth-mode-toggle').style.display = (reset || updatePassword) ? '' : '';
     document.getElementById('auth-mode-toggle').textContent = (reset || updatePassword) ? 'Back to sign in' : (signup ? 'Already have an account? Sign in' : 'Create an account');
     document.getElementById('auth-reset-link').style.display = (!signup && !reset && !updatePassword) ? '' : 'none';
-    document.querySelector('.auth-divider').style.display = (reset || updatePassword) ? 'none' : '';
-    document.querySelector('.auth-guest-btn').style.display = (reset || updatePassword) ? 'none' : '';
+    document.querySelector('.auth-divider').style.display = (reset || updatePassword || authDialogMode) ? 'none' : '';
+    document.querySelector('.auth-guest-btn').style.display = (reset || updatePassword || authDialogMode) ? 'none' : '';
     showAuthMessage(message, isError);
 }
+
+window.openAccountSignIn = () => {
+    authReturnToApp = true;
+    const dropdown = document.getElementById('nav-dropdown');
+    if (dropdown) dropdown.classList.remove('active');
+    renderAuthView('login', '', false, true);
+    document.getElementById('auth-email').focus();
+};
+
+window.closeAccountSignIn = () => {
+    if (!authDialogMode) return;
+    setElementVisible(document.getElementById('auth-view'), false);
+    document.getElementById('auth-view').classList.remove('auth-dialog');
+    authDialogMode = false;
+    authReturnToApp = false;
+    document.body.classList.remove('no-scroll');
+};
 
 window.toggleAuthMode = () => {
     renderAuthView(authMode === 'signup' || authMode === 'reset' || authMode === 'update-password' ? 'login' : 'signup');
@@ -614,11 +640,24 @@ async function enterAccount() {
     try {
         await loadAccountProfiles();
         setElementVisible(document.getElementById('auth-view'), false);
+        document.getElementById('auth-view').classList.remove('auth-dialog');
         document.body.classList.remove('no-scroll');
-        renderProfileScreen();
+
+        if (authReturnToApp) {
+            authReturnToApp = false;
+            authDialogMode = false;
+            setElementVisible(document.getElementById('profile-view'), false);
+            const nav = document.querySelector('.top-nav');
+            if (nav) nav.style.display = 'flex';
+            if (profiles.length) await selectProfile(profiles[0].id);
+            else renderProfileScreen();
+        } else {
+            authDialogMode = false;
+            renderProfileScreen();
+        }
     } catch (error) {
         console.error('Could not load account profiles:', error);
-        renderAuthView('login', 'Signed in, but your profiles could not be loaded. Please refresh to try again.', true);
+        renderAuthView('login', 'Signed in, but your profiles could not be loaded. Please try again.', true, authReturnToApp);
     }
 }
 
@@ -691,12 +730,28 @@ async function signOutAccount() {
     if (!supabaseClient) return;
     const { error } = await supabaseClient.auth.signOut();
     if (error) return showToast('Could not sign out: ' + error.message);
+
     authUser = null;
     cloudProfileMode = false;
-    guestMode = false;
+    guestMode = true;
+    authDialogMode = false;
+    authReturnToApp = false;
     currentProfile = null;
+    watchlist = [];
+    likedContent = [];
+    excludedContent = [];
+    cloudDataLoading = false;
     profiles = safeJsonParse('gtv_profiles', []);
-    renderAuthView('login', 'You have been signed out.');
+
+    setElementVisible(document.getElementById('auth-view'), false);
+    document.getElementById('auth-view').classList.remove('auth-dialog');
+    setElementVisible(document.getElementById('profile-view'), false);
+    document.body.classList.remove('no-scroll');
+    const nav = document.querySelector('.top-nav');
+    if (nav) nav.style.display = 'flex';
+
+    if (profiles.length) renderProfileScreen();
+    else initApp();
 }
 
 
@@ -792,7 +847,9 @@ function setupNewNavigation() {
         <div class="dropdown-item" onclick="openWatchlist();"><span class="material-icons">list</span> My Watchlist</div>
         <div class="dropdown-item" onclick="openHiddenContent();"><span class="material-icons">visibility_off</span> Hidden Content</div>
         <div class="dropdown-item" onclick="openSettingsView(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">settings</span> Settings</div>
-        ${cloudProfileMode ? '<div class="dropdown-item" onclick="signOutAccount()"><span class="material-icons">logout</span> Sign Out</div>' : ''}
+        ${cloudProfileMode
+            ? '<div class="dropdown-item" onclick="signOutAccount(); document.getElementById(\'nav-dropdown\').classList.remove(\'active\');"><span class="material-icons">logout</span> Sign Out</div>'
+            : '<div class="dropdown-item" onclick="openAccountSignIn()"><span class="material-icons">login</span> Sign In</div>'}
     `;
     document.body.appendChild(dropdown);
 
@@ -1109,6 +1166,18 @@ window.renderProfileScreen = () => {
     const manageBtn = document.getElementById('manage-profiles-btn');
     manageBtn.innerText = isManagingProfiles ? 'Done' : 'Manage Profiles';
     manageBtn.style.display = profiles.length === 0 ? 'none' : 'block';
+
+    let accountBtn = document.getElementById('profile-account-btn');
+    if (!accountBtn) {
+        accountBtn = document.createElement('button');
+        accountBtn.id = 'profile-account-btn';
+        accountBtn.className = 'more-info-btn';
+        accountBtn.style.marginTop = '12px';
+        manageBtn.insertAdjacentElement('afterend', accountBtn);
+    }
+    accountBtn.textContent = cloudProfileMode ? 'Sign Out' : 'Sign In';
+    accountBtn.onclick = cloudProfileMode ? signOutAccount : openAccountSignIn;
+    accountBtn.style.display = isManagingProfiles ? 'none' : 'block';
 };
 
 window.toggleManageProfiles = () => {
@@ -1256,7 +1325,9 @@ window.selectProfile = async (id) => {
             <div class="dropdown-item" onclick="openWatchlist();"><span class="material-icons">list</span> My Watchlist</div>
             <div class="dropdown-item" onclick="openHiddenContent();"><span class="material-icons">visibility_off</span> Hidden Content</div>
             <div class="dropdown-item" onclick="openSettingsView(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">settings</span> Settings</div>
-            ${cloudProfileMode ? '<div class="dropdown-item" onclick="signOutAccount()"><span class="material-icons">logout</span> Sign Out</div>' : ''}
+            ${cloudProfileMode
+                ? '<div class="dropdown-item" onclick="signOutAccount(); document.getElementById(\'nav-dropdown\').classList.remove(\'active\');"><span class="material-icons">logout</span> Sign Out</div>'
+                : '<div class="dropdown-item" onclick="openAccountSignIn()"><span class="material-icons">login</span> Sign In</div>'}
         `;
     }
     
