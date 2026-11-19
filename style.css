@@ -1415,6 +1415,7 @@ body {
     .nav-links::-webkit-scrollbar { display: none; }
     .nav-item { font-size: 0.95rem; color: rgba(255,255,255,0.8); padding: 5px 0; }
     .nav-item.active { color: #fff; font-weight: 700; }
+    #nav-people { display: none; }
 
     /* Search - Full Header Overlay */
     .search-container.active {
