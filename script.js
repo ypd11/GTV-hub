@@ -4218,6 +4218,13 @@ window.handleBack = (fromPopState = false) => {
         setElementVisible(dashboard, true, 'block');
         setElementVisible(detailsView, false);
         setElementVisible(categoryView, false);
+        setElementVisible(document.getElementById('people-view'), false);
+        setElementVisible(document.getElementById('person-profile-view'), false);
+        setElementVisible(document.getElementById('profile-view'), false);
+        setElementVisible(playerContainer, false);
+        const nav = document.querySelector('.top-nav');
+        if (nav) nav.style.display = 'flex';
+        document.body.classList.remove('no-scroll');
         document.getElementById('hero-section').style.display = 'flex';
         resetUrl();
         window.scrollTo(0, state.scroll);
