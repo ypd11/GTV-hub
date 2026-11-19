@@ -33,6 +33,36 @@
     </div>
 </nav>
 
+<!-- Account Authentication View -->
+<section id="auth-view" class="auth-view" style="display:none;">
+    <div class="auth-panel">
+        <div class="brand-logo auth-brand">GTV<span> hub</span></div>
+        <div class="auth-heading">
+            <h1 id="auth-title">Welcome to GTV Hub</h1>
+            <p id="auth-subtitle">Sign in to sync your profiles and watchlist across devices.</p>
+        </div>
+        <form id="auth-form" class="auth-form" onsubmit="submitAuthForm(event)">
+            <label for="auth-email">Email address</label>
+            <input id="auth-email" type="email" placeholder="you@example.com" autocomplete="email" required>
+            <label for="auth-password">Password</label>
+            <input id="auth-password" type="password" placeholder="Your password" autocomplete="current-password" required minlength="6">
+            <div id="auth-confirm-wrap" style="display:none;">
+                <label for="auth-confirm-password">Confirm password</label>
+                <input id="auth-confirm-password" type="password" placeholder="Repeat your password" autocomplete="new-password">
+            </div>
+            <p id="auth-message" class="auth-message" role="status" aria-live="polite"></p>
+            <button id="auth-submit" class="play-btn auth-submit" type="submit">Sign In</button>
+        </form>
+        <div class="auth-links">
+            <button id="auth-mode-toggle" type="button" onclick="toggleAuthMode()">Create an account</button>
+            <button id="auth-reset-link" type="button" onclick="sendPasswordReset()">Forgot password?</button>
+        </div>
+        <div class="auth-divider"><span>or</span></div>
+        <button class="more-info-btn auth-guest-btn" type="button" onclick="continueAsGuest()">Continue as Guest</button>
+        <p class="auth-footnote">Guest data stays on this device. Sign in anytime to sync across devices.</p>
+    </div>
+</section>
+
 <!-- Profile Selection View -->
 <section id="profile-view" style="display:none;">
     <div class="profile-container">
@@ -106,6 +136,7 @@
     </section>
 </div>
 
-<script src="script.js?v=29"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="script.js?v=30"></script>
 </body>
 </html>
