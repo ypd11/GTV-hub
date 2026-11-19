@@ -3041,3 +3041,14 @@ body {
     .auth-links { gap: 8px; }
     .auth-links button { font-size: .75rem; }
 }
+
+/* Match the authentication branding to the Who's watching? screen */
+.auth-brand,
+.auth-mobile-brand {
+    background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 30px rgba(52, 152, 219, 0.3);
+}
