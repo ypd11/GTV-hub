@@ -125,7 +125,7 @@ if (localStorage.getItem('gtv_reduced_motion') === 'true') {
     document.body.classList.add('reduced-motion');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Global Error Handler for stability
     window.onerror = function(msg, url, line, col, error) {
         console.error("GTV Error:", msg, error);
@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     setupBranding();
-    initApp(); // Start with Profile Check instead of direct Dashboard load
+    await initializeAuthentication();
     setupNewNavigation();
     setupMobileCheck();
     
@@ -461,6 +461,217 @@ document.addEventListener('DOMContentLoaded', () => {
     // This is now handled inside initApp() to ensure it runs before profile selection.
 });
 
+
+const SUPABASE_URL = 'https://fvjlovsvihuzrajzndap.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_d6tKvsXFUGkI59kXvKiy9Q_Z-6-tKMR';
+let supabaseClient = null;
+let authUser = null;
+let guestMode = false;
+let cloudProfileMode = false;
+let authMode = 'login';
+let cloudDataLoading = false;
+
+function showAuthMessage(message, isError = false) {
+    const el = document.getElementById('auth-message');
+    if (!el) return;
+    el.textContent = message || '';
+    el.classList.toggle('error', !!isError);
+}
+
+function renderAuthView(mode = 'login', message = '') {
+    authMode = mode;
+    setElementVisible(document.getElementById('auth-view'), true, 'flex');
+    setElementVisible(document.getElementById('profile-view'), false);
+    setElementVisible(document.getElementById('dashboard'), false);
+    const nav = document.querySelector('.top-nav');
+    if (nav) nav.style.display = 'none';
+    document.body.classList.add('no-scroll');
+    const signup = mode === 'signup';
+    const reset = mode === 'reset';
+    document.getElementById('auth-title').textContent = reset ? 'Reset your password' : (signup ? 'Create your account' : 'Welcome to GTV Hub');
+    document.getElementById('auth-subtitle').textContent = reset
+        ? 'We’ll email you a link to choose a new password.'
+        : (signup ? 'Create an account to keep your profiles and watchlist in sync.' : 'Sign in to sync your profiles and watchlist across devices.');
+    document.getElementById('auth-password').style.display = reset ? 'none' : '';
+    document.querySelector('label[for="auth-password"]').style.display = reset ? 'none' : '';
+    document.getElementById('auth-password').required = !reset;
+    document.getElementById('auth-confirm-wrap').style.display = signup ? 'block' : 'none';
+    document.getElementById('auth-confirm-password').required = signup;
+    document.getElementById('auth-submit').textContent = reset ? 'Send reset link' : (signup ? 'Create Account' : 'Sign In');
+    document.getElementById('auth-mode-toggle').style.display = reset ? 'none' : '';
+    document.getElementById('auth-mode-toggle').textContent = signup ? 'Already have an account? Sign in' : 'Create an account';
+    document.getElementById('auth-reset-link').style.display = (!signup && !reset) ? '' : 'none';
+    document.querySelector('.auth-divider').style.display = reset ? 'none' : '';
+    document.querySelector('.auth-guest-btn').style.display = reset ? 'none' : '';
+    showAuthMessage(message);
+}
+
+window.toggleAuthMode = () => {
+    renderAuthView(authMode === 'signup' ? 'login' : 'signup');
+};
+
+window.submitAuthForm = async (event) => {
+    event.preventDefault();
+    if (!supabaseClient) return showAuthMessage('The sign-in service is unavailable. Please refresh and try again.', true);
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const confirmPassword = document.getElementById('auth-confirm-password').value;
+    const button = document.getElementById('auth-submit');
+    button.disabled = true;
+    showAuthMessage(authMode === 'signup' ? 'Creating your account…' : 'Please wait…');
+    try {
+        if (authMode === 'signup') {
+            if (password !== confirmPassword) throw new Error('The passwords do not match.');
+            const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
+            if (error) throw error;
+            if (data.session) {
+                authUser = data.user;
+                await enterAccount();
+            } else {
+                renderAuthView('login', 'Account created. Check your email and confirm your address, then sign in here.');
+            }
+        } else if (authMode === 'login') {
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            authUser = data.user;
+            await enterAccount();
+        } else if (authMode === 'reset') {
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+            if (error) throw error;
+            renderAuthView('login', 'Password reset email sent. Check your inbox.');
+        }
+    } catch (error) {
+        showAuthMessage(error.message || 'Something went wrong. Please try again.', true);
+    } finally {
+        button.disabled = false;
+    }
+};
+
+window.sendPasswordReset = () => {
+    const email = document.getElementById('auth-email').value.trim();
+    renderAuthView('reset', email ? 'We’ll send the reset link to ' + email + '.' : 'Enter your email address, then send the reset link.');
+    if (email) document.getElementById('auth-email').value = email;
+};
+
+window.continueAsGuest = () => {
+    guestMode = true;
+    cloudProfileMode = false;
+    authUser = null;
+    setElementVisible(document.getElementById('auth-view'), false);
+    document.body.classList.remove('no-scroll');
+    initApp();
+};
+
+async function initializeAuthentication() {
+    if (!window.supabase || !window.supabase.createClient) {
+        renderAuthView('login', 'Could not load the sign-in service. Check your connection and refresh.', true);
+        return;
+    }
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) console.warn('Could not restore Supabase session:', error.message);
+    if (data && data.session) {
+        authUser = data.session.user;
+        await enterAccount();
+    } else {
+        renderAuthView('login');
+    }
+}
+
+async function enterAccount() {
+    guestMode = false;
+    cloudProfileMode = true;
+    try {
+        await loadAccountProfiles();
+        setElementVisible(document.getElementById('auth-view'), false);
+        document.body.classList.remove('no-scroll');
+        renderProfileScreen();
+    } catch (error) {
+        console.error('Could not load account profiles:', error);
+        renderAuthView('login', 'Signed in, but your profiles could not be loaded. Please refresh to try again.', true);
+    }
+}
+
+async function loadAccountProfiles() {
+    const { data, error } = await supabaseClient
+        .from('profiles')
+        .select('id,name,color,position')
+        .eq('user_id', authUser.id)
+        .order('position', { ascending: true });
+    if (error) throw error;
+    profiles = data || [];
+
+    const localProfiles = safeJsonParse('gtv_profiles', []);
+    const migrationKey = 'gtv_cloud_migrated_' + authUser.id;
+    if (localProfiles.length && !localStorage.getItem(migrationKey)) {
+        const importLocal = confirm('We found profiles saved on this device. Would you like to import them into this account so they can sync across devices?');
+        if (importLocal) {
+            for (let i = 0; i < localProfiles.length && profiles.length < 5; i++) {
+                const old = localProfiles[i];
+                const { data: created, error: createError } = await supabaseClient
+                    .from('profiles')
+                    .insert({ user_id: authUser.id, name: old.name, color: old.color || '#3498db', position: profiles.length })
+                    .select('id,name,color,position').single();
+                if (createError) throw createError;
+                const oldId = old.id;
+                const payload = {
+                    profile_id: created.id,
+                    watchlist: safeJsonParse('gtv_watchlist_' + oldId, []),
+                    liked_content: safeJsonParse('gtv_liked_content_' + oldId, []),
+                    excluded_content: safeJsonParse('gtv_excluded_content_' + oldId, []),
+                    watch_history: safeJsonParse('gtv_watch_history_' + oldId, []),
+                    settings: {}
+                };
+                const { error: dataError } = await supabaseClient.from('profile_data').insert(payload);
+                if (dataError) throw dataError;
+                profiles.push(created);
+            }
+            if (localProfiles.length > 5) showToast('Only the first five profiles were imported. You can add the rest later if space becomes available.');
+        }
+        localStorage.setItem(migrationKey, 'true');
+    }
+
+    if (profiles.length === 0) {
+        const { data: created, error: createError } = await supabaseClient
+            .from('profiles')
+            .insert({ user_id: authUser.id, name: 'Default', color: '#3498db', position: 0 })
+            .select('id,name,color,position').single();
+        if (createError) throw createError;
+        const { error: dataError } = await supabaseClient.from('profile_data').insert({ profile_id: created.id });
+        if (dataError) throw dataError;
+        profiles = [created];
+    }
+}
+
+async function persistCurrentProfileData() {
+    if (!cloudProfileMode || !supabaseClient || !currentProfile || cloudDataLoading) return;
+    const payload = {
+        profile_id: currentProfile.id,
+        watchlist: watchlist,
+        liked_content: likedContent,
+        excluded_content: excludedContent,
+        watch_history: safeJsonParse('gtv_watch_history_' + currentProfile.id, []),
+        settings: {}
+    };
+    const { error } = await supabaseClient.from('profile_data').upsert(payload, { onConflict: 'profile_id' });
+    if (error) console.error('Could not sync profile data:', error.message);
+}
+
+async function signOutAccount() {
+    if (!supabaseClient) return;
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) return showToast('Could not sign out: ' + error.message);
+    authUser = null;
+    cloudProfileMode = false;
+    guestMode = false;
+    currentProfile = null;
+    profiles = safeJsonParse('gtv_profiles', []);
+    renderAuthView('login', 'You have been signed out.');
+}
+
+
 function setupBranding() {
     document.title = 'GTV hub - Movies & TV Shows';
     const style = document.createElement('style');
@@ -553,6 +764,7 @@ function setupNewNavigation() {
         <div class="dropdown-item" onclick="openWatchlist();"><span class="material-icons">list</span> My Watchlist</div>
         <div class="dropdown-item" onclick="openHiddenContent();"><span class="material-icons">visibility_off</span> Hidden Content</div>
         <div class="dropdown-item" onclick="openSettingsView(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">settings</span> Settings</div>
+        ${cloudProfileMode ? '<div class="dropdown-item" onclick="signOutAccount()"><span class="material-icons">logout</span> Sign Out</div>' : ''}
     `;
     document.body.appendChild(dropdown);
 
@@ -899,7 +1111,23 @@ window.promptCreateProfile = () => {
     setTimeout(() => document.getElementById('new-profile-name').focus(), 100);
 };
 
-window.createProfile = (name) => {
+window.createProfile = async (name) => {
+    if (cloudProfileMode) {
+        if (profiles.length >= 5) return showToast('You can have up to five profiles.');
+        const colors = ['#3498db', '#e74c3c', '#f1c40f', '#9b59b6', '#2ecc71', '#e67e22'];
+        const { data, error } = await supabaseClient.from('profiles')
+            .insert({ user_id: authUser.id, name: name, color: colors[profiles.length % colors.length], position: profiles.length })
+            .select('id,name,color,position').single();
+        if (error) return showToast(error.message);
+        const { error: dataError } = await supabaseClient.from('profile_data').insert({ profile_id: data.id });
+        if (dataError) {
+            await supabaseClient.from('profiles').delete().eq('id', data.id);
+            return showToast(dataError.message);
+        }
+        profiles.push(data);
+        renderProfileScreen();
+        return;
+    }
     const newId = Date.now();
     const colors = ['#3498db', '#e74c3c', '#f1c40f', '#9b59b6', '#2ecc71', '#e67e22'];
     const color = colors[profiles.length % colors.length];
@@ -925,8 +1153,12 @@ window.deleteProfile = (id, event) => {
     showModal('Delete Profile?', 'This will permanently delete this profile and all its data (watchlist, history, etc). This cannot be undone.', [
         { text: 'Cancel', secondary: true },
         { text: 'Delete', className: 'play-btn remove-confirm-btn', action: () => {
+            if (cloudProfileMode) {
+                const { error } = await supabaseClient.from('profiles').delete().eq('id', id);
+                if (error) { showToast(error.message); return; }
+            }
             profiles = profiles.filter(p => p.id !== id);
-            localStorage.setItem('gtv_profiles', JSON.stringify(profiles));
+            if (!cloudProfileMode) localStorage.setItem('gtv_profiles', JSON.stringify(profiles));
             // Cleanup data
             localStorage.removeItem(`gtv_watchlist_${id}`);
             localStorage.removeItem(`gtv_liked_content_${id}`);
@@ -937,10 +1169,31 @@ window.deleteProfile = (id, event) => {
     ]);
 };
 
-window.selectProfile = (id) => {
+window.selectProfile = async (id) => {
     currentProfile = profiles.find(p => p.id === id);
     if (!currentProfile) return;
-    
+
+    // Load cloud data first, then mirror it locally for existing app features.
+    if (cloudProfileMode) {
+        cloudDataLoading = true;
+        try {
+            const { data, error } = await supabaseClient.from('profile_data')
+                .select('watchlist,liked_content,excluded_content,watch_history')
+                .eq('profile_id', id).maybeSingle();
+            if (error) throw error;
+            const cloudData = data || {};
+            localStorage.setItem(`gtv_watchlist_${id}`, JSON.stringify(cloudData.watchlist || []));
+            localStorage.setItem(`gtv_liked_content_${id}`, JSON.stringify(cloudData.liked_content || []));
+            localStorage.setItem(`gtv_excluded_content_${id}`, JSON.stringify(cloudData.excluded_content || []));
+            localStorage.setItem(`gtv_watch_history_${id}`, JSON.stringify(cloudData.watch_history || []));
+        } catch (error) {
+            cloudDataLoading = false;
+            showToast('Could not load this profile: ' + error.message);
+            return;
+        }
+        cloudDataLoading = false;
+    }
+
     // 1. Load Profile Data
     watchlist = safeJsonParse(`gtv_watchlist_${id}`, []);
     likedContent = safeJsonParse(`gtv_liked_content_${id}`, []);
@@ -969,6 +1222,7 @@ window.selectProfile = (id) => {
             <div class="dropdown-item" onclick="openWatchlist();"><span class="material-icons">list</span> My Watchlist</div>
             <div class="dropdown-item" onclick="openHiddenContent();"><span class="material-icons">visibility_off</span> Hidden Content</div>
             <div class="dropdown-item" onclick="openSettingsView(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">settings</span> Settings</div>
+            ${cloudProfileMode ? '<div class="dropdown-item" onclick="signOutAccount()"><span class="material-icons">logout</span> Sign Out</div>' : ''}
         `;
     }
     
@@ -2059,6 +2313,7 @@ window.confirmRemove = () => {
     if (index > -1) {
         watchlist.splice(index, 1);
         if(currentProfile) localStorage.setItem(`gtv_watchlist_${currentProfile.id}`, JSON.stringify(watchlist));
+        persistCurrentProfileData();
         
         // Always update dashboard in background
         updateDashboardWatchlist();
@@ -2190,6 +2445,7 @@ window.excludeContent = (id) => {
     if (!excludedContent.includes(id.toString())) {
         excludedContent.push(id.toString());
         if(currentProfile) localStorage.setItem(`gtv_excluded_content_${currentProfile.id}`, JSON.stringify(excludedContent));
+        persistCurrentProfileData();
     }
     closePlayer();
     closeDetails();
@@ -2867,6 +3123,7 @@ window.toggleLike = (id) => {
         if (currentDetailsData) injectRecommendationRow(currentDetailsData);
     }
     if(currentProfile) localStorage.setItem(`gtv_liked_content_${currentProfile.id}`, JSON.stringify(likedContent));
+    persistCurrentProfileData();
 };
 
 window.renderEpisodes = async (tmdbId, seasonNum, count, btnElement) => {
@@ -3633,6 +3890,7 @@ window.clearWatchlistAction = () => {
         { text: 'Clear All', action: () => {
             watchlist = [];
             if(currentProfile) localStorage.setItem(`gtv_watchlist_${currentProfile.id}`, '[]');
+            persistCurrentProfileData();
             showToast('Watchlist cleared');
         }}
     ]);
@@ -3644,6 +3902,7 @@ window.resetHiddenAction = () => {
         { text: 'Reset', action: () => {
             excludedContent = [];
             if(currentProfile) localStorage.setItem(`gtv_excluded_content_${currentProfile.id}`, '[]');
+            persistCurrentProfileData();
             showToast('Hidden content reset');
         }}
     ]);
