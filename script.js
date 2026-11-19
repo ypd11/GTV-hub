@@ -3235,6 +3235,7 @@ async function addToHistory(id, type) {
     if (history.length > 20) history.pop();
     
     localStorage.setItem(historyKey, JSON.stringify(history));
+    await persistCurrentProfileData();
     updateContinueWatchingRow();
     return itemData;
 }
