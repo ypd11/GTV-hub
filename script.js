@@ -488,26 +488,27 @@ function renderAuthView(mode = 'login', message = '', isError = false) {
     document.body.classList.add('no-scroll');
     const signup = mode === 'signup';
     const reset = mode === 'reset';
-    document.getElementById('auth-title').textContent = reset ? 'Reset your password' : (signup ? 'Create your account' : 'Welcome to GTV Hub');
+    const updatePassword = mode === 'update-password';
+    document.getElementById('auth-title').textContent = reset ? 'Reset your password' : (updatePassword ? 'Choose a new password' : (signup ? 'Create your account' : 'Welcome to GTV Hub'));
     document.getElementById('auth-subtitle').textContent = reset
         ? 'We’ll email you a link to choose a new password.'
-        : (signup ? 'Create an account to keep your profiles and watchlist in sync.' : 'Sign in to sync your profiles and watchlist across devices.');
+        : (updatePassword ? 'Choose a new password for your GTV Hub account.' : (signup ? 'Create an account to keep your profiles and watchlist in sync.' : 'Sign in to sync your profiles and watchlist across devices.'));
     document.getElementById('auth-password').style.display = reset ? 'none' : '';
     document.querySelector('label[for="auth-password"]').style.display = reset ? 'none' : '';
     document.getElementById('auth-password').required = !reset;
-    document.getElementById('auth-confirm-wrap').style.display = signup ? 'block' : 'none';
-    document.getElementById('auth-confirm-password').required = signup;
-    document.getElementById('auth-submit').textContent = reset ? 'Send reset link' : (signup ? 'Create Account' : 'Sign In');
-    document.getElementById('auth-mode-toggle').style.display = '';
-    document.getElementById('auth-mode-toggle').textContent = reset ? 'Back to sign in' : (signup ? 'Already have an account? Sign in' : 'Create an account');
-    document.getElementById('auth-reset-link').style.display = (!signup && !reset) ? '' : 'none';
-    document.querySelector('.auth-divider').style.display = reset ? 'none' : '';
-    document.querySelector('.auth-guest-btn').style.display = reset ? 'none' : '';
+    document.getElementById('auth-confirm-wrap').style.display = (signup || updatePassword) ? 'block' : 'none';
+    document.getElementById('auth-confirm-password').required = signup || updatePassword;
+    document.getElementById('auth-submit').textContent = reset ? 'Send reset link' : (updatePassword ? 'Update Password' : (signup ? 'Create Account' : 'Sign In'));
+    document.getElementById('auth-mode-toggle').style.display = (reset || updatePassword) ? '' : '';
+    document.getElementById('auth-mode-toggle').textContent = (reset || updatePassword) ? 'Back to sign in' : (signup ? 'Already have an account? Sign in' : 'Create an account');
+    document.getElementById('auth-reset-link').style.display = (!signup && !reset && !updatePassword) ? '' : 'none';
+    document.querySelector('.auth-divider').style.display = (reset || updatePassword) ? 'none' : '';
+    document.querySelector('.auth-guest-btn').style.display = (reset || updatePassword) ? 'none' : '';
     showAuthMessage(message, isError);
 }
 
 window.toggleAuthMode = () => {
-    renderAuthView(authMode === 'signup' || authMode === 'reset' ? 'login' : 'signup');
+    renderAuthView(authMode === 'signup' || authMode === 'reset' || authMode === 'update-password' ? 'login' : 'signup');
 };
 
 window.submitAuthForm = async (event) => {
@@ -520,7 +521,13 @@ window.submitAuthForm = async (event) => {
     button.disabled = true;
     showAuthMessage(authMode === 'signup' ? 'Creating your account…' : 'Please wait…');
     try {
-        if (authMode === 'signup') {
+        if (authMode === 'update-password') {
+            if (password !== confirmPassword) throw new Error('The passwords do not match.');
+            const { error } = await supabaseClient.auth.updateUser({ password });
+            if (error) throw error;
+            await supabaseClient.auth.signOut();
+            renderAuthView('login', 'Your password has been updated. Please sign in with your new password.');
+        } else if (authMode === 'signup') {
             if (password !== confirmPassword) throw new Error('The passwords do not match.');
             const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
             if (error) throw error;
@@ -569,6 +576,12 @@ async function initializeAuthentication() {
     }
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
         auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY' && session) {
+            authUser = session.user;
+            renderAuthView('update-password');
+        }
     });
     const { data, error } = await supabaseClient.auth.getSession();
     if (error) console.warn('Could not restore Supabase session:', error.message);
