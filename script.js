@@ -2622,10 +2622,10 @@ window.openDetails = async (id, type, isHistory = false) => {
         const trailerBtn = trailer ? `<button class="more-info-btn" onclick="openTrailer('${trailer.key}')"><span class="material-icons">movie</span> Trailer</button>` : '';
         
         detailsContent.innerHTML = `
-            <div class="hero-section" style="min-height:100vh; background-image:${backdropStyle}; background-size:cover; background-position:center; position:relative; display:flex; align-items:flex-start; padding:140px 4% 80px 4%;">
-                <div class="hero-overlay" style="position:absolute; inset:0; background:linear-gradient(to right, #050505 0%, rgba(5,5,5,0.8) 20%, rgba(5,5,5,0.2) 100%);"></div>
-                <button onclick="closeDetails()" class="hero-icon-btn page-back-btn" style="position:absolute; z-index:20;"><span class="material-icons">arrow_back</span></button>
-                <div style="position:relative; z-index:10; max-width: 700px; text-align:left;">
+            <div class="hero-section details-hero" style="--details-backdrop: ${backdropStyle};">
+                <div class="hero-overlay details-hero-overlay"></div>
+                <button onclick="closeDetails()" class="hero-icon-btn page-back-btn details-back-btn" aria-label="Back"><span class="material-icons">arrow_back</span></button>
+                <div class="details-hero-content">
                     ${titleHtml}
                     <div class="hero-meta" style="margin-bottom: 10px; align-items: center; flex-wrap: wrap; gap: 12px;">
                         ${ratingHtml}
