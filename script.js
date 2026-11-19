@@ -118,6 +118,7 @@ if (savedSource && playerSources.includes(savedSource)) {
 }
 let currentSourceIdx = 0;
 let isManualBack = false;
+let appHistoryIndex = 0;
 let pendingDeepLink = null;
 let currentPersonCredits = { knownFor: [], filmography: [] };
 
@@ -142,6 +143,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     setupBranding();
     await initializeAuthentication();
+    history.replaceState({ gtvHubNavigation: true, gtvHubIndex: 0 }, '', window.location.href);
+    history.pushState({ gtvHubNavigation: true, gtvHubIndex: 1 }, '', window.location.href);
+    appHistoryIndex = 1;
     setupNewNavigation();
     setupMobileCheck();
     
@@ -150,15 +154,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         navigator.serviceWorker.register('./sw.js').catch(console.error);
     }
     
-    // Listen for the browser/remote back button
-    window.addEventListener('popstate', (e) => {
-        if (isManualBack) {
-            isManualBack = false;
-            return;
+    // Browser Back navigates through GTV Hub screens instead of leaving the app.
+    window.addEventListener('popstate', (event) => {
+        const state = event.state;
+        if (state && state.gtvHubNavigation) {
+            const nextIndex = Number(state.gtvHubIndex) || 0;
+            if (nextIndex < appHistoryIndex) {
+                appHistoryIndex = nextIndex;
+                if (navigationStack.length) {
+                    handleBack(true);
+                } else {
+                    // Keep the app open when Back reaches its root screen.
+                    appHistoryIndex = 1;
+                    history.pushState({ gtvHubNavigation: true, gtvHubIndex: appHistoryIndex }, '', window.location.href);
+                }
+                return;
+            }
         }
-        // When the back button is pressed, we trigger our custom back handler.
-        // The navigationStack should be popped by the handler itself.
-        handleBack();
     });
 
     // Back to Top Button
@@ -773,7 +785,7 @@ function setupNewNavigation() {
     dropdown.id = 'nav-dropdown';
     dropdown.className = 'nav-dropdown';
     dropdown.innerHTML = `
-        <div class="dropdown-item" onclick="renderProfileScreen(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">people</span> Switch Profile</div>
+        <div class="dropdown-item" onclick="openProfilePicker(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">people</span> Switch Profile</div>
         <div class="dropdown-item" onclick="openCategories(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">category</span> Categories</div>
             <div class="dropdown-item" onclick="openPeople(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">person_search</span> People</div>
         <div class="dropdown-item" onclick="randomPick();"><span class="material-icons">shuffle</span> Random Pick</div>
@@ -1004,6 +1016,11 @@ window.loadMoreSearch = async () => {
 
 let isManagingProfiles = false;
 
+window.openProfilePicker = () => {
+    captureAndPushState();
+    renderProfileScreen();
+};
+
 window.renderProfileScreen = () => {
     const profileView = document.getElementById('profile-view');
     const dashboard = document.getElementById('dashboard');
@@ -1186,6 +1203,7 @@ window.deleteProfile = (id, event) => {
 };
 
 window.selectProfile = async (id) => {
+    if (document.getElementById('profile-view').style.display !== 'none') captureAndPushState();
     currentProfile = profiles.find(p => p.id === id);
     if (!currentProfile) return;
 
@@ -1231,7 +1249,7 @@ window.selectProfile = async (id) => {
                 <div class="dropdown-profile-avatar" style="background:${escapeHtml(color)};">${initial}</div>
                 <div class="dropdown-profile-name">${escapeHtml(currentProfile.name)}</div>
             </div>
-            <div class="dropdown-item" onclick="renderProfileScreen(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">people</span> Switch Profile</div>
+            <div class="dropdown-item" onclick="openProfilePicker(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">people</span> Switch Profile</div>
             <div class="dropdown-item" onclick="openCategories(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">category</span> Categories</div>
             <div class="dropdown-item" onclick="openPeople(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">person_search</span> People</div>
             <div class="dropdown-item" onclick="randomPick();"><span class="material-icons">shuffle</span> Random Pick</div>
@@ -2560,7 +2578,6 @@ function setPeopleView(view) {
 window.openPeople = (isHistory = false) => {
     if (!isHistory) {
         captureAndPushState();
-        history.pushState({ view: 'people' }, '', window.location.pathname + '?people');
     }
     setPeopleView('people');
     activeNavigationSection = 'people';
@@ -2677,7 +2694,6 @@ document.addEventListener('keydown', event => {
 window.openPersonProfile = async (id, isHistory = false) => {
     if (!isHistory) {
         captureAndPushState();
-        history.pushState({ view: 'person', id }, '', window.location.pathname + '?person=' + id);
     }
     peopleCurrentProfileId = id;
     setPeopleView('person');
@@ -2857,6 +2873,8 @@ function renderPersonCreditsResults() {
 }
 
 window.switchTab = (tab) => {
+    const onDashboard = dashboard.style.display === 'block';
+    if (!onDashboard || currentTab !== tab) captureAndPushState();
     setElementVisible(document.getElementById('people-view'), false);
     setElementVisible(document.getElementById('person-profile-view'), false);
     setElementVisible(detailsView, false);
@@ -3056,15 +3074,7 @@ window.openDetails = async (id, type, isHistory = false) => {
 };
 
 function closeDetails() {
-    // Fix for stuck history (iframe pollution):
-    // Force UI update immediately, then try to sync history.
-    isManualBack = true;
     handleBack();
-    
-    if (history.length > 1) {
-        history.back();
-    }
-    setTimeout(() => { isManualBack = false; }, 300);
 }
 
 window.toggleWatchlist = (id) => {
@@ -4077,8 +4087,11 @@ function captureAndPushState() {
     let state = null;
     // Save current view state to stack before navigating away.
     // The search overlay sits above the current view, so preserve both layers.
+    const profileView = document.getElementById('profile-view');
+    if (profileView && profileView.style.display !== 'none') state = { view: 'profile' };
+
     const searchModal = document.getElementById('search-modal-overlay');
-    if (searchModal?.classList.contains('active')) {
+    if (!state && searchModal?.classList.contains('active')) {
         const searchInput = document.getElementById('modal-search-input');
         const searchResults = document.getElementById('modal-search-results');
         const baseView = document.getElementById('person-profile-view')?.style.display === 'block' ? 'person' :
@@ -4097,11 +4110,11 @@ function captureAndPushState() {
             tab: currentTab,
             navigationSection: activeNavigationSection
         };
-    } else if (document.getElementById('person-profile-view')?.style.display === 'block') {
+    } else if (!state && document.getElementById('person-profile-view')?.style.display === 'block') {
         state = { view: 'person', id: peopleCurrentProfileId, scroll: window.scrollY };
-    } else if (document.getElementById('people-view')?.style.display === 'block') {
+    } else if (!state && document.getElementById('people-view')?.style.display === 'block') {
         state = { view: 'people', scroll: window.scrollY, query: peopleCurrentQuery };
-    } else if (detailsView.style.display === 'block') {
+    } else if (!state && detailsView.style.display === 'block') {
         if (currentDetailsData) {
             state = {
                 view: 'details',
@@ -4110,7 +4123,7 @@ function captureAndPushState() {
                 scroll: window.scrollY
             };
         }
-    } else if (categoryView.style.display === 'block') {
+    } else if (!state && categoryView.style.display === 'block') {
         state = {
             view: 'category',
             title: document.getElementById('category-title').textContent,
@@ -4120,14 +4133,23 @@ function captureAndPushState() {
             items: [...allLoadedCategoryItems],
             scroll: window.scrollY
         };
-    } else if (dashboard.style.display === 'block') {
+    } else if (!state && dashboard.style.display === 'block') {
         state = { view: 'dashboard', scroll: window.scrollY };
     }
     
-    if (state) navigationStack.push(state);
+    if (state) {
+        navigationStack.push(state);
+        appHistoryIndex += 1;
+        history.pushState({ gtvHubNavigation: true, gtvHubIndex: appHistoryIndex }, '', window.location.href);
+    }
 }
 
-window.handleBack = () => {
+window.handleBack = (fromPopState = false) => {
+    if (!fromPopState && navigationStack.length > 0 && history.state?.gtvHubNavigation) {
+        history.back();
+        return;
+    }
+
     // Ensure player is closed when navigating back
     if (playerContainer.style.display === 'flex') {
         closePlayer();
@@ -4141,6 +4163,10 @@ window.handleBack = () => {
         setElementVisible(categoryView, false);
         setElementVisible(document.getElementById('people-view'), false);
         setElementVisible(document.getElementById('person-profile-view'), false);
+        setElementVisible(document.getElementById('profile-view'), false);
+        const nav = document.querySelector('.top-nav');
+        if (nav) nav.style.display = 'flex';
+        document.body.classList.remove('no-scroll');
         document.getElementById('hero-section').style.display = 'flex';
         resetUrl();
         return;
@@ -4148,7 +4174,20 @@ window.handleBack = () => {
 
     const state = navigationStack.pop();
     
-    if (state.view === 'search') {
+    if (state.view === 'profile') {
+        setElementVisible(document.getElementById('auth-view'), false);
+        setElementVisible(document.getElementById('profile-view'), true, 'flex');
+        setElementVisible(dashboard, false);
+        setElementVisible(detailsView, false);
+        setElementVisible(categoryView, false);
+        setElementVisible(document.getElementById('people-view'), false);
+        setElementVisible(document.getElementById('person-profile-view'), false);
+        setElementVisible(playerContainer, false);
+        const nav = document.querySelector('.top-nav');
+        if (nav) nav.style.display = 'none';
+        document.body.classList.add('no-scroll');
+        renderProfileScreen();
+    } else if (state.view === 'search') {
         currentTab = state.tab || currentTab;
         activeNavigationSection = state.navigationSection || currentTab;
         setupNewNavigation();
@@ -4234,8 +4273,6 @@ function prepareCategoryView() {
     setElementVisible(document.getElementById('person-profile-view'), false);
     setElementVisible(playerContainer, false);
     window.scrollTo(0, 0);
-    // Push history for category view since captureAndPushState no longer does it
-    history.pushState({view: 'category'}, '');
 }
 
 // URL Management
@@ -4244,16 +4281,14 @@ function updateUrl(id, type) {
     newUrl.searchParams.delete('movie');
     newUrl.searchParams.delete('tv');
     newUrl.searchParams.set(type === 'movie' ? 'movie' : 'tv', id);
-    // Only push state if we are NOT navigating back/forward in history
-    // This prevents creating duplicate entries when using the Back button
-    window.history.pushState({view: 'details', id, type}, '', newUrl);
+    window.history.replaceState({ ...(history.state || {}), gtvHubNavigation: true, gtvHubIndex: appHistoryIndex, view: 'details', id, type }, '', newUrl);
 }
 
 function resetUrl() {
     const newUrl = new URL(window.location);
     newUrl.searchParams.delete('movie');
     newUrl.searchParams.delete('tv');
-    window.history.replaceState({}, '', newUrl.pathname);
+    window.history.replaceState({ ...(history.state || {}), gtvHubNavigation: true, gtvHubIndex: appHistoryIndex }, '', newUrl.pathname);
 }
 
 window.shareContent = (title) => {
