@@ -485,6 +485,7 @@ let cloudDataLoading = false;
 let authDialogMode = false;
 let authReturnToApp = false;
 let authDialogPreviousNoScroll = false;
+let authDialogPreviousProfileDisplay = null;
 let passwordRecoveryPending = window.location.hash.includes('type=recovery') || new URLSearchParams(window.location.search).get('type') === 'recovery';
 
 function showAuthMessage(message, isError = false) {
@@ -532,6 +533,10 @@ function renderAuthView(mode = 'login', message = '', isError = false, asDialog 
 
 window.openAccountSignIn = () => {
     authDialogPreviousNoScroll = document.body.classList.contains('no-scroll');
+    const profileView = document.getElementById('profile-view');
+    authDialogPreviousProfileDisplay = profileView ? profileView.style.display : null;
+    // The profile picker is a separate full-screen view; hide it while the dialog is open.
+    if (profileView) profileView.style.display = 'none';
     authReturnToApp = true;
     const dropdown = document.getElementById('nav-dropdown');
     if (dropdown) dropdown.classList.remove('active');
@@ -545,6 +550,11 @@ window.closeAccountSignIn = () => {
     document.getElementById('auth-view').classList.remove('auth-dialog');
     authDialogMode = false;
     authReturnToApp = false;
+    const profileView = document.getElementById('profile-view');
+    if (profileView && authDialogPreviousProfileDisplay !== null) {
+        profileView.style.display = authDialogPreviousProfileDisplay;
+    }
+    authDialogPreviousProfileDisplay = null;
     document.body.classList.toggle('no-scroll', authDialogPreviousNoScroll);
 };
 
