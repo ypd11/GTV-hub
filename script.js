@@ -478,7 +478,7 @@ function showAuthMessage(message, isError = false) {
     el.classList.toggle('error', !!isError);
 }
 
-function renderAuthView(mode = 'login', message = '') {
+function renderAuthView(mode = 'login', message = '', isError = false) {
     authMode = mode;
     setElementVisible(document.getElementById('auth-view'), true, 'flex');
     setElementVisible(document.getElementById('profile-view'), false);
@@ -503,7 +503,7 @@ function renderAuthView(mode = 'login', message = '') {
     document.getElementById('auth-reset-link').style.display = (!signup && !reset) ? '' : 'none';
     document.querySelector('.auth-divider').style.display = reset ? 'none' : '';
     document.querySelector('.auth-guest-btn').style.display = reset ? 'none' : '';
-    showAuthMessage(message);
+    showAuthMessage(message, isError);
 }
 
 window.toggleAuthMode = () => {
@@ -2458,6 +2458,7 @@ window.unhideContent = (id) => {
         { text: 'Unhide', action: () => {
             excludedContent = excludedContent.filter(i => i !== id.toString());
             if(currentProfile) localStorage.setItem(`gtv_excluded_content_${currentProfile.id}`, JSON.stringify(excludedContent));
+            persistCurrentProfileData();
             openHiddenContent(); // Refresh view
         }}
     ]);
@@ -3081,6 +3082,7 @@ window.toggleWatchlist = (id) => {
     }
     updateDashboardWatchlist();
     if(currentProfile) localStorage.setItem(`gtv_watchlist_${currentProfile.id}`, JSON.stringify(watchlist));
+    persistCurrentProfileData();
 };
 
 window.toggleLike = (id) => {
