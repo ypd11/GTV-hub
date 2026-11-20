@@ -504,21 +504,18 @@ function showAuthMessage(message, isError = false) {
     el.classList.toggle('error', !!isError);
 }
 
-function renderAuthView(mode = 'login', message = '', isError = false, asDialog = false) {
+function renderAuthView(mode = 'login', message = '', isError = false, asDialog = true) {
     authMode = mode;
-    authDialogMode = !!asDialog;
+    // Authentication is always presented as a compact dialog, never as a full-page screen.
+    authDialogMode = true;
     const authView = document.getElementById('auth-view');
-    authView.classList.toggle('auth-dialog', authDialogMode);
+    authView.classList.add('auth-dialog');
     setElementVisible(authView, true, 'flex');
-    if (!authDialogMode) {
-        setElementVisible(document.getElementById('profile-view'), false);
-        setElementVisible(document.getElementById('dashboard'), false);
-        const nav = document.querySelector('.top-nav');
-        if (nav) nav.style.display = 'none';
-    }
+
     const closeButton = document.getElementById('auth-dialog-close');
-    if (closeButton) closeButton.style.display = authDialogMode ? 'flex' : 'none';
+    if (closeButton) closeButton.style.display = 'flex';
     document.body.classList.add('no-scroll');
+
     const signup = mode === 'signup';
     const reset = mode === 'reset';
     const updatePassword = mode === 'update-password';
@@ -535,12 +532,11 @@ function renderAuthView(mode = 'login', message = '', isError = false, asDialog 
     document.getElementById('auth-mode-toggle').style.display = (reset || updatePassword) ? '' : '';
     document.getElementById('auth-mode-toggle').textContent = (reset || updatePassword) ? 'Back to sign in' : (signup ? 'Already have an account? Sign in' : 'Create an account');
     document.getElementById('auth-reset-link').style.display = (!signup && !reset && !updatePassword) ? '' : 'none';
-    document.querySelector('.auth-divider').style.display = (reset || updatePassword || authDialogMode) ? 'none' : '';
-    document.querySelector('.auth-guest-btn').style.display = (reset || updatePassword || authDialogMode) ? 'none' : '';
+    document.querySelector('.auth-divider').style.display = (reset || updatePassword) ? 'none' : '';
+    document.querySelector('.auth-guest-btn').style.display = (reset || updatePassword) ? 'none' : '';
     showAuthMessage(message, isError);
-    if (!authDialogMode) dismissStartupScreen();
+    dismissStartupScreen();
 }
-
 window.openAccountSignIn = () => {
     authDialogPreviousNoScroll = document.body.classList.contains('no-scroll');
     const profileView = document.getElementById('profile-view');
@@ -638,13 +634,10 @@ window.showFeatureMaintenanceDialog = (featureName = 'This feature', onContinue 
 
 window.toggleAuthMode = () => {
     if (authMode === 'signup' || authMode === 'reset' || authMode === 'update-password') {
-        renderAuthView('login', '', false, authDialogMode);
+        renderAuthView('login');
         return;
     }
-
-    window.showFeatureMaintenanceDialog('Account registration', () => {
-        renderAuthView('signup', '', false, authDialogMode);
-    });
+    renderAuthView('signup');
 };
 
 window.submitAuthForm = async (event) => {
