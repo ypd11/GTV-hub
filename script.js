@@ -120,6 +120,7 @@ let currentSourceIdx = 0;
 let isManualBack = false;
 let appHistoryIndex = 0;
 let pendingDeepLink = null;
+let pendingCommunityRoute = null;
 let currentPersonCredits = { knownFor: [], filmography: [] };
 
 if (localStorage.getItem('gtv_reduced_motion') === 'true') {
@@ -132,6 +133,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("GTV Error:", msg, error);
         return false; 
     };
+
+    // Preserve community links until a viewer has been selected.
+    pendingCommunityRoute = window.location.hash;
 
     // Capture deep link params immediately
     const urlParams = new URLSearchParams(window.location.search);
@@ -148,12 +152,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     appHistoryIndex = 1;
     setupNewNavigation();
     setupMobileCheck();
-    const initialCommunityRoute = window.location.hash;
-    if (initialCommunityRoute === '#community') window.openCommunityDirectory(true, true);
-    else if (initialCommunityRoute.indexOf('#profile/') === 0) {
-        const routeUsername = decodeURIComponent(initialCommunityRoute.slice('#profile/'.length));
-        if (routeUsername) window.openCommunityProfile(routeUsername, true, true);
-    }
     
     // Register Service Worker for Caching
     if ('serviceWorker' in navigator) {
@@ -1631,6 +1629,17 @@ window.selectProfile = async (id) => {
     // 5. Always load the Dashboard background first
     // This populates the navigation stack so 'Back' works correctly
     loadDashboard();
+
+    // Restore a shared community link only after the viewer picker is complete.
+    const communityRoute = pendingCommunityRoute;
+    pendingCommunityRoute = null;
+    if (communityRoute === '#community') {
+        window.openCommunityDirectory(true, true);
+    } else if (communityRoute && communityRoute.indexOf('#profile/') === 0) {
+        let routeUsername = '';
+        try { routeUsername = decodeURIComponent(communityRoute.slice('#profile/'.length)); } catch (error) {}
+        if (routeUsername) window.openCommunityProfile(routeUsername, true, true);
+    }
 
     // 6. If it's a deep link, open the details on top
     if (movieId || tvId) {
