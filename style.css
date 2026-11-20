@@ -3837,10 +3837,10 @@ body {
 
 
 /* Watch Party — native GTV hub dialog */
-.watch-party-panel{position:fixed;inset:0;z-index:60000;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(4,6,10,.78);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s ease,visibility .22s ease}
+.watch-party-panel{position:fixed;inset:0;z-index:60000;display:flex;align-items:stretch;justify-content:flex-end;padding:0;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s ease,visibility .22s ease}
 .watch-party-panel.active{opacity:1;visibility:visible;pointer-events:auto}
-.watch-party-dialog{width:min(100%,490px);max-height:min(84vh,760px);min-height:390px;display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(255,255,255,.11);border-radius:18px;background:linear-gradient(155deg,#191d25 0%,#101319 72%);color:#f4f6f8;box-shadow:0 28px 90px rgba(0,0,0,.62);transform:translateY(12px) scale(.985);transition:transform .22s ease}
-.watch-party-panel.active .watch-party-dialog{transform:translateY(0) scale(1)}
+.watch-party-dialog{width:min(100%,410px);height:100%;max-height:100vh;min-height:0;display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(255,255,255,.11);border-right:0;border-radius:18px 0 0 18px;background:linear-gradient(155deg,#191d25 0%,#101319 72%);color:#f4f6f8;box-shadow:-18px 0 55px rgba(0,0,0,.32);transform:translateX(18px);transition:transform .22s ease}
+.watch-party-panel.active .watch-party-dialog{transform:translateX(0)}
 .watch-party-top{display:flex;justify-content:space-between;align-items:center;padding:22px 24px 17px;border-bottom:1px solid rgba(255,255,255,.075)}
 .watch-party-top h2{margin:4px 0 0;font-size:1.42rem;font-weight:700;letter-spacing:-.35px;color:#fff}
 .watch-party-eyebrow{color:var(--accent,#3498db);font-size:.68rem;font-weight:800;letter-spacing:1.35px}
@@ -3850,7 +3850,7 @@ body {
 .watch-party-lobby{margin:auto 0}
 .watch-party-intro{color:#b8c0cb;line-height:1.65;margin:0 0 23px;text-align:center;font-size:.94rem}
 .watch-party-primary,.watch-party-secondary{min-height:46px;border:0;border-radius:9px;padding:12px 17px;color:#fff;font:inherit;font-weight:700;cursor:pointer;transition:transform .18s,filter .18s,background .18s}
-.watch-party-primary{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;background:linear-gradient(110deg,#3498db,#7861c9);box-shadow:0 7px 22px rgba(52,152,219,.2)}
+.watch-party-primary{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:50px;background:linear-gradient(110deg,#3498db,#7861c9);box-shadow:0 7px 22px rgba(52,152,219,.2)}
 .watch-party-primary:hover{filter:brightness(1.12);transform:translateY(-1px)}
 .watch-party-primary .material-icons{font-size:20px}
 .watch-party-divider{display:flex;align-items:center;gap:12px;margin:23px 0;color:#7f8996;font-size:.66rem;font-weight:800;letter-spacing:1.25px}
@@ -3885,5 +3885,8 @@ body {
 .watch-party-leave{align-self:center;border:0;background:transparent;color:#e28a8a;font:inherit;font-size:.78rem;padding:13px 10px 0;cursor:pointer}
 .watch-party-status{min-height:18px;color:#91a0b1;font-size:.76rem;line-height:1.45;margin:12px 0 0;text-align:center}
 .watch-party-status.error{color:#ff9292}
-@media(max-width:600px){.watch-party-panel{padding:12px}.watch-party-dialog{width:100%;max-height:88vh;min-height:360px;border-radius:15px}.watch-party-top{padding:18px 18px 14px}.watch-party-content{padding:18px}.watch-party-join-form{gap:7px}.watch-party-secondary{min-width:76px}}
+@media(max-width:600px){.watch-party-panel{align-items:center;justify-content:center;padding:12px;background:transparent}.watch-party-dialog{width:100%;height:auto;max-height:88vh;min-height:360px;border:1px solid rgba(255,255,255,.11);border-radius:15px;box-shadow:0 22px 70px rgba(0,0,0,.55);transform:translateY(12px) scale(.985)}.watch-party-panel.active .watch-party-dialog{transform:translateY(0) scale(1)}.watch-party-top{padding:18px 18px 14px}.watch-party-content{padding:18px}.watch-party-join-form{gap:7px}.watch-party-secondary{min-width:76px}}
 @media(max-height:520px){.watch-party-dialog{max-height:94vh;min-height:0}.watch-party-content{padding-top:14px;padding-bottom:12px}.watch-party-intro{margin-bottom:14px}.watch-party-divider{margin:14px 0}}
+
+/* Keep the full navigation menu usable on shorter desktop and mobile screens. */
+.nav-dropdown{max-height:calc(100vh - 90px);overflow-y:auto;overscroll-behavior:contain}
