@@ -3582,3 +3582,98 @@ body {
 @media (prefers-reduced-motion: reduce) {
     #auth-view.auth-dialog .auth-art-poster { transform: none; }
 }
+
+
+/* Desktop dialog: retain the original full-screen sign-in split layout,
+   scaled down into a centered horizontal modal. */
+@media (min-width: 821px) {
+    #auth-view.auth-dialog .auth-layout {
+        display: grid;
+        grid-template-columns: minmax(280px, .9fr) minmax(410px, 1.1fr);
+        width: min(100%, 900px);
+        min-height: 0;
+        align-items: stretch;
+    }
+    #auth-view.auth-dialog .auth-aside {
+        display: flex;
+        position: relative;
+        min-height: 590px;
+        height: 100%;
+        padding: 38px 34px;
+        border: 1px solid rgba(255,255,255,.08);
+        border-right: 0;
+        border-radius: 22px 0 0 22px;
+        background:
+            radial-gradient(ellipse at 15% 78%, rgba(52,152,219,.2), transparent 43%),
+            radial-gradient(ellipse at 88% 18%, rgba(155,89,182,.16), transparent 42%),
+            linear-gradient(145deg, #101c2b 0%, #11101d 54%, #080b11 100%);
+        overflow: hidden;
+    }
+    #auth-view.auth-dialog .auth-aside .auth-brand {
+        position: relative;
+        z-index: 2;
+        display: block;
+        margin: 0;
+        text-align: left;
+        font-size: 29px;
+    }
+    #auth-view.auth-dialog .auth-aside-copy {
+        position: relative;
+        z-index: 2;
+        max-width: 330px;
+        margin: auto 0;
+        padding: 38px 0;
+    }
+    #auth-view.auth-dialog .auth-aside-copy h2 {
+        margin-bottom: 16px;
+        font-size: clamp(2.2rem, 4vw, 3rem);
+        letter-spacing: -1.8px;
+    }
+    #auth-view.auth-dialog .auth-aside-copy > p {
+        max-width: 300px;
+        font-size: .9rem;
+        line-height: 1.7;
+    }
+    #auth-view.auth-dialog .auth-feature {
+        margin-top: 27px;
+        font-size: .78rem;
+    }
+    #auth-view.auth-dialog .auth-aside-footer {
+        position: relative;
+        z-index: 2;
+        font-size: .58rem;
+        letter-spacing: 1.6px;
+    }
+    #auth-view.auth-dialog .auth-main {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 590px;
+        padding: 42px 42px 34px;
+        border: 1px solid rgba(255,255,255,.11);
+        border-left: 0;
+        border-radius: 0 22px 22px 0;
+        background:
+            radial-gradient(ellipse at 100% 0%, rgba(155,89,182,.10), transparent 45%),
+            linear-gradient(155deg, #171c24, #101319 70%);
+    }
+    #auth-view.auth-dialog .auth-mobile-brand { display: none; }
+    #auth-view.auth-dialog .auth-panel { width: 100%; max-width: 390px; }
+    #auth-view.auth-dialog .auth-heading { text-align: left; }
+    #auth-view.auth-dialog .auth-heading p { margin-left: 0; }
+    #auth-view.auth-dialog .auth-dialog-close {
+        top: 12px;
+        right: 12px;
+    }
+}
+@media (max-width: 820px) {
+    #auth-view.auth-dialog .auth-aside { display: none; }
+    #auth-view.auth-dialog .auth-main {
+        display: block;
+        min-height: 0;
+        border: 1px solid rgba(255,255,255,.11);
+        border-radius: 18px;
+        padding: 32px 21px 24px;
+    }
+    #auth-view.auth-dialog .auth-mobile-brand { display: block; }
+}
