@@ -3306,3 +3306,149 @@ body {
     color: transparent;
     font-weight: 700;
 }
+
+
+/* Final compact authentication dialog: shared GTV hub branding and detail-page buttons. */
+#auth-view.auth-view.auth-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 6000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: max(14px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom));
+    overflow-x: hidden;
+    overflow-y: auto;
+    background:
+        radial-gradient(ellipse at 12% 12%, rgba(52,152,219,.19), transparent 48%),
+        radial-gradient(ellipse at 88% 88%, rgba(155,89,182,.20), transparent 48%),
+        rgba(3,6,10,.84);
+    backdrop-filter: blur(13px);
+}
+#auth-view.auth-dialog .auth-layout {
+    display: block;
+    width: min(100%, 440px);
+    min-height: 0;
+    margin: auto;
+}
+#auth-view.auth-dialog .auth-aside { display: none; }
+#auth-view.auth-dialog .auth-main {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    padding: 34px 32px 29px;
+    border: 1px solid rgba(255,255,255,.11);
+    border-radius: 22px;
+    background:
+        radial-gradient(ellipse at 100% 0%, rgba(155,89,182,.14), transparent 46%),
+        radial-gradient(ellipse at 0% 100%, rgba(52,152,219,.10), transparent 48%),
+        linear-gradient(155deg, #171c24, #101319 72%);
+    box-shadow: 0 26px 90px rgba(0,0,0,.58);
+}
+#auth-view.auth-dialog .auth-panel {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+#auth-view.auth-dialog .auth-mobile-brand {
+    display: block;
+    width: fit-content;
+    margin: 0 auto 22px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 29px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    text-shadow: none;
+}
+#auth-view.auth-dialog .auth-mobile-brand span {
+    font-weight: 300;
+    -webkit-text-fill-color: transparent;
+}
+#auth-view.auth-dialog .auth-heading {
+    margin-bottom: 22px;
+    text-align: center;
+}
+#auth-view.auth-dialog .auth-heading h1 {
+    margin: 0 0 8px;
+    font-size: clamp(1.4rem, 5vw, 1.7rem);
+    letter-spacing: -.6px;
+}
+#auth-view.auth-dialog .auth-heading p {
+    margin: 0 auto;
+    max-width: 340px;
+    font-size: .88rem;
+    line-height: 1.55;
+}
+#auth-view.auth-dialog .auth-form { gap: 8px; }
+#auth-view.auth-dialog .auth-form label { margin-top: 8px; }
+#auth-view.auth-dialog .auth-form input {
+    height: 48px;
+    border-radius: 11px;
+    background: rgba(7,11,17,.78);
+}
+#auth-view.auth-dialog .auth-submit,
+#auth-view.auth-dialog .auth-guest-btn {
+    min-height: 48px;
+    border-radius: 50px;
+    justify-content: center;
+    width: 100%;
+    padding: 12px 24px;
+    font-size: .88rem;
+    letter-spacing: .8px;
+}
+#auth-view.auth-dialog .auth-submit {
+    margin-top: 13px;
+    color: #fff;
+    background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%);
+    box-shadow: 0 7px 22px rgba(91,105,205,.25);
+}
+#auth-view.auth-dialog .auth-submit:hover,
+#auth-view.auth-dialog .auth-submit:focus-visible {
+    box-shadow: 0 9px 28px rgba(115,105,210,.36);
+}
+#auth-view.auth-dialog .auth-guest-btn { border: 2px solid rgba(255,255,255,.28); }
+#auth-view.auth-dialog .auth-links {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+#auth-view.auth-dialog .auth-links button { color: #c0a4ed; font-size: .78rem; }
+#auth-view.auth-dialog .auth-links button:hover { color: #fff; }
+#auth-view.auth-dialog .auth-divider { margin: 19px 0 14px; }
+#auth-view.auth-dialog .auth-footnote { margin-top: 13px; }
+#auth-view.auth-dialog .auth-dialog-close {
+    top: 11px;
+    right: 11px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+}
+#auth-view .auth-title-brand {
+    background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    font-weight: 700;
+}
+@media (max-width: 480px) {
+    #auth-view.auth-dialog .auth-main { padding: 32px 21px 24px; border-radius: 18px; }
+    #auth-view.auth-dialog .auth-mobile-brand { margin-bottom: 19px; }
+    #auth-view.auth-dialog .auth-heading { margin-bottom: 18px; }
+    #auth-view.auth-dialog .auth-links { gap: 10px; }
+}
+@media (max-height: 620px) {
+    #auth-view.auth-dialog { align-items: flex-start; }
+    #auth-view.auth-dialog .auth-main { margin-top: auto; margin-bottom: auto; }
+}
