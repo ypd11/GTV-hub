@@ -808,6 +808,38 @@ window.continueAsGuest = () => {
     initApp();
 };
 
+// Supabase anonymous identities are reserved for temporary Watch Party access.
+// They must never enter the regular cloud-profile account flow.
+function isAnonymousSupabaseUser(user) {
+    return !!user && (
+        user.is_anonymous === true ||
+        (user.app_metadata && user.app_metadata.provider === 'anonymous')
+    );
+}
+
+// Return the current authenticated identity for Watch Party operations.
+// Existing account sessions are reused; local guests receive an anonymous
+// Supabase identity only when they actually create or join a party.
+window.ensureWatchPartySession = async function() {
+    if (!supabaseClient) throw new Error('The sign-in service is unavailable. Please refresh and try again.');
+
+    const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+    if (sessionError) throw sessionError;
+
+    let user = sessionData && sessionData.session ? sessionData.session.user : null;
+    if (!user) {
+        const { data, error } = await supabaseClient.auth.signInAnonymously();
+        if (error) throw error;
+        user = data && data.user;
+    }
+
+    if (!user) throw new Error('Could not establish a Watch Party session.');
+    return {
+        user: user,
+        isAnonymous: isAnonymousSupabaseUser(user)
+    };
+};
+
 async function initializeAuthentication() {
     if (!window.supabase || !window.supabase.createClient) {
         renderAuthView('login', 'Could not load the sign-in service. Check your connection and refresh.', true);
@@ -826,9 +858,20 @@ async function initializeAuthentication() {
     const { data, error } = await supabaseClient.auth.getSession();
     if (error) console.warn('Could not restore Supabase session:', error.message);
     if (data && data.session) {
-        authUser = data.session.user;
-        if (passwordRecoveryPending) renderAuthView('update-password');
-        else await enterAccount();
+        const sessionUser = data.session.user;
+        if (isAnonymousSupabaseUser(sessionUser)) {
+            // A Watch Party guest has a real Supabase session, but remains
+            // in local guest mode and must never receive cloud profiles.
+            authUser = null;
+            guestMode = true;
+            cloudProfileMode = false;
+            profiles = safeJsonParse('gtv_profiles', []);
+            initApp();
+        } else {
+            authUser = sessionUser;
+            if (passwordRecoveryPending) renderAuthView('update-password');
+            else await enterAccount();
+        }
     } else {
         // Start unauthenticated visitors in guest mode at the profile picker.
         guestMode = true;
