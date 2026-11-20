@@ -1346,7 +1346,7 @@ window.renderProfileScreen = () => {
         let deleteBtn = '';
         if (isManagingProfiles) {
             card.classList.add('managing');
-            deleteBtn = `<button class="profile-delete-btn" onclick="deleteProfile(${p.id}, event)"><span class="material-icons" style="font-size:16px;">close</span></button>`;
+            deleteBtn = `<button class="profile-delete-btn" type="button"><span class="material-icons" style="font-size:16px;">close</span></button>`;
         }
 
         // Fix: Show Initial instead of Icon
@@ -1361,6 +1361,11 @@ window.renderProfileScreen = () => {
             </div>
             <div class="profile-name">${escapeHtml(p.name)}</div>
         `;
+        const deleteButton = card.querySelector('.profile-delete-btn');
+        if (deleteButton) {
+            deleteButton.addEventListener('click', (event) => window.deleteProfile(p.id, event));
+        }
+
         list.appendChild(card);
     });
 
