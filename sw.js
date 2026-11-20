@@ -1,8 +1,9 @@
-const CACHE_NAME = 'gtv-hub-v31';
+const CACHE_NAME = 'gtv-hub-v32';
 const DYNAMIC_CACHE = 'gtv-dynamic-v2';
 const ASSETS = [
   './',
   './index.html',
+  './email-confirmed.html',
   './style.css',
   './script.js',
   './manifest.json',
