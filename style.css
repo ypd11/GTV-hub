@@ -3693,3 +3693,61 @@ body {
     -webkit-text-fill-color: transparent;
     color: transparent;
 }
+
+
+/* In-player TV episode browser */
+.player-episodes-container { position: relative; pointer-events: auto; }
+.player-episodes-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: min(340px, calc(100vw - 32px));
+    max-height: min(70vh, 560px);
+    overflow: hidden;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    background: rgba(15,17,22,0.96);
+    color: #fff;
+    box-shadow: 0 14px 45px rgba(0,0,0,0.55);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    z-index: 5010;
+}
+.player-episodes-panel.active { display: flex; }
+.player-episodes-heading { font-size: 1rem; font-weight: 700; }
+.player-season-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 9px;
+    background: #242832;
+    color: #fff;
+    font: inherit;
+    outline: none;
+}
+.player-episode-list { display: flex; flex-direction: column; gap: 5px; overflow-y: auto; min-height: 0; }
+.player-episode-option {
+    width: 100%;
+    padding: 11px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #ddd;
+    text-align: left;
+    font: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+.player-episode-option:hover, .player-episode-option:focus-visible { background: rgba(255,255,255,0.1); color: #fff; outline: none; }
+.player-episode-option.active { background: rgba(52,152,219,0.2); color: #75c5ff; font-weight: 700; }
+.player-episodes-loading { padding: 12px 2px; color: #aaa; font-size: 0.88rem; }
+.player-episodes-container .hero-icon-btn { pointer-events: auto; }
+.video-container.controls-hidden .player-episodes-panel.active { opacity: 1; pointer-events: auto; }
+@media (max-width: 600px) {
+    .player-episodes-panel { right: -8px; width: min(320px, calc(100vw - 24px)); max-height: 65vh; }
+}
