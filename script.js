@@ -5151,8 +5151,6 @@ window.openCommunityProfileSettings = async function () {
           '<p id="community-profile-message" class="community-profile-message" role="status"></p>' +
           '<div class="community-profile-actions"><button type="button" class="community-action-outline" onclick="closeCommunityProfileSettings()">Cancel</button><button type="submit" class="community-action-primary" id="community-profile-save">Create profile</button></div>' +
         '</form></div>';
-    document.body.appendChild(modal);
-    document.body.classList.add('no-scroll');
     modal.querySelector('#community-avatar-grid').addEventListener('click', function(event) {
         const option = event.target.closest('[data-avatar-id]');
         if (!option) return;
@@ -5168,9 +5166,15 @@ window.openCommunityProfileSettings = async function () {
     modal.querySelector('#community-profile-form').addEventListener('submit', saveCommunityProfile);
     modal.addEventListener('click', function(event) { if (event.target === modal) closeCommunityProfileSettings(); });
     const result = await supabaseClient.from('community_profiles').select('username,display_name,bio,avatar_id,is_public').eq('user_id', authUser.id).maybeSingle();
-    if (!document.getElementById('community-profile-modal')) return;
     const message = modal.querySelector('#community-profile-message');
-    if (result.error) { message.textContent = 'Could not load your profile: ' + result.error.message; message.classList.add('error'); return; }
+    if (result.error) {
+        modal.querySelector('#community-profile-title').textContent = 'Community profile';
+        message.textContent = 'Could not load your profile: ' + result.error.message;
+        message.classList.add('error');
+        document.body.appendChild(modal);
+        document.body.classList.add('no-scroll');
+        return;
+    }
     const data = result.data;
     const metadata = authUser.user_metadata || {};
     const defaultName = metadata.display_name || metadata.full_name || (authUser.email ? authUser.email.split('@')[0] : '');
@@ -5188,6 +5192,9 @@ window.openCommunityProfileSettings = async function () {
         option.setAttribute('aria-pressed', String(active));
     });
     modal.querySelector('#community-profile-save').textContent = data ? 'Save changes' : 'Create profile';
+    // Reveal the dialog only after the saved profile has populated every field.
+    document.body.appendChild(modal);
+    document.body.classList.add('no-scroll');
 };
 window.closeCommunityProfileSettings = function() {
     const modal = document.getElementById('community-profile-modal');
