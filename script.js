@@ -1394,7 +1394,7 @@ window.renderProfileScreen = () => {
     if (!accountBtn) {
         accountBtn = document.createElement('button');
         accountBtn.id = 'profile-account-btn';
-        accountBtn.className = 'more-info-btn';
+        accountBtn.className = 'play-btn profile-account-btn';
         accountBtn.style.marginTop = '12px';
         manageBtn.insertAdjacentElement('afterend', accountBtn);
     }
