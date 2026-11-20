@@ -4001,6 +4001,19 @@ window.addEventListener('message', event => {
     if (!message || message.type !== 'PLAYER_EVENT' || !message.data || !activeWatchParty || !activeWatchParty.is_host) return;
     const eventName = message.data.event;
     if (!['play', 'pause', 'seeked', 'ended'].includes(eventName)) return;
+    if (message.data.id && ['movie', 'tv'].includes(message.data.mediaType)) {
+        const playerMedia = {
+            id: Number(message.data.id),
+            type: message.data.mediaType,
+            season: Number(message.data.season) || 1,
+            episode: Number(message.data.episode) || 1
+        };
+        const current = window.currentPlayInfo || {};
+        if (String(current.id) !== String(playerMedia.id) || current.type !== playerMedia.type || Number(current.season || 1) !== playerMedia.season || Number(current.episode || 1) !== playerMedia.episode) {
+            window.currentPlayInfo = playerMedia;
+            broadcastWatchPartyAction('media', playerMedia);
+        }
+    }
     if (eventName === 'play') watchPartyHostPlaying = true;
     if (eventName === 'pause' || eventName === 'ended') watchPartyHostPlaying = false;
     const currentTime = Number(message.data.currentTime);
