@@ -479,7 +479,7 @@ body {
     margin-top: 3vw;
 }
 
-.row-title, #category-title {
+.row-title, #category-title, .community-profile-page-title {
     font-size: clamp(1.2rem, 1.5vw, 2rem);
     color: #e5e5e5;
     font-weight: 700;
