@@ -5002,7 +5002,7 @@ window.openCommunityProfile=async function(username,fromHistory,directLink){
   if(ownResult.data&&ownResult.data.username===clean)result=ownResult;
  }
  if(req!==communityProfileRequest||communityCurrentUsername!==clean)return;
- if(result.error||!result.data){host.innerHTML='<div class="community-profile-not-found"><button class="back-btn-simple" onclick="openCommunityDirectory()"><span class="material-icons">arrow_back</span> Community</button><span class="material-icons">person_off</span><h1>Profile unavailable</h1><p>This profile does not exist, or it is private.</p></div>';return;}
+ if(result.error||!result.data){host.innerHTML='<div class="community-profile-not-found"><div class="category-header-block" style="padding: 0 4%; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;"><button class="back-btn-simple" onclick="openCommunityDirectory()"><span class="material-icons">arrow_back</span></button></div><span class="material-icons">person_off</span><h1>Profile unavailable</h1><p>This profile does not exist, or it is private.</p></div>';return;}
  const p=result.data,own=!!(authUser&&authUser.id===p.user_id);
  const [fr,fg,follow]=await Promise.all([supabaseClient.from('follows').select('follower_id',{count:'exact',head:true}).eq('following_id',p.user_id),supabaseClient.from('follows').select('following_id',{count:'exact',head:true}).eq('follower_id',p.user_id),authUser&&!own?supabaseClient.from('follows').select('follower_id').eq('follower_id',authUser.id).eq('following_id',p.user_id).maybeSingle():Promise.resolve({data:null,error:null})]);
  if(req!==communityProfileRequest||communityCurrentUsername!==clean)return;const followers=fr.count||0,following=fg.count||0,isFollowing=!!follow.data;
