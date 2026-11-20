@@ -736,7 +736,12 @@ async function initializeAuthentication() {
         if (passwordRecoveryPending) renderAuthView('update-password');
         else await enterAccount();
     } else {
-        renderAuthView('login');
+        // Start unauthenticated visitors in guest mode at the profile picker.
+        guestMode = true;
+        cloudProfileMode = false;
+        authUser = null;
+        profiles = safeJsonParse('gtv_profiles', []);
+        initApp();
     }
 }
 
