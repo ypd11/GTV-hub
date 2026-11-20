@@ -3677,3 +3677,9 @@ body {
     }
     #auth-view.auth-dialog .auth-mobile-brand { display: block; }
 }
+
+/* Keep the confirm-password label/input spacing consistent with the other auth fields. */
+#auth-view.auth-dialog #auth-confirm-wrap label {
+    display: block;
+    margin-bottom: 8px;
+}
