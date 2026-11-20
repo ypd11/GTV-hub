@@ -1070,6 +1070,7 @@ function setupNewNavigation() {
         <div class="dropdown-item" onclick="openWatchlist();"><span class="material-icons">list</span> My Watchlist</div>
         <div class="dropdown-item" onclick="openHiddenContent();"><span class="material-icons">visibility_off</span> Hidden Content</div>
         <div class="dropdown-item" onclick="openSettingsView(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">settings</span> Settings</div>
+        <div class="dropdown-item" onclick="openChangelogView(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">history</span> Changelog</div>
         ${cloudProfileMode
             ? '<div class="dropdown-item" onclick="signOutAccount(); document.getElementById(\'nav-dropdown\').classList.remove(\'active\');"><span class="material-icons">logout</span> Sign Out</div>'
             : '<div class="dropdown-item" onclick="openAccountSignIn()"><span class="material-icons">login</span> Sign In</div>'}
@@ -1569,6 +1570,7 @@ window.selectProfile = async (id) => {
             <div class="dropdown-item" onclick="openWatchlist();"><span class="material-icons">list</span> My Watchlist</div>
             <div class="dropdown-item" onclick="openHiddenContent();"><span class="material-icons">visibility_off</span> Hidden Content</div>
             <div class="dropdown-item" onclick="openSettingsView(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">settings</span> Settings</div>
+            <div class="dropdown-item" onclick="openChangelogView(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">history</span> Changelog</div>
             ${cloudProfileMode
                 ? '<div class="dropdown-item" onclick="signOutAccount(); document.getElementById(\'nav-dropdown\').classList.remove(\'active\');"><span class="material-icons">logout</span> Sign Out</div>'
                 : '<div class="dropdown-item" onclick="openAccountSignIn()"><span class="material-icons">login</span> Sign In</div>'}
@@ -1853,6 +1855,7 @@ function createFooter() {
             <div class="footer-links">
                 <span onclick="openHelpView()">Help</span>
                 <span onclick="openAboutView()">About</span>
+                <span onclick="openChangelogView()">Changelog</span>
                 <span onclick="openTermsView()">Terms of Use</span>
                 <span onclick="openPrivacyView()">Privacy Policy</span>
                 <span onclick="openLegalView()">Legal & DMCA</span>
@@ -3738,34 +3741,50 @@ window.openInfoView = (title, content) => {
 
 window.openHelpView = () => {
     openInfoView('Help Center', `
-        <div style="max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; color: #ccc;">
-        <h3 style="color:var(--accent); margin-bottom:10px;">Getting Started</h3>
-        <p>Welcome to GTV hub! Browse and stream a vast collection of Movies and TV Shows.</p>
-        
+        <div style="max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.7; color: #ccc;">
+        <h3 style="color:#fff; margin-bottom:10px;">Getting Started</h3>
+        <p>Welcome to GTV hub! Browse movies and TV shows, discover cast members, keep a watchlist, and continue watching across sessions. You can use the app as a guest or create an account if you want your profiles and supported viewing data to sync across devices.</p>
+
+        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Guest Mode or an Account</h4>
+        <p>You do not need an account to use GTV hub. Choose <strong>Continue as Guest</strong> to use the app on the current browser and device. Guest profiles and their data are stored locally, so they are not automatically available on another device or browser.</p>
+        <p>You can also create an account with your email address and a password, then confirm your email if prompted. Sign in on another device to access the profiles and supported data saved to your account. You can switch between guest use and account sign-in from the profile or account controls. Signing out does not delete your account.</p>
+
+        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Profiles</h4>
+        <p>Profiles let different viewers keep their own watchlists, viewing progress, preferences, and recommendations separate. Open the profile picker to switch viewers or choose <strong>Manage Profiles</strong> to add, edit, or delete profiles. When you are signed in, profiles created in your account are saved to your account; in guest mode, they remain on the current device.</p>
+        <p>Deleting a profile removes that profile and its associated profile data. Take care when confirming a deletion, especially when using an account with cloud-synced profiles.</p>
+
         <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">How to Watch</h4>
-        <p>Click on any poster to view details. On the details page, click "Play Now". For TV Shows, select seasons and episodes from the dropdown.</p>
-        
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Switching Servers</h4>
-        <p>If a video fails to load or buffers frequently, try switching the server. In the player, click the "Server" button (or the DNS icon) to select a different video source.</p>
+        <p>Select a movie or TV show poster to open its details. From there, choose <strong>Play Now</strong> to start playback. For a TV show, choose a season and then the episode you want to watch. Use the player controls and the Back button to return to the title details.</p>
+        <p>GTV hub displays catalogue information and connects to external video players. Playback availability and quality depend on the selected third-party source, not only on the title appearing in the catalogue.</p>
 
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Custom API Key</h4>
-        <p>This site uses the TMDB API for metadata. If you experience issues with data loading, you can use your own TMDB API Key in Settings. This ensures you don't hit shared rate limits.</p>
+        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Switching Playback Providers</h4>
+        <p>If a video does not load, displays an error, or buffers repeatedly, open the server/source selector in the player and try another available provider. Different providers may have different availability, quality, subtitles, advertisements, or loading times. Not every title is available from every source.</p>
 
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">My Watchlist</h4>
-        <p>Save content for later by clicking the "Add to Watchlist" button on any movie or show. Access your list from the main menu or the dashboard.</p>
+        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">My Watchlist and Viewing Activity</h4>
+        <p>Use <strong>Add to Watchlist</strong> on a title to save it for later. Open <strong>My Watchlist</strong> from the main menu to revisit saved movies and shows. Like or otherwise interact with titles where those controls are available to help shape recommendations. Continue Watching and viewing history help you return to content you have already started.</p>
+        <p>Guest activity is stored on the current device. When signed in, supported profile data is synchronized with your account so it can follow you to other devices.</p>
+
+        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Search, Categories, and People</h4>
+        <p>Use the search field to find a movie or show by title. Browse Categories to explore genres and collections, or open People to discover actors and other people associated with films and series. Select a person to view their credits and related information.</p>
+
+        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Settings and Custom TMDB API Key</h4>
+        <p>Open Settings from the main menu to adjust the app's available preferences, such as region, default content tab, and reduced-motion behavior. GTV hub uses TMDB for catalogue metadata, posters, and cast information. If you have your own TMDB API key, you can enter it in Settings. Keep your key private, particularly on shared devices.</p>
 
         <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Trailers</h4>
-        <p>Watch trailers for movies and shows directly within the app by clicking the "Trailer" button on the details page.</p>
+        <p>Where available, select the <strong>Trailer</strong> option on a movie or show details page to view a trailer. Trailer playback may also rely on an external service.</p>
 
         <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Hidden Content</h4>
-        <p>Some content may not be available at the moment. If a stream is broken, please <b>try all available servers</b> in the player first. If it still doesn't work, you can hide the title from your lists so it doesn't appear again. Manage your hidden items in the "Hidden Content" section in the menu.</p>
-        
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Ads & Popups</h4>
-        <p>The video player is provided by a third-party service and may contain ads. We do not control these ads and we do not receive any revenue from them. They are inserted by the video host to support their servers.</p>
-        
+        <p>If you do not want a title to appear in your lists or recommendations, use the hide option when available. Open <strong>Hidden Content</strong> from the menu to review hidden titles and manage them. Hiding a title does not remove it from the third-party catalogue or playback providers.</p>
+
+        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Ads, Popups, and External Players</h4>
+        <p>Video providers are independent third parties. Their players may display advertisements, popups, redirects, or their own controls and privacy notices. GTV hub does not control those third-party experiences. Close unexpected tabs and avoid entering personal or payment information into unfamiliar pages.</p>
+
         <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Troubleshooting</h4>
-        <p>If a video fails to load, try refreshing the page. Ensure you have a stable internet connection.</p>
-        <p style="margin-top:10px; color:#aaa; font-size:0.9em;"><strong>Note:</strong> If you see a movie or episode without a cover image or thumbnail, it often indicates that the content is not available on the server. Playback for these items is likely to fail.</p>
+        <p><strong>Catalogue or images will not load:</strong> Check your internet connection, then refresh the page. If you use a custom TMDB API key, verify that it is entered correctly.</p>
+        <p><strong>A video will not play:</strong> Try another playback provider, refresh the player, and check whether the title is available from a different source. A missing poster or episode thumbnail can indicate incomplete catalogue information, but it does not always prove that playback is unavailable.</p>
+        <p><strong>Your profiles or watchlist are missing:</strong> Make sure you selected the right profile and, if you expect cloud data, that you are signed in to the correct account. Guest data belongs to the browser and device where it was created.</p>
+        <p><strong>Changes are not appearing on another device:</strong> Confirm that you are signed in on both devices and using the same account and profile. Guest data does not sync between devices.</p>
+        <p style="margin-top:15px; color:#aaa; font-size:0.9em;">If you still need help or want to report a problem, use the feedback link in the About section.</p>
         </div>
     `);
 };
@@ -3780,7 +3799,7 @@ window.openAboutView = () => {
                 <img src="../icon.png" alt="GTV hub" style="width: 100px; height: 100px; border-radius: 24px; margin-bottom: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
                 <h1 style="font-size: 3.5rem; font-weight: 800; margin: 0 0 10px 0; letter-spacing: -1px; background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">GTV <span style="font-weight: 300;">hub</span></h1>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 30px;">
-                    <span style="background: rgba(255,255,255,0.1); padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; border: 1px solid rgba(255,255,255,0.1);">v2.1.0</span>
+                    <span style="background: rgba(255,255,255,0.1); padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; border: 1px solid rgba(255,255,255,0.1);">v3.0.0</span>
                     <span style="background: rgba(52, 152, 219, 0.15); color: #3498db; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; border: 1px solid rgba(52, 152, 219, 0.2);">Stable</span>
                 </div>
                 <p style="font-size: 1.2rem; line-height: 1.6; color: #aaa; max-width: 500px; margin: 0 auto 35px auto;">
@@ -3814,7 +3833,7 @@ window.openAboutView = () => {
                         <span class="material-icons" style="color: #e74c3c; font-size: 26px;">security</span>
                     </div>
                     <h3 style="color: #fff; margin: 0 0 10px 0; font-size: 1.3rem;">Privacy First</h3>
-                    <p style="color: #888; font-size: 0.95rem; line-height: 1.6; margin: 0;">No account required. Your data stays locally on your device.</p>
+                    <p style="color: #888; font-size: 0.95rem; line-height: 1.6; margin: 0;">Use GTV hub as a guest or sign in to sync your profiles and supported data across devices.</p>
                 </div>
             </div>
 
@@ -3839,8 +3858,8 @@ window.openAboutView = () => {
                             <span class="material-icons" style="color: #e74c3c;">smart_display</span>
                         </div>
                         <div>
-                            <div style="color: #fff; font-weight: 700; font-size: 1.1rem;">VidSrc</div>
-                            <div style="font-size: 0.85rem; color: #888; margin-top: 5px;">Video player integration.</div>
+                            <div style="color: #fff; font-weight: 700; font-size: 1.1rem;">Playback Providers</div>
+                            <div style="font-size: 0.85rem; color: #888; margin-top: 5px;">Multiple third-party video sources.</div>
                         </div>
                     </div>
                 </div>
@@ -3858,6 +3877,43 @@ window.openAboutView = () => {
                     </button>
                 </a>
             </div>
+        </div>
+    `);
+};
+
+window.openChangelogView = () => {
+    openInfoView('Changelog', `
+        <div style="max-width: 800px; margin: 0 auto; padding: 25px 20px 45px; line-height: 1.7; color: #ccc;">
+            <div style="margin-bottom:30px;">
+                <div style="display:inline-block; padding:6px 13px; border-radius:20px; background:rgba(52,152,219,0.14); color:#7fc4ff; font-size:0.85rem; font-weight:700;">LATEST RELEASE</div>
+                <h2 style="color:#fff; font-size:2rem; margin:14px 0 4px;">GTV hub 3.0.0</h2>
+                <p style="color:#888; margin:0;">November 20, 2026</p>
+                <p style="margin-top:16px;">A major update focused on accounts, profiles, and keeping your GTV hub experience available across devices.</p>
+            </div>
+
+            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Added</h4>
+            <ul style="list-style-type:disc; padding-left:22px;">
+                <li>Optional account registration and sign-in with email confirmation.</li>
+                <li>Password recovery and password update support.</li>
+                <li>Cloud-backed profiles and synchronization of supported profile data across devices.</li>
+                <li>Guest mode remains available for people who prefer to use the app without an account.</li>
+                <li>A dedicated Help Center with guidance for accounts, profiles, playback, and troubleshooting.</li>
+                <li>A dedicated Changelog page.</li>
+            </ul>
+
+            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Improved</h4>
+            <ul style="list-style-type:disc; padding-left:22px;">
+                <li>Profile management for both guest and signed-in users.</li>
+                <li>Account and privacy explanations to distinguish local guest data from cloud-synchronized account data.</li>
+                <li>About page credits now describe playback providers generally rather than naming a single video source.</li>
+            </ul>
+
+            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Fixed</h4>
+            <ul style="list-style-type:disc; padding-left:22px;">
+                <li>Profile deletion for signed-in users.</li>
+            </ul>
+
+            <p style="margin-top:30px; color:#888; font-size:0.9rem;">GTV hub is continuously evolving. This page will list notable changes as new versions are released.</p>
         </div>
     `);
 };
@@ -3886,7 +3942,7 @@ window.openTermsView = () => {
             <p>By accessing and using GTV hub ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. In addition, when using these particular services, you shall be subject to any posted guidelines or rules applicable to such services.</p>
 
             <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">2. Description of Service</h4>
-            <p>GTV hub is a search engine and media indexing tool. We do not host, upload, or store any video files on our servers. The Service acts as a client-side interface to browse metadata provided by The Movie Database (TMDB) and embed video players from third-party providers (such as VidSrc).</p>
+            <p>GTV hub is a browsing interface for movie and TV metadata provided by The Movie Database (TMDB) and playback options supplied by third-party video providers. GTV hub does not host or upload the video files played through those external providers.</p>
 
             <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">3. User Responsibilities</h4>
             <p>You agree to use the Service only for lawful purposes. You are prohibited from violating or attempting to violate the security of the Service, including, without limitation, accessing data not intended for you or logging into a server or account which you are not authorized to access.</p>
@@ -3908,25 +3964,19 @@ window.openPrivacyView = () => {
         <div style="max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; color: #ccc;">
             <p>Last updated: ${new Date().toLocaleDateString()}</p>
             
-            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">1. Information Collection</h4>
-            <p>GTV hub is designed with privacy in mind. We do not require you to create an account or provide personal information (such as name, email address, or phone number) to use the Service.</p>
+            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">1. Guest Use and Accounts</h4>
+            <p>You can use GTV hub without registering. If you choose guest mode, profile information and supported app data are stored in your browser's local storage on that device. Guest data is not automatically synchronized to other devices.</p>
+            <p>You may optionally create an account using an email address and password. Account authentication and cloud profile synchronization are provided through Supabase. When you are signed in, information associated with your profiles and supported features may be stored in the app's cloud database and synchronized across devices. This can include profile details, watchlists, viewing activity, likes, and supported preferences. The email address you provide is used for account authentication and related account messages.</p>
 
-            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">2. Local Storage & Cookies</h4>
-            <p>We do not use traditional server-side "cookies" to track you across the internet. However, we use your browser's <strong>Local Storage</strong> to save your preferences and enhance your experience. This data stays on your device and is never sent to our servers.</p>
-            <p><strong>Data stored locally includes:</strong></p>
-            <ul style="list-style-type: disc; padding-left: 20px; margin-top: 5px;">
-                <li>Your Watchlist and Favorites</li>
-                <li>Watch History</li>
-                <li>App Settings (Theme, Region, API Keys)</li>
-                <li>Profile Information (Names and Colors)</li>
-            </ul>
-            <p>You can clear this data at any time by clearing your browser's cache or using the "Factory Reset" option in Settings.</p>
+            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">2. Local Storage and Cookies</h4>
+            <p>GTV hub uses your browser's <strong>Local Storage</strong> to keep app preferences, session-related information, and locally cached profile data. In guest mode, your profile data remains on the current device. For signed-in users, local storage may also contain a local copy or cache of data that is synchronized with the account database. Therefore, not all information is limited to your device.</p>
+            <p>Clearing browser storage may remove guest data and locally cached information. It does not necessarily delete information already saved to a signed-in account. Use the account and profile controls in GTV hub for account-related actions.</p>
 
             <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">3. Third-Party Services</h4>
             <p>Our Service interacts with third-party APIs and services. These services may collect their own data according to their privacy policies:</p>
             <ul style="list-style-type: disc; padding-left: 20px; margin-top: 5px;">
                 <li><strong>The Movie Database (TMDB):</strong> Used for fetching movie/TV show data.</li>
-                <li><strong>VidSrc / Video Hosts:</strong> When you play a video, you are connecting directly to a third-party server. They may use cookies or collect IP addresses for logging and ad delivery.</li>
+                <li><strong>Third-party video providers:</strong> When you select a playback source, your browser connects to that provider. The provider may process connection information, use cookies, or display advertisements according to its own policies.</li>
             </ul>
         </div>
     `);
@@ -3936,7 +3986,7 @@ window.openSettingsView = () => {
     const region = localStorage.getItem('gtv_region') || 'US';
     const defaultTab = localStorage.getItem('gtv_default_tab') || 'movie';
     const reducedMotion = localStorage.getItem('gtv_reduced_motion') === 'true';
-    const version = '2.1.1';
+    const version = '3.0.0';
 
     const html = `
         <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
