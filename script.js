@@ -1130,12 +1130,12 @@ function setupNewNavigation() {
     dropdown.id = 'nav-dropdown';
     dropdown.className = 'nav-dropdown';
     dropdown.innerHTML = `
+        <div class="dropdown-item" onclick="openWatchPartyJoin(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">groups</span> Join Watch Party</div>
         <div class="dropdown-item" onclick="openProfilePicker(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">people</span> Switch Profile</div>
         <div class="dropdown-item" onclick="openCategories(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">category</span> Categories</div>
             <div class="dropdown-item" onclick="openPeople(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">person_search</span> People</div>
         <div class="dropdown-item" onclick="randomPick();"><span class="material-icons">shuffle</span> Random Pick</div>
         <div class="dropdown-item" onclick="openWatchlist();"><span class="material-icons">list</span> My Watchlist</div>
-        <div class="dropdown-item" onclick="openWatchPartyJoin(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">groups</span> Join Watch Party</div>
         <div class="dropdown-item" onclick="openHiddenContent();"><span class="material-icons">visibility_off</span> Hidden Content</div>
         <div class="dropdown-item" onclick="openSettingsView(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">settings</span> Settings</div>
         <div class="dropdown-item" onclick="openChangelogView(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">history</span> Changelog</div>
@@ -3579,7 +3579,7 @@ window.renderEpisodes = async (tmdbId, seasonNum, count, btnElement) => {
     }
 };
 
-window.playItem = async (id, type, season = 1, episode = 1) => {
+window.playItem = async (id, type, season = 1, episode = 1, fromWatchParty = false) => {
     // Store current play info for source switching
     window.currentPlayInfo = { id, type, season, episode };
     const episodesBtn = document.getElementById('player-episodes-btn');
@@ -3600,6 +3600,7 @@ window.playItem = async (id, type, season = 1, episode = 1) => {
     }
     
     loadPlayerSource();
+    if (!fromWatchParty && activeWatchParty && activeWatchParty.is_host) broadcastWatchPartyAction('media', { id, type, season, episode });
 };
 
 async function addToHistory(id, type, season = null, episode = null) {
@@ -3661,7 +3662,7 @@ async function addToHistory(id, type, season = null, episode = null) {
     return itemData;
 }
 
-window.loadPlayerSource = () => {
+window.loadPlayerSource = (playbackOptions = {}) => {
     const { id, type, season, episode } = window.currentPlayInfo;
     const baseUrl = playerSources[currentSourceIdx];  
 
@@ -3670,7 +3671,10 @@ window.loadPlayerSource = () => {
         : `${baseUrl}/tv/${id}/${season}/${episode}`;
         
     if (baseUrl.includes('vidking.net')) {
-        embedUrl += '?autoPlay=true';
+        const query = new URLSearchParams();
+        if (playbackOptions.autoplay !== false) query.set('autoPlay', 'true');
+        if (Number.isFinite(Number(playbackOptions.progress)) && playbackOptions.progress > 0) query.set('progress', String(playbackOptions.progress));
+        embedUrl += query.toString() ? '?' + query.toString() : '';
         if (type === 'tv') {
             embedUrl += '&nextEpisode=true&episodeSelector=true';
         }
@@ -3707,10 +3711,11 @@ window.loadPlayerSource = () => {
     showToast(`Playing from: ${domain}`);
 };
 
-window.selectPlayerSource = (index) => {
+window.selectPlayerSource = (index, fromWatchParty = false) => {
     currentSourceIdx = index;
     loadPlayerSource();
     document.getElementById('server-dropdown-menu').classList.remove('active');
+    if (!fromWatchParty && activeWatchParty && activeWatchParty.is_host) broadcastWatchPartyAction('source', { index });
 };
 
 
@@ -3721,6 +3726,7 @@ let watchPartyPresenceChannel = null;
 let watchPartyPanel = null;
 let watchPartyMessages = [];
 let watchPartySending = false;
+let watchPartyApplyingRemoteAction = false;
 
 window.initializeWatchPartyPanel = function() {
     if (document.getElementById('watch-party-panel')) {
@@ -3891,6 +3897,7 @@ async function connectWatchPartyRealtime() {
     if (watchPartyPresenceChannel) await supabaseClient.removeChannel(watchPartyPresenceChannel);
     const partyId = activeWatchParty.id;
     watchPartyChannel = supabaseClient.channel('watch-party-chat:' + partyId)
+        .on('broadcast', { event: 'playback' }, ({ payload }) => applyWatchPartyAction(payload))
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'watch_party_messages', filter: 'party_id=eq.' + partyId }, payload => {
             if (!watchPartyMessages.some(message => message.id === payload.new.id)) {
                 watchPartyMessages.push(payload.new);
@@ -3932,20 +3939,66 @@ function renderWatchPartyPresence() {
     watchPartyPanel.querySelector('.watch-party-participant-count').textContent = people.length + (people.length === 1 ? ' here' : ' here');
 }
 
-async function openWatchPartyRoom(party, user, displayName) {
-    activeWatchParty = { id: party.id, invite_code: party.invite_code, title: party.title, user_id: user.id, display_name: displayName };
+async function openWatchPartyRoom(party, user, displayName, isHost) {
+    activeWatchParty = { id: party.id, invite_code: party.invite_code, title: party.title, user_id: user.id, display_name: displayName, is_host: !!isHost };
     watchPartyMessages = [];
     renderWatchPartyRoom();
     setWatchPartyStatus('Connecting to your party…');
     try {
         await loadWatchPartyMessages();
         await connectWatchPartyRealtime();
-        setWatchPartyStatus('You’re in. Copy the invite link and send it to your friends.');
+        if (!activeWatchParty.is_host && party.tmdb_id && party.media_type) {
+            await window.playItem(Number(party.tmdb_id), party.media_type, Number(party.season_number) || 1, Number(party.episode_number) || 1, true);
+            setWatchPartyStatus('Joined. Loading the host’s movie or episode.');
+        } else {
+            setWatchPartyStatus(activeWatchParty.is_host ? 'You’re hosting. Your playback controls are shared with the party.' : 'You’re in. Copy the invite link and send it to your friends.');
+        }
     } catch (error) {
         setWatchPartyStatus(error.message || 'Could not connect to the party.', true);
     }
 }
 
+function broadcastWatchPartyAction(action, data = {}) {
+    if (!activeWatchParty || !activeWatchParty.is_host || !watchPartyChannel || watchPartyApplyingRemoteAction) return;
+    watchPartyChannel.send({ type: 'broadcast', event: 'playback', payload: { action, data, sent_at: Date.now(), host_id: activeWatchParty.user_id } })
+        .catch(error => console.warn('Watch Party playback broadcast failed:', error));
+}
+
+async function applyWatchPartyAction(payload) {
+    if (!activeWatchParty || activeWatchParty.is_host || !payload || !payload.action) return;
+    const data = payload.data || {};
+    watchPartyApplyingRemoteAction = true;
+    try {
+        if (payload.action === 'media' && data.id && ['movie', 'tv'].includes(data.type)) {
+            await window.playItem(Number(data.id), data.type, Number(data.season) || 1, Number(data.episode) || 1, true);
+        } else if (payload.action === 'source' && Number.isInteger(Number(data.index)) && playerSources[Number(data.index)]) {
+            window.selectPlayerSource(Number(data.index), true);
+        } else if (payload.action === 'player' && Number.isFinite(Number(data.currentTime))) {
+            const baseUrl = playerSources[currentSourceIdx] || '';
+            if (baseUrl.includes('vidking.net')) {
+                window.loadPlayerSource({ progress: Math.max(0, Number(data.currentTime)), autoplay: data.event !== 'pause' });
+            } else {
+                setWatchPartyStatus('This provider does not expose remote play/pause/seek controls. Media and episode changes are synchronized.');
+            }
+        }
+    } catch (error) {
+        console.warn('Could not apply Watch Party playback action:', error);
+        setWatchPartyStatus('Could not synchronize this playback action.', true);
+    } finally {
+        setTimeout(() => { watchPartyApplyingRemoteAction = false; }, 350);
+    }
+}
+
+window.addEventListener('message', event => {
+    if (!iframe || event.source !== iframe.contentWindow || !/^https:\/\/(www\.)?vidking\.net$/.test(event.origin)) return;
+    let message = event.data;
+    if (typeof message === 'string') { try { message = JSON.parse(message); } catch (_) { return; } }
+    if (!message || message.type !== 'PLAYER_EVENT' || !message.data || !activeWatchParty || !activeWatchParty.is_host) return;
+    const eventName = message.data.event;
+    if (!['play', 'pause', 'seeked', 'ended'].includes(eventName)) return;
+    const currentTime = Number(message.data.currentTime);
+    if (Number.isFinite(currentTime)) broadcastWatchPartyAction('player', { event: eventName, currentTime });
+});
 window.createWatchParty = async function() {
     if (!watchPartyPanel || !supabaseClient) return;
     const button = watchPartyPanel.querySelector('.watch-party-create');
@@ -3964,7 +4017,7 @@ window.createWatchParty = async function() {
         if (result.error) throw result.error;
         const party = Array.isArray(result.data) ? result.data[0] : result.data;
         if (!party || !party.id) throw new Error('The party was created, but its details could not be loaded.');
-        await openWatchPartyRoom(party, identity.user, displayName);
+        await openWatchPartyRoom(party, identity.user, displayName, true);
     } catch (error) {
         setWatchPartyStatus(error.message || 'Could not create the party.', true);
     } finally {
@@ -3987,7 +4040,7 @@ window.joinWatchParty = async function(inviteCode) {
         if (result.error) throw result.error;
         const party = Array.isArray(result.data) ? result.data[0] : result.data;
         if (!party || !party.id) throw new Error('That invite code was not recognized or the party has ended.');
-        await openWatchPartyRoom(party, identity.user, displayName);
+        await openWatchPartyRoom(party, identity.user, displayName, false);
     } catch (error) {
         setWatchPartyStatus(error.message || 'Could not join the party.', true);
     } finally {
