@@ -9,11 +9,16 @@
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" href="./icon.png" type="image/png">
     <link rel="apple-touch-icon" href="./icon.png">
-    <link rel="stylesheet" href="style.css?v=33">
+    <link rel="stylesheet" href="style.css?v=34">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons&amp;v=30" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;800&display=swap" rel="stylesheet">
 </head>
 <body class="notranslate">
+<div id="startup-screen" class="startup-screen" role="status" aria-live="polite">
+    <div class="startup-brand">GTV<span> hub</span></div>
+    <div class="startup-spinner" aria-hidden="true"></div>
+    <p>Getting things ready...</p>
+</div>
 
 <nav class="top-nav">
     <div class="nav-left">
@@ -42,7 +47,7 @@
                 <span class="auth-eyebrow">YOUR ENTERTAINMENT, IN SYNC</span>
                 <h2>Pick up where<br>you left off.</h2>
                 <p>Keep your profiles, watchlist and viewing progress together across your devices.</p>
-                <div class="auth-feature"><span class="material-icons">devices</span><span>One account. Your GTV Hub everywhere.</span></div>
+                <div class="auth-feature"><span class="material-icons">devices</span><span>One account. Your GTV hub everywhere.</span></div>
             </div>
             <div class="auth-aside-orb auth-aside-orb-one"></div>
             <div class="auth-aside-orb auth-aside-orb-two"></div>
@@ -53,7 +58,7 @@
                 <button id="auth-dialog-close" class="auth-dialog-close" type="button" onclick="closeAccountSignIn()" aria-label="Close sign in" style="display:none;"><span class="material-icons">close</span></button>
                 <div class="brand-logo auth-mobile-brand">GTV<span> hub</span></div>
                 <div class="auth-heading">
-                    <h1 id="auth-title">Welcome to GTV Hub</h1>
+                    <h1 id="auth-title">Welcome to GTV hub</h1>
                     <p id="auth-subtitle">Sign in to sync your profiles and watchlist across devices.</p>
                 </div>
                 <form id="auth-form" class="auth-form" onsubmit="submitAuthForm(event)">
@@ -154,6 +159,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=32"></script>
+<script src="script.js?v=33"></script>
 </body>
 </html>
