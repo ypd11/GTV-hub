@@ -3715,7 +3715,7 @@ window.selectPlayerSource = (index, fromWatchParty = false) => {
     currentSourceIdx = index;
     loadPlayerSource();
     document.getElementById('server-dropdown-menu').classList.remove('active');
-    if (!fromWatchParty && activeWatchParty && activeWatchParty.is_host) broadcastWatchPartyAction('source', { index });
+    if (!fromWatchParty && activeWatchParty && activeWatchParty.is_host) broadcastWatchPartyAction('source', { url: playerSources[index] });
 };
 
 
@@ -3727,6 +3727,7 @@ let watchPartyPanel = null;
 let watchPartyMessages = [];
 let watchPartySending = false;
 let watchPartyApplyingRemoteAction = false;
+let watchPartyHostPlaying = true;
 
 window.initializeWatchPartyPanel = function() {
     if (document.getElementById('watch-party-panel')) {
@@ -3971,12 +3972,12 @@ async function applyWatchPartyAction(payload) {
     try {
         if (payload.action === 'media' && data.id && ['movie', 'tv'].includes(data.type)) {
             await window.playItem(Number(data.id), data.type, Number(data.season) || 1, Number(data.episode) || 1, true);
-        } else if (payload.action === 'source' && Number.isInteger(Number(data.index)) && playerSources[Number(data.index)]) {
-            window.selectPlayerSource(Number(data.index), true);
+        } else if (payload.action === 'source' && data.url && playerSources.includes(data.url)) {
+            window.selectPlayerSource(playerSources.indexOf(data.url), true);
         } else if (payload.action === 'player' && Number.isFinite(Number(data.currentTime))) {
             const baseUrl = playerSources[currentSourceIdx] || '';
             if (baseUrl.includes('vidking.net')) {
-                window.loadPlayerSource({ progress: Math.max(0, Number(data.currentTime)), autoplay: data.event !== 'pause' });
+                window.loadPlayerSource({ progress: Math.max(0, Number(data.currentTime)), autoplay: data.playing === true });
             } else {
                 setWatchPartyStatus('This provider does not expose remote play/pause/seek controls. Media and episode changes are synchronized.');
             }
@@ -3996,8 +3997,10 @@ window.addEventListener('message', event => {
     if (!message || message.type !== 'PLAYER_EVENT' || !message.data || !activeWatchParty || !activeWatchParty.is_host) return;
     const eventName = message.data.event;
     if (!['play', 'pause', 'seeked', 'ended'].includes(eventName)) return;
+    if (eventName === 'play') watchPartyHostPlaying = true;
+    if (eventName === 'pause' || eventName === 'ended') watchPartyHostPlaying = false;
     const currentTime = Number(message.data.currentTime);
-    if (Number.isFinite(currentTime)) broadcastWatchPartyAction('player', { event: eventName, currentTime });
+    if (Number.isFinite(currentTime)) broadcastWatchPartyAction('player', { event: eventName, currentTime, playing: watchPartyHostPlaying });
 });
 window.createWatchParty = async function() {
     if (!watchPartyPanel || !supabaseClient) return;
