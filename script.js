@@ -148,6 +148,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     appHistoryIndex = 1;
     setupNewNavigation();
     setupMobileCheck();
+    const initialCommunityRoute = window.location.hash;
+    if (initialCommunityRoute === '#community') window.openCommunityDirectory(true, true);
+    else if (initialCommunityRoute.indexOf('#profile/') === 0) {
+        const routeUsername = decodeURIComponent(initialCommunityRoute.slice('#profile/'.length));
+        if (routeUsername) window.openCommunityProfile(routeUsername, true, true);
+    }
     
     // Register Service Worker for Caching
     if ('serviceWorker' in navigator) {
@@ -155,6 +161,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // Browser Back navigates through GTV hub screens instead of leaving the app.
+    window.addEventListener('hashchange', () => {
+        const route = window.location.hash;
+        if (route === '#community') window.openCommunityDirectory(true, true);
+        else if (route.indexOf('#profile/') === 0) {
+            const username = decodeURIComponent(route.slice('#profile/'.length));
+            if (username) window.openCommunityProfile(username, true, true);
+        }
+    });
     window.addEventListener('popstate', (event) => {
         const state = event.state;
         if (state && state.gtvhubNavigation) {
@@ -1085,6 +1099,7 @@ function setupNewNavigation() {
         <div class="dropdown-item" onclick="openProfilePicker(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">people</span> Switch Profile</div>
         <div class="dropdown-item" onclick="openCategories(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">category</span> Categories</div>
             <div class="dropdown-item" onclick="openPeople(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">person_search</span> People</div>
+        <div class="dropdown-item" onclick="openCommunityDirectory(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">groups</span> Community</div>
         <div class="dropdown-item" onclick="randomPick();"><span class="material-icons">shuffle</span> Random Pick</div>
         <div class="dropdown-item" onclick="openWatchlist();"><span class="material-icons">list</span> My Watchlist</div>
         <div class="dropdown-item" onclick="openHiddenContent();"><span class="material-icons">visibility_off</span> Hidden Content</div>
@@ -4571,6 +4586,10 @@ function captureAndPushState() {
             tab: currentTab,
             navigationSection: activeNavigationSection
         };
+    } else if (!state && document.getElementById('community-profile-view')?.style.display === 'block') {
+        state = { view: 'community-profile', username: communityCurrentUsername, scroll: window.scrollY };
+    } else if (!state && document.getElementById('community-view')?.style.display === 'block') {
+        state = { view: 'community-directory', query: document.getElementById('community-search-input')?.value || '', scroll: window.scrollY };
     } else if (!state && document.getElementById('person-profile-view')?.style.display === 'block') {
         state = { view: 'person', id: peopleCurrentProfileId, scroll: window.scrollY };
     } else if (!state && document.getElementById('people-view')?.style.display === 'block') {
@@ -4720,6 +4739,17 @@ window.handleBack = (fromPopState = false) => {
         
         window.scrollTo(0, state.scroll);
         resetUrl(); // Categories don't have deep links yet
+    } else if (state.view === 'community-directory') {
+        openCommunityDirectory(true);
+        const communitySearch = document.getElementById('community-search-input');
+        if (communitySearch && state.query) {
+            communitySearch.value = state.query;
+            loadCommunityDirectory(state.query);
+        }
+        window.scrollTo(0, state.scroll || 0);
+    } else if (state.view === 'community-profile') {
+        openCommunityProfile(state.username, true);
+        window.scrollTo(0, state.scroll || 0);
     } else if (state.view === 'people') {
         openPeople(true);
         if (state.query) { document.getElementById('people-search-input').value = state.query; searchPeople(state.query); }
@@ -4740,6 +4770,8 @@ function prepareCategoryView() {
     setElementVisible(categoryView, true, 'block');
     setElementVisible(document.getElementById('people-view'), false);
     setElementVisible(document.getElementById('person-profile-view'), false);
+    setElementVisible(document.getElementById('community-view'), false);
+    setElementVisible(document.getElementById('community-profile-view'), false);
     setElementVisible(playerContainer, false);
     window.scrollTo(0, 0);
 }
@@ -4931,6 +4963,52 @@ window.triggerSearch = (query) => {
     handleSearchInput({ target: input });
 };
 
+
+
+/* Community discovery and public profiles */
+let communityCurrentUsername = '';
+let communityDirectoryRequest = 0;
+let communityProfileRequest = 0;
+function communityEscape(value){return escapeHtml(String(value==null?'':value));}
+function communitySetPage(page){
+ ['dashboard','details-view','category-view','people-view','person-profile-view','community-view','community-profile-view'].forEach(id=>{const el=document.getElementById(id);if(el)setElementVisible(el,id===page,'block');});
+ setElementVisible(playerContainer,false);const nav=document.querySelector('.top-nav');if(nav)nav.style.display='flex';document.body.classList.remove('no-scroll');window.scrollTo(0,0);
+}
+function communitySetUrl(hash){const url=new URL(window.location.href);url.searchParams.delete('movie');url.searchParams.delete('tv');url.hash=hash;history.replaceState({...(history.state||{}),gtvhubNavigation:true,gtvhubIndex:appHistoryIndex},'',url);}
+window.openCommunityDirectory=async function(fromHistory,directLink){
+ if(!fromHistory&&!directLink)captureAndPushState();communitySetPage('community-view');communitySetUrl('community');
+ const host=document.getElementById('community-view-content');
+ host.innerHTML=`<div class="community-page-heading"><div><span class="community-page-kicker">THE GTV HUB COMMUNITY</span><h1>Find your people.</h1><p>Discover profiles and connect with other viewers.</p></div><div class="community-heading-icon"><span class="material-icons">groups</span></div></div><form class="community-search" id="community-search-form"><span class="material-icons">search</span><input id="community-search-input" type="search" maxlength="40" placeholder="Search by username..." autocomplete="off"><button type="submit">Search</button></form><div class="community-results-heading"><h2 id="community-results-title">Recently joined</h2><span id="community-results-count"></span></div><div id="community-directory-list" class="community-directory-grid"><div class="community-loading">Loading community...</div></div>`;
+ document.getElementById('community-search-form').addEventListener('submit',e=>{e.preventDefault();loadCommunityDirectory(document.getElementById('community-search-input').value);});await loadCommunityDirectory('');
+};
+async function loadCommunityDirectory(searchTerm){
+ const host=document.getElementById('community-directory-list');if(!host||!supabaseClient)return;const req=++communityDirectoryRequest;host.innerHTML='<div class="community-loading">Loading community...</div>';
+ const term=String(searchTerm||'').trim().replace(/[%_,()]/g,' ').slice(0,40);let q=supabaseClient.from('community_profiles').select('user_id,username,display_name,bio,avatar_id,created_at').eq('is_public',true).not('username','is',null).order('created_at',{ascending:false}).limit(30);if(term)q=q.ilike('username','%'+term+'%');
+ const result=await q;if(req!==communityDirectoryRequest||!document.getElementById('community-directory-list'))return;if(result.error){host.innerHTML='<div class="community-empty">Could not load community profiles. Please try again.</div>';return;}
+ const profiles=result.data||[],title=document.getElementById('community-results-title'),count=document.getElementById('community-results-count');if(title)title.textContent=term?'Search results':'Recently joined';if(count)count.textContent=profiles.length?profiles.length+(profiles.length===30?'+':'')+' profiles':'';
+ if(!profiles.length){host.innerHTML='<div class="community-empty"><span class="material-icons">person_search</span><strong>No profiles found</strong><p>Try another username, or be the first to create a public profile.</p></div>';return;}
+ host.innerHTML=profiles.map(p=>`<button type="button" class="community-person-card" onclick="openCommunityProfile('${communityEscape(p.username)}')"><img src="${communityAvatarUrl(p.avatar_id)}" alt="" loading="lazy"><span class="community-person-info"><strong>${communityEscape(p.display_name||p.username)}</strong><span>@${communityEscape(p.username)}</span><small>${communityEscape(p.bio||'No bio yet.')}</small></span><span class="material-icons community-person-arrow">chevron_right</span></button>`).join('');
+}
+window.openCommunityProfile=async function(username,fromHistory,directLink){
+ const clean=String(username||'').trim().toLowerCase();if(!/^[a-z0-9_]{3,20}$/.test(clean))return;if(!fromHistory&&!directLink)captureAndPushState();communityCurrentUsername=clean;communitySetPage('community-profile-view');communitySetUrl('profile/'+encodeURIComponent(clean));
+ const host=document.getElementById('community-profile-content'),req=++communityProfileRequest;host.innerHTML='<div class="community-profile-loading"><div class="spinner"></div><span>Loading profile...</span></div>';if(!supabaseClient){host.innerHTML='<div class="community-empty">Community profiles are unavailable right now.</div>';return;}
+ const result=await supabaseClient.from('community_profiles').select('user_id,username,display_name,bio,avatar_id,is_public,created_at').eq('username',clean).maybeSingle();if(req!==communityProfileRequest||communityCurrentUsername!==clean)return;
+ if(result.error||!result.data){host.innerHTML='<div class="community-profile-not-found"><button class="community-back-link" onclick="openCommunityDirectory()"><span class="material-icons">arrow_back</span> Community</button><span class="material-icons">person_off</span><h1>Profile unavailable</h1><p>This profile does not exist, or it is private.</p></div>';return;}
+ const p=result.data,own=!!(authUser&&authUser.id===p.user_id);
+ const [fr,fg,follow]=await Promise.all([supabaseClient.from('follows').select('follower_id',{count:'exact',head:true}).eq('following_id',p.user_id),supabaseClient.from('follows').select('following_id',{count:'exact',head:true}).eq('follower_id',p.user_id),authUser&&!own?supabaseClient.from('follows').select('follower_id').eq('follower_id',authUser.id).eq('following_id',p.user_id).maybeSingle():Promise.resolve({data:null,error:null})]);
+ if(req!==communityProfileRequest||communityCurrentUsername!==clean)return;const followers=fr.count||0,following=fg.count||0,isFollowing=!!follow.data;
+ let action='';if(own)action='<button class="community-follow-button is-own" type="button" onclick="openCommunityProfileSettings()"><span class="material-icons">edit</span> Edit profile</button>';else if(authUser)action='<button class="community-follow-button '+(isFollowing?'is-following':'')+'" type="button" onclick="toggleCommunityFollow(\''+communityEscape(p.username)+'\','+isFollowing+')"><span class="material-icons">'+(isFollowing?'check':'person_add')+'</span> '+(isFollowing?'Following':'Follow')+'</button>';else action='<p class="community-signin-hint">Sign in to follow this profile.</p>';
+ host.innerHTML=`<div class="community-profile-page"><button class="community-back-link" onclick="openCommunityDirectory()"><span class="material-icons">arrow_back</span> Community</button><div class="community-profile-hero"><img class="community-profile-large-avatar" src="${communityAvatarUrl(p.avatar_id)}" alt=""><div class="community-profile-identity"><span class="community-page-kicker">COMMUNITY PROFILE</span><h1>${communityEscape(p.display_name||p.username)}</h1><div class="community-profile-handle">@${communityEscape(p.username)}</div><p>${communityEscape(p.bio||'This viewer has not added a bio yet.')}</p><div class="community-profile-stats"><span><strong>${followers}</strong> followers</span><span><strong>${following}</strong> following</span></div>${action}</div></div><div class="community-profile-lower"><span class="material-icons">movie_filter</span><div><strong>More community features are on the way.</strong><p>For now, you can follow viewers whose taste you enjoy.</p></div></div><button class="community-share-link" type="button" onclick="shareCommunityProfile('${communityEscape(p.username)}')"><span class="material-icons">link</span> Copy profile link</button></div>`;
+};
+window.toggleCommunityFollow=async function(username,current){
+ if(!authUser||!supabaseClient){showToast('Sign in to follow community profiles.');return;}const target=await supabaseClient.from('community_profiles').select('user_id,is_public').eq('username',username).maybeSingle();if(target.error||!target.data||!target.data.is_public){showToast('This profile is no longer available.');return;}
+ const button=document.querySelector('.community-follow-button');if(button){button.disabled=true;button.textContent=current?'Unfollowing…':'Following…';}
+ const result=current?await supabaseClient.from('follows').delete().eq('follower_id',authUser.id).eq('following_id',target.data.user_id):await supabaseClient.from('follows').insert({follower_id:authUser.id,following_id:target.data.user_id});
+ if(result.error){if(button)button.disabled=false;showToast('Could not update follow status. Please try again.');return;}await openCommunityProfile(username,true);
+};
+window.shareCommunityProfile=async function(username){
+ const link=window.location.origin+window.location.pathname+'#profile/'+encodeURIComponent(username);try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(link);else{const field=document.createElement('textarea');field.value=link;field.style.position='fixed';field.style.opacity='0';document.body.appendChild(field);field.select();document.execCommand('copy');field.remove();}showToast('Profile link copied.');}catch(e){showToast('Could not copy the profile link.');}
+};
 
 // Community profile setup and editing
 const COMMUNITY_AVATAR_COUNT = 90;
