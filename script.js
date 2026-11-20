@@ -4997,7 +4997,10 @@ window.openCommunityProfile=async function(username,fromHistory,directLink){
  const clean=String(username||'').trim().toLowerCase();if(!/^[a-z0-9_]{3,20}$/.test(clean))return;if(!fromHistory&&!directLink)captureAndPushState();communityCurrentUsername=clean;communitySetPage('community-profile-view');communitySetUrl('profile/'+encodeURIComponent(clean));
  const host=document.getElementById('community-profile-content'),req=++communityProfileRequest;host.innerHTML='<div class="community-profile-loading"><div class="spinner"></div><span>Loading profile...</span></div>';if(!supabaseClient){host.innerHTML='<div class="community-empty">Community profiles are unavailable right now.</div>';return;}
  let result=await supabaseClient.from('community_profiles').select('user_id,username,display_name,bio,avatar_id,is_public,created_at').eq('username',clean).maybeSingle();
- if ((!result.data || result.error) && authUser) result=await supabaseClient.from('community_profiles').select('user_id,username,display_name,bio,avatar_id,is_public,created_at').eq('user_id',authUser.id).maybeSingle();
+ if ((!result.data || result.error) && authUser) {
+  const ownResult=await supabaseClient.from('community_profiles').select('user_id,username,display_name,bio,avatar_id,is_public,created_at').eq('user_id',authUser.id).maybeSingle();
+  if(ownResult.data&&ownResult.data.username===clean)result=ownResult;
+ }
  if(req!==communityProfileRequest||communityCurrentUsername!==clean)return;
  if(result.error||!result.data){host.innerHTML='<div class="community-profile-not-found"><button class="community-back-link" onclick="openCommunityDirectory()"><span class="material-icons">arrow_back</span> Community</button><span class="material-icons">person_off</span><h1>Profile unavailable</h1><p>This profile does not exist, or it is private.</p></div>';return;}
  const p=result.data,own=!!(authUser&&authUser.id===p.user_id);
