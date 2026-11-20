@@ -311,6 +311,87 @@ document.addEventListener('DOMContentLoaded', async () => {
     serverContainer.appendChild(dropdown);
     
     rightActions.appendChild(serverContainer);
+
+    // TV episode browser (only shown while a TV show is playing).
+    const episodeBrowser = document.createElement('div');
+    episodeBrowser.className = 'player-episodes-container';
+    episodeBrowser.id = 'player-episodes-container';
+    const episodesBtn = document.createElement('button');
+    episodesBtn.id = 'player-episodes-btn';
+    episodesBtn.className = 'hero-icon-btn';
+    episodesBtn.innerHTML = '<span class="material-icons">video_library</span>';
+    episodesBtn.title = 'Episodes';
+    episodesBtn.setAttribute('aria-label', 'Browse episodes');
+    episodesBtn.style.display = 'none';
+    const episodesPanel = document.createElement('div');
+    episodesPanel.id = 'player-episodes-panel';
+    episodesPanel.className = 'player-episodes-panel';
+    episodesPanel.innerHTML = '<div class="player-episodes-heading">Episodes</div><div class="player-episodes-loading">Loading seasons...</div>';
+    episodesBtn.onclick = async (e) => {
+        e.stopPropagation();
+        const opening = !episodesPanel.classList.contains('active');
+        episodesPanel.classList.toggle('active', opening);
+        if (!opening) { showPlayerControls(); return; }
+        if (episodesPanel.dataset.loadedFor === String(window.currentPlayInfo?.id)) {
+            showPlayerControls();
+            return;
+        }
+        const info = window.currentPlayInfo;
+        if (!info || info.type !== 'tv') return;
+        episodesPanel.dataset.loadedFor = String(info.id);
+        episodesPanel.innerHTML = '<div class="player-episodes-heading">Episodes</div><div class="player-episodes-loading">Loading seasons...</div>';
+        try {
+            const response = await fetch(`${TMDB_BASE}/tv/${info.id}?api_key=${TMDB_KEY}`);
+            const show = await response.json();
+            const seasons = (show.seasons || []).filter(season => season.season_number > 0);
+            if (!seasons.length) throw new Error('No seasons available');
+            const seasonSelect = document.createElement('select');
+            seasonSelect.className = 'player-season-select';
+            seasons.forEach(season => {
+                const option = document.createElement('option');
+                option.value = season.season_number;
+                option.textContent = `Season ${season.season_number}`;
+                if (Number(season.season_number) === Number(info.season)) option.selected = true;
+                seasonSelect.appendChild(option);
+            });
+            const episodeList = document.createElement('div');
+            episodeList.className = 'player-episode-list';
+            episodesPanel.innerHTML = '<div class="player-episodes-heading">Episodes</div>';
+            episodesPanel.appendChild(seasonSelect);
+            episodesPanel.appendChild(episodeList);
+            const loadSeason = async (seasonNumber) => {
+                episodeList.innerHTML = '<div class="player-episodes-loading">Loading episodes...</div>';
+                const seasonResponse = await fetch(`${TMDB_BASE}/tv/${info.id}/season/${seasonNumber}?api_key=${TMDB_KEY}`);
+                const seasonData = await seasonResponse.json();
+                episodeList.innerHTML = '';
+                (seasonData.episodes || []).forEach(ep => {
+                    const episodeBtn = document.createElement('button');
+                    episodeBtn.type = 'button';
+                    episodeBtn.className = 'player-episode-option';
+                    if (Number(seasonNumber) === Number(window.currentPlayInfo?.season) && Number(ep.episode_number) === Number(window.currentPlayInfo?.episode)) episodeBtn.classList.add('active');
+                    episodeBtn.textContent = `E${ep.episode_number} · ${ep.name || 'Episode'}`;
+                    episodeBtn.title = ep.name || `Episode ${ep.episode_number}`;
+                    episodeBtn.onclick = (event) => {
+                        event.stopPropagation();
+                        episodesPanel.classList.remove('active');
+                        playItem(info.id, 'tv', Number(seasonNumber), Number(ep.episode_number));
+                    };
+                    episodeList.appendChild(episodeBtn);
+                });
+                if (!episodeList.children.length) episodeList.innerHTML = '<div class="player-episodes-loading">No episodes found.</div>';
+            };
+            seasonSelect.onchange = () => loadSeason(Number(seasonSelect.value));
+            await loadSeason(Number(seasonSelect.value));
+        } catch (error) {
+            episodesPanel.innerHTML = '<div class="player-episodes-heading">Episodes</div><div class="player-episodes-loading">Could not load episodes.</div>';
+            console.warn('GTV hub: failed to load player episodes.', error);
+        }
+        showPlayerControls();
+    };
+    episodeBrowser.appendChild(episodesBtn);
+    episodeBrowser.appendChild(episodesPanel);
+    rightActions.appendChild(episodeBrowser);
+
     header.appendChild(rightActions);
     
     // Close dropdown on click outside
@@ -330,7 +411,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (controlsHideTimer) clearTimeout(controlsHideTimer);
         controlsHideTimer = setTimeout(() => {
             const dropdownOpen = document.getElementById('server-dropdown-menu')?.classList.contains('active');
-            if (!dropdownOpen) {
+            const episodesOpen = document.getElementById('player-episodes-panel')?.classList.contains('active');
+            if (!dropdownOpen && !episodesOpen) {
                 playerCont.classList.add('controls-hidden');
                 // Prevent a focused toolbar button (for example, the fullscreen
                 // button) from keeping the controls visible indefinitely.
@@ -3387,6 +3469,10 @@ window.renderEpisodes = async (tmdbId, seasonNum, count, btnElement) => {
 window.playItem = async (id, type, season = 1, episode = 1) => {
     // Store current play info for source switching
     window.currentPlayInfo = { id, type, season, episode };
+    const episodesBtn = document.getElementById('player-episodes-btn');
+    const episodesPanel = document.getElementById('player-episodes-panel');
+    if (episodesBtn) episodesBtn.style.display = type === 'tv' ? 'flex' : 'none';
+    if (episodesPanel) { episodesPanel.classList.remove('active'); episodesPanel.dataset.loadedFor = ''; }
     
     setElementVisible(playerContainer, true, 'flex');
     playerContainer.classList.remove('controls-hidden');
