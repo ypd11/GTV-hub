@@ -1918,7 +1918,7 @@ function createContinueWatchingRow(items) {
         }
         
         return `
-            <div class="continue-watching-card" onclick="playItem('${item.id}', '${type}')">
+            <div class="continue-watching-card" onclick="playItem('${item.id}', '${type}', ${Number(item.season) || 1}, ${Number(item.episode) || 1})">
                 <div class="cw-tag">${escapeHtml(tagText)}</div>
                 <img class="cw-img" src="${img}" alt="${escapeHtml(titleText)}" loading="lazy">
                 <div class="cw-play-icon"><span class="material-icons">play_arrow</span></div>
