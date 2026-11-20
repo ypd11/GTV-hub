@@ -3810,6 +3810,7 @@ window.openHelpView = () => {
 
             <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">16. Ads, Popups, and External Services</h4>
             <p style="margin:0 0 14px;">GTV hub uses external services for catalogue data and playback. Third-party video players may display advertisements, open new tabs, or use their own cookies and tracking technologies. Those experiences are controlled by the provider, not by GTV hub. Be cautious with unfamiliar popups and never enter sensitive information into a page unless you trust the service.</p>
+            <p style="margin:0 0 14px;">If you prefer not to see advertisements, you can use an ad blocker in your browser or on your device. <strong>Our recommendation is <a href="https://adguard.com/" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">AdGuard</a></strong>, which offers ad-blocking options for supported browsers and devices. Ad blockers are third-party tools and are not part of GTV hub. Their effectiveness varies, and some video providers may not work correctly when an ad blocker is enabled. If playback stops working, try allowing the provider's site or temporarily disabling the blocker for that page.</p>
 
             <p style="margin-top:30px; padding-top:18px; border-top:1px solid rgba(255,255,255,0.1); color:#aaa; font-size:0.98rem;">Need more help or found a problem? Use the feedback link in the About section to contact the GTV hub team.</p>
         </div>
@@ -3941,6 +3942,38 @@ window.openChangelogView = () => {
             </ul>
 
             <p style="margin-top:30px; color:#888; font-size:0.9rem;">GTV hub is continuously evolving. This page will list notable changes as new versions are released.</p>
+        </div>
+    `);
+};
+
+window.openTermsView = () => {
+    openInfoView('Terms of Use', `
+        <div style="max-width: 800px; margin: 0 auto; padding: 24px 22px 40px; line-height: 1.75; color: #ccc; font-size:1.02rem;">
+            <p>Last updated: ${new Date().toLocaleDateString()}</p>
+
+            <h3 style="color:#fff; font-size:1.35rem; margin:20px 0 12px;">1. Using GTV hub</h3>
+            <p>GTV hub is an interface for discovering movies and television shows. It provides catalogue information, browsing tools, profile features, watchlists, and links or embedded players supplied by independent third parties. By accessing or using the website, you agree to these Terms of Use. If you do not agree, please stop using the website.</p>
+
+            <h4 style="color:#fff; font-size:1.18rem; margin-top:28px; margin-bottom:10px;">2. Accounts and Guest Access</h4>
+            <p>You may use GTV hub as a guest or create an account. Guest information is stored in the browser on the device where it is created and may not be available on other devices. Registered accounts allow supported profile information to be associated with your account and synchronized through the services used by GTV hub.</p>
+            <p>You are responsible for keeping your account credentials private and for activity carried out through your account. Provide accurate information when registering and contact us if you believe your account has been accessed without permission.</p>
+
+            <h4 style="color:#fff; font-size:1.18rem; margin-top:28px; margin-bottom:10px;">3. Third-Party Content and Playback</h4>
+            <p>GTV hub does not host or upload the video files played through external playback providers. Catalogue information and playback services are supplied by third parties that operate independently of GTV hub. Their availability, content, advertisements, privacy practices, and terms may change without notice.</p>
+            <p>When you follow a link or use an embedded player, you may be interacting directly with a third-party service. You are responsible for reviewing and complying with that service's terms and applicable rules. GTV hub does not guarantee that a particular title or playback source will be available or work on your device.</p>
+
+            <h4 style="color:#fff; font-size:1.18rem; margin-top:28px; margin-bottom:10px;">4. Acceptable Use</h4>
+            <p>You agree not to misuse the website, attempt to disrupt its operation, interfere with its security, or use it in a way that violates applicable law or the rights of others. Do not attempt unauthorized access to accounts, systems, or data.</p>
+
+            <h4 style="color:#fff; font-size:1.18rem; margin-top:28px; margin-bottom:10px;">5. Availability and Changes</h4>
+            <p>Features, catalogue data, and third-party integrations may be modified, interrupted, or discontinued. We may update GTV hub and these Terms of Use from time to time. The latest version will be published on this page, with its update date shown above.</p>
+
+            <h4 style="color:#fff; font-size:1.18rem; margin-top:28px; margin-bottom:10px;">6. Disclaimer</h4>
+            <p>GTV hub is provided on an “as available” basis. To the extent permitted by applicable law, we make no guarantee that the website will always be uninterrupted, error-free, secure, or compatible with every device. We are not responsible for independent third-party websites, services, or content.</p>
+
+            <h4 style="color:#fff; font-size:1.18rem; margin-top:28px; margin-bottom:10px;">7. Contact</h4>
+            <p>For questions about these Terms of Use, contact <a href="mailto:exeinn.info@gmail.com?subject=GTV%20hub%20Terms%20of%20Use" style="color:var(--accent);">exeinn.info@gmail.com</a>.</p>
+            <p style="margin-top:24px;">For information about account data, guest profiles, and third-party services, please also review the <span style="color:var(--accent); cursor:pointer; text-decoration:underline;" onclick="openPrivacyView()">Privacy Policy</span> and <span style="color:var(--accent); cursor:pointer; text-decoration:underline;" onclick="openLegalView()">Legal &amp; DMCA</span> pages.</p>
         </div>
     `);
 };
