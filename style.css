@@ -3797,3 +3797,27 @@ body {
         margin: auto;
     }
 }
+
+
+/* Account action on Who's watching? matches the branded sign-in action. */
+#profile-account-btn {
+    width: 100%;
+    max-width: 260px;
+    min-height: 48px;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 12px 24px;
+    border-radius: 50px;
+    color: #fff;
+    font-size: .88rem;
+    letter-spacing: .8px;
+    background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%);
+    box-shadow: 0 7px 22px rgba(91,105,205,.25);
+    transition: box-shadow .2s ease, transform .2s ease;
+}
+#profile-account-btn:hover,
+#profile-account-btn:focus-visible {
+    box-shadow: 0 9px 28px rgba(115,105,210,.36);
+    transform: translateY(-1px);
+}
