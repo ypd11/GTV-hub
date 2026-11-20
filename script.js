@@ -656,7 +656,7 @@ window.submitAuthForm = async (event) => {
             renderAuthView('login', 'Your password has been updated. Please sign in with your new password.');
         } else if (authMode === 'signup') {
             if (password !== confirmPassword) throw new Error('The passwords do not match.');
-            const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
+            const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + '/email-confirmed.html' } });
             if (error) throw error;
             if (data.session) {
                 authUser = data.user;
