@@ -3233,3 +3233,66 @@ body {
 @media (prefers-reduced-motion: reduce) {
     .gtv-notice-overlay, .gtv-notice-dialog { transition: none; animation: none; }
 }
+
+
+/* Unified blue-to-purple brand treatment for authentication. */
+#auth-view .auth-brand,
+#auth-view .auth-mobile-brand {
+    font-family: 'Outfit', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    text-shadow: 0 0 30px rgba(115, 105, 210, .22);
+}
+#auth-view .auth-brand span,
+#auth-view .auth-mobile-brand span { font-weight: 300; }
+
+#auth-view .auth-submit {
+    background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%);
+    box-shadow: 0 8px 24px rgba(91, 105, 205, .24);
+}
+#auth-view .auth-submit:hover,
+#auth-view .auth-submit:focus-visible {
+    box-shadow: 0 10px 30px rgba(115, 105, 210, .34);
+}
+#auth-view .auth-form input:focus {
+    border-color: #8b70cb;
+    box-shadow: 0 0 0 3px rgba(139, 112, 203, .16);
+}
+#auth-view .auth-links button {
+    color: #b69ae8;
+}
+#auth-view .auth-links button:hover { color: #d9c7ff; }
+#auth-view .auth-eyebrow {
+    color: #b69ae8;
+}
+#auth-view .auth-feature .material-icons { color: #a78bda; }
+#auth-view .auth-aside {
+    background:
+        radial-gradient(ellipse at 15% 78%, rgba(52,152,219,.18), transparent 43%),
+        radial-gradient(ellipse at 88% 18%, rgba(155,89,182,.16), transparent 42%),
+        linear-gradient(145deg, #101c2b 0%, #11101d 54%, #080b11 100%);
+}
+#auth-view .auth-main {
+    background:
+        radial-gradient(ellipse at 90% 10%, rgba(155,89,182,.08), transparent 38%),
+        #080b11;
+}
+@media (max-width: 820px) {
+    #auth-view .auth-main {
+        background:
+            radial-gradient(ellipse at 50% 0%, rgba(52,152,219,.13), transparent 42%),
+            radial-gradient(ellipse at 100% 30%, rgba(155,89,182,.10), transparent 38%),
+            #080b11;
+    }
+}
+#auth-view.auth-dialog .auth-main {
+    background:
+        radial-gradient(ellipse at 100% 0%, rgba(155,89,182,.10), transparent 45%),
+        linear-gradient(155deg, #171c24, #101319 70%);
+}
