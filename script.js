@@ -482,6 +482,7 @@ let guestMode = false;
 let cloudProfileMode = false;
 let authMode = 'login';
 let cloudDataLoading = false;
+let profileSettings = {};
 let authDialogMode = false;
 let authReturnToApp = false;
 let authDialogPreviousNoScroll = false;
@@ -816,7 +817,7 @@ async function persistCurrentProfileData() {
         liked_content: likedContent,
         excluded_content: excludedContent,
         watch_history: safeJsonParse('gtv_watch_history_' + currentProfile.id, []),
-        settings: {}
+        settings: profileSettings
     };
     const { error } = await supabaseClient.from('profile_data').upsert(payload, { onConflict: 'profile_id' });
     if (error) console.error('Could not sync profile data:', error.message);
@@ -1377,10 +1378,25 @@ window.selectProfile = async (id) => {
         cloudDataLoading = true;
         try {
             const { data, error } = await supabaseClient.from('profile_data')
-                .select('watchlist,liked_content,excluded_content,watch_history')
+                .select('watchlist,liked_content,excluded_content,watch_history,settings')
                 .eq('profile_id', id).maybeSingle();
             if (error) throw error;
             const cloudData = data || {};
+            profileSettings = cloudData.settings && typeof cloudData.settings === 'object' ? cloudData.settings : {};
+            const syncedSettingKeys = {
+                default_tab: 'gtv_default_tab',
+                reduced_motion: 'gtv_reduced_motion',
+                active_source: 'gtv_active_source',
+                region: 'gtv_region'
+            };
+            Object.entries(syncedSettingKeys).forEach(([setting, storageKey]) => {
+                if (Object.prototype.hasOwnProperty.call(profileSettings, setting)) {
+                    localStorage.setItem(storageKey, profileSettings[setting]);
+                }
+            });
+            currentTab = localStorage.getItem('gtv_default_tab') || 'movie';
+            activeNavigationSection = currentTab;
+            document.body.classList.toggle('reduced-motion', localStorage.getItem('gtv_reduced_motion') === 'true');
             localStorage.setItem(`gtv_watchlist_${id}`, JSON.stringify(cloudData.watchlist || []));
             localStorage.setItem(`gtv_liked_content_${id}`, JSON.stringify(cloudData.liked_content || []));
             localStorage.setItem(`gtv_excluded_content_${id}`, JSON.stringify(cloudData.excluded_content || []));
@@ -3974,6 +3990,18 @@ window.openSettingsView = () => {
 
 window.saveSetting = (key, value) => {
     localStorage.setItem(key, value);
+
+    const cloudSettingKeys = {
+        gtv_default_tab: 'default_tab',
+        gtv_reduced_motion: 'reduced_motion',
+        gtv_active_source: 'active_source',
+        gtv_region: 'region'
+    };
+    const cloudSetting = cloudSettingKeys[key];
+    if (cloudSetting && cloudProfileMode && currentProfile) {
+        profileSettings[cloudSetting] = value;
+        persistCurrentProfileData();
+    }
     
     if (key === 'gtv_reduced_motion') {
         if (value) document.body.classList.add('reduced-motion');
