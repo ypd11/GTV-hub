@@ -3392,7 +3392,7 @@ window.playItem = async (id, type, season = 1, episode = 1) => {
     playerContainer.classList.remove('controls-hidden');
     if (window.showGtvPlayerControls) window.showGtvPlayerControls();
     document.body.style.overflow = 'hidden';
-    const itemData = await addToHistory(id, type);
+    const itemData = await addToHistory(id, type, season, episode);
     
     const hideBtn = document.getElementById('player-hide-btn');
     if (hideBtn && itemData) {
@@ -3403,15 +3403,18 @@ window.playItem = async (id, type, season = 1, episode = 1) => {
     loadPlayerSource();
 };
 
-async function addToHistory(id, type) {
+async function addToHistory(id, type, season = null, episode = null) {
     const historyKey = currentProfile ? `gtv_watch_history_${currentProfile.id}` : 'gtv_watch_history';
     let history = safeJsonParse(historyKey, []);
-    
-    let season = null;
-    let episode = null;
-    if (window.currentPlayInfo && window.currentPlayInfo.id == id) {
-         season = window.currentPlayInfo.season;
-         episode = window.currentPlayInfo.episode;
+
+    // Use the exact episode selected for this playback instead of relying on
+    // the global player state, which can be stale during rapid episode changes.
+    if (type === 'tv') {
+        season = Number(season) || 1;
+        episode = Number(episode) || 1;
+    } else {
+        season = null;
+        episode = null;
     }
 
     let itemData = null;
