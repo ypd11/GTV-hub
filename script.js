@@ -392,6 +392,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     episodeBrowser.appendChild(episodesPanel);
     rightActions.appendChild(episodeBrowser);
 
+    const watchPartyBtn = document.createElement('button');
+    watchPartyBtn.id = 'watch-party-open-btn';
+    watchPartyBtn.className = 'hero-icon-btn';
+    watchPartyBtn.innerHTML = '<span class="material-icons">groups</span>';
+    watchPartyBtn.title = 'Watch Party';
+    watchPartyBtn.setAttribute('aria-label', 'Open Watch Party');
+    watchPartyBtn.onclick = event => { event.stopPropagation(); window.toggleWatchPartyPanel(); };
+    rightActions.appendChild(watchPartyBtn);
+
     header.appendChild(rightActions);
     
     // Close dropdown on click outside
@@ -403,6 +412,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     
     playerCont.insertBefore(header, playerCont.firstChild);
+    window.initializeWatchPartyPanel(playerCont);
 
     // Auto-hide GTV hub controls, including while the pointer remains over
     // the cross-origin video iframe (whose internal pointer movement is inaccessible).
@@ -3687,6 +3697,298 @@ window.selectPlayerSource = (index) => {
     loadPlayerSource();
     document.getElementById('server-dropdown-menu').classList.remove('active');
 };
+
+
+// -------------------- Watch Party --------------------
+let activeWatchParty = null;
+let watchPartyChannel = null;
+let watchPartyPresenceChannel = null;
+let watchPartyPanel = null;
+let watchPartyMessages = [];
+let watchPartySending = false;
+
+window.initializeWatchPartyPanel = function(playerCont) {
+    if (document.getElementById('watch-party-panel')) {
+        watchPartyPanel = document.getElementById('watch-party-panel');
+        return;
+    }
+    const panel = document.createElement('aside');
+    panel.id = 'watch-party-panel';
+    panel.className = 'watch-party-panel';
+    panel.setAttribute('aria-label', 'Watch Party');
+    panel.innerHTML = '<div class="watch-party-top"><div><span class="watch-party-eyebrow">GTV hub</span><h2>Watch Party</h2></div><button type="button" class="watch-party-close" aria-label="Close Watch Party"><span class="material-icons">close</span></button></div>' +
+        '<div class="watch-party-content"><div class="watch-party-lobby"><p class="watch-party-intro">Watch together and chat in real time.</p><button type="button" class="watch-party-primary watch-party-create">Create a party</button><div class="watch-party-divider"><span>or join with a code</span></div><form class="watch-party-join-form"><input class="watch-party-code" maxlength="32" autocomplete="off" placeholder="Enter invite code" aria-label="Invite code" required><button type="submit" class="watch-party-secondary">Join</button></form><p class="watch-party-note">Everyone can join with a GTV hub account or as a guest.</p></div>' +
+        '<div class="watch-party-room" hidden><div class="watch-party-room-summary"><div><span class="watch-party-eyebrow">INVITE CODE</span><strong class="watch-party-invite-code"></strong></div><button type="button" class="watch-party-copy" title="Copy invite code"><span class="material-icons">content_copy</span></button></div><div class="watch-party-participants"><span class="material-icons">groups</span><span class="watch-party-participant-count">1 here</span><span class="watch-party-participant-names"></span></div><div class="watch-party-chat" aria-live="polite"><div class="watch-party-empty">Messages will appear here. Say hello!</div></div><form class="watch-party-message-form"><input class="watch-party-message-input" maxlength="1000" autocomplete="off" placeholder="Write a message…" aria-label="Chat message" required><button type="submit" aria-label="Send message"><span class="material-icons">send</span></button></form><button type="button" class="watch-party-leave">Leave party</button></div><p class="watch-party-status" role="status" aria-live="polite"></p></div>';
+    playerCont.appendChild(panel);
+    watchPartyPanel = panel;
+    panel.querySelector('.watch-party-close').onclick = () => panel.classList.remove('active');
+    panel.querySelector('.watch-party-create').onclick = () => window.createWatchParty();
+    panel.querySelector('.watch-party-join-form').onsubmit = event => {
+        event.preventDefault();
+        window.joinWatchParty(panel.querySelector('.watch-party-code').value);
+    };
+    panel.querySelector('.watch-party-copy').onclick = async () => {
+        if (!activeWatchParty) return;
+        try {
+            await navigator.clipboard.writeText(activeWatchParty.invite_code);
+            showToast('Invite code copied');
+        } catch (_) {
+            setWatchPartyStatus('Invite code: ' + activeWatchParty.invite_code);
+        }
+    };
+    panel.querySelector('.watch-party-message-form').onsubmit = event => {
+        event.preventDefault();
+        window.sendWatchPartyMessage();
+    };
+    panel.querySelector('.watch-party-leave').onclick = () => window.leaveWatchParty();
+};
+
+window.toggleWatchPartyPanel = function() {
+    const panel = document.getElementById('watch-party-panel');
+    if (!panel) return;
+    const opening = !panel.classList.contains('active');
+    panel.classList.toggle('active', opening);
+    if (opening && !activeWatchParty) panel.querySelector('.watch-party-code').focus();
+    if (opening && window.showGtvPlayerControls) window.showGtvPlayerControls();
+};
+
+function setWatchPartyStatus(message, isError = false) {
+    if (!watchPartyPanel) return;
+    const status = watchPartyPanel.querySelector('.watch-party-status');
+    status.textContent = message || '';
+    status.classList.toggle('error', !!isError);
+}
+
+function getWatchPartyDisplayName(isAnonymous) {
+    if (!isAnonymous && currentProfile && currentProfile.name) return currentProfile.name.trim().slice(0, 24);
+    const suggestion = localStorage.getItem('gtv_watch_party_guest_name') || (currentProfile && currentProfile.name) || 'Guest';
+    const entered = window.prompt('Choose a name for this Watch Party (up to 24 characters):', suggestion);
+    if (entered === null) return null;
+    const name = entered.trim().replace(/\s+/g, ' ').slice(0, 24);
+    if (!name) throw new Error('Please enter a display name.');
+    localStorage.setItem('gtv_watch_party_guest_name', name);
+    return name;
+}
+
+function getCurrentWatchPartyMedia() {
+    const info = window.currentPlayInfo;
+    if (!info || !info.id || !['movie', 'tv'].includes(info.type)) throw new Error('Start playing a movie or TV episode before creating a party.');
+    const historyKey = currentProfile ? 'gtv_watch_history_' + currentProfile.id : 'gtv_watch_history';
+    const history = safeJsonParse(historyKey, []);
+    const item = history.find(entry => String(entry.id) === String(info.id));
+    const details = currentDetailsData && String(currentDetailsData.id) === String(info.id) ? currentDetailsData : null;
+    return {
+        media_type: info.type,
+        tmdb_id: Number(info.id),
+        title: (item && item.title) || (details && (details.title || details.name)) || (info.type === 'tv' ? 'TV show' : 'Movie'),
+        poster_path: (item && item.poster_path) || (details && details.poster_path) || null,
+        season_number: info.type === 'tv' ? Number(info.season) || 1 : null,
+        episode_number: info.type === 'tv' ? Number(info.episode) || 1 : null
+    };
+}
+
+function renderWatchPartyRoom() {
+    if (!watchPartyPanel || !activeWatchParty) return;
+    watchPartyPanel.querySelector('.watch-party-lobby').hidden = true;
+    watchPartyPanel.querySelector('.watch-party-room').hidden = false;
+    watchPartyPanel.querySelector('.watch-party-invite-code').textContent = activeWatchParty.invite_code;
+    renderWatchPartyMessages();
+}
+
+function renderWatchPartyMessages() {
+    if (!watchPartyPanel) return;
+    const container = watchPartyPanel.querySelector('.watch-party-chat');
+    container.innerHTML = '';
+    if (!watchPartyMessages.length) {
+        const empty = document.createElement('div');
+        empty.className = 'watch-party-empty';
+        empty.textContent = 'Messages will appear here. Say hello!';
+        container.appendChild(empty);
+        return;
+    }
+    watchPartyMessages.forEach(message => {
+        const item = document.createElement('div');
+        item.className = 'watch-party-message' + (message.sender_id === activeWatchParty.user_id ? ' mine' : '');
+        const name = document.createElement('strong');
+        name.textContent = message.sender_name || 'Guest';
+        const body = document.createElement('p');
+        body.textContent = message.message;
+        const time = document.createElement('time');
+        time.textContent = new Date(message.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        item.append(name, body, time);
+        container.appendChild(item);
+    });
+    container.scrollTop = container.scrollHeight;
+}
+
+async function loadWatchPartyMessages() {
+    const result = await supabaseClient.from('watch_party_messages')
+        .select('id,party_id,sender_id,sender_name,message,created_at')
+        .eq('party_id', activeWatchParty.id).order('created_at', { ascending: true }).limit(100);
+    if (result.error) throw result.error;
+    watchPartyMessages = result.data || [];
+    renderWatchPartyMessages();
+}
+
+async function connectWatchPartyRealtime() {
+    if (watchPartyChannel) await supabaseClient.removeChannel(watchPartyChannel);
+    if (watchPartyPresenceChannel) await supabaseClient.removeChannel(watchPartyPresenceChannel);
+    const partyId = activeWatchParty.id;
+    watchPartyChannel = supabaseClient.channel('watch-party-chat:' + partyId)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'watch_party_messages', filter: 'party_id=eq.' + partyId }, payload => {
+            if (!watchPartyMessages.some(message => message.id === payload.new.id)) {
+                watchPartyMessages.push(payload.new);
+                watchPartyMessages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                if (watchPartyMessages.length > 100) watchPartyMessages.shift();
+                renderWatchPartyMessages();
+            }
+        })
+        .subscribe(status => {
+            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setWatchPartyStatus('Chat connection interrupted. Trying to reconnect.', true);
+        });
+
+    watchPartyPresenceChannel = supabaseClient.channel('watch-party-presence:' + partyId, {
+        config: { presence: { key: activeWatchParty.user_id } }
+    });
+    watchPartyPresenceChannel
+        .on('presence', { event: 'sync' }, renderWatchPartyPresence)
+        .on('presence', { event: 'join' }, renderWatchPartyPresence)
+        .on('presence', { event: 'leave' }, renderWatchPartyPresence)
+        .subscribe(async status => {
+            if (status === 'SUBSCRIBED' && activeWatchParty) {
+                await watchPartyPresenceChannel.track({
+                    user_id: activeWatchParty.user_id,
+                    display_name: activeWatchParty.display_name
+                });
+            }
+        });
+}
+
+function renderWatchPartyPresence() {
+    if (!watchPartyPanel || !watchPartyPresenceChannel || !activeWatchParty) return;
+    const state = watchPartyPresenceChannel.presenceState();
+    const people = [];
+    Object.keys(state).forEach(key => (state[key] || []).forEach(entry => {
+        if (!people.some(person => person.user_id === entry.user_id)) people.push(entry);
+    }));
+    watchPartyPanel.querySelector('.watch-party-participant-names').textContent =
+        people.map(person => person.display_name).join(' · ') || activeWatchParty.display_name;
+    watchPartyPanel.querySelector('.watch-party-participant-count').textContent = people.length + (people.length === 1 ? ' here' : ' here');
+}
+
+async function openWatchPartyRoom(party, user, displayName) {
+    activeWatchParty = { id: party.id, invite_code: party.invite_code, title: party.title, user_id: user.id, display_name: displayName };
+    watchPartyMessages = [];
+    renderWatchPartyRoom();
+    setWatchPartyStatus('Connecting to your party…');
+    try {
+        await loadWatchPartyMessages();
+        await connectWatchPartyRealtime();
+        setWatchPartyStatus('You’re in. Share the invite code with friends.');
+    } catch (error) {
+        setWatchPartyStatus(error.message || 'Could not connect to the party.', true);
+    }
+}
+
+window.createWatchParty = async function() {
+    if (!watchPartyPanel || !supabaseClient) return;
+    const button = watchPartyPanel.querySelector('.watch-party-create');
+    button.disabled = true;
+    setWatchPartyStatus('Creating your party…');
+    try {
+        const identity = await window.ensureWatchPartySession();
+        const displayName = getWatchPartyDisplayName(identity.isAnonymous);
+        if (!displayName) { setWatchPartyStatus('Party creation cancelled.'); return; }
+        const media = getCurrentWatchPartyMedia();
+        const result = await supabaseClient.rpc('create_watch_party', {
+            p_media_type: media.media_type, p_tmdb_id: media.tmdb_id, p_title: media.title,
+            p_display_name: displayName, p_poster_path: media.poster_path,
+            p_season_number: media.season_number, p_episode_number: media.episode_number
+        });
+        if (result.error) throw result.error;
+        const party = Array.isArray(result.data) ? result.data[0] : result.data;
+        if (!party || !party.id) throw new Error('The party was created, but its details could not be loaded.');
+        await openWatchPartyRoom(party, identity.user, displayName);
+    } catch (error) {
+        setWatchPartyStatus(error.message || 'Could not create the party.', true);
+    } finally {
+        button.disabled = false;
+    }
+};
+
+window.joinWatchParty = async function(inviteCode) {
+    if (!watchPartyPanel || !supabaseClient) return;
+    const code = String(inviteCode || '').trim();
+    if (!code) return setWatchPartyStatus('Enter an invite code to join.', true);
+    const button = watchPartyPanel.querySelector('.watch-party-join-form button');
+    button.disabled = true;
+    setWatchPartyStatus('Joining your party…');
+    try {
+        const identity = await window.ensureWatchPartySession();
+        const displayName = getWatchPartyDisplayName(identity.isAnonymous);
+        if (!displayName) { setWatchPartyStatus('Joining cancelled.'); return; }
+        const result = await supabaseClient.rpc('join_watch_party', { p_invite_code: code, p_display_name: displayName });
+        if (result.error) throw result.error;
+        const party = Array.isArray(result.data) ? result.data[0] : result.data;
+        if (!party || !party.id) throw new Error('That invite code was not recognized or the party has ended.');
+        await openWatchPartyRoom(party, identity.user, displayName);
+    } catch (error) {
+        setWatchPartyStatus(error.message || 'Could not join the party.', true);
+    } finally {
+        button.disabled = false;
+    }
+};
+
+window.sendWatchPartyMessage = async function() {
+    if (!activeWatchParty || watchPartySending) return;
+    const input = watchPartyPanel.querySelector('.watch-party-message-input');
+    const message = input.value.trim();
+    if (!message) return;
+    watchPartySending = true;
+    const button = watchPartyPanel.querySelector('.watch-party-message-form button');
+    button.disabled = true;
+    try {
+        const result = await supabaseClient.from('watch_party_messages').insert({
+            party_id: activeWatchParty.id, sender_id: activeWatchParty.user_id,
+            sender_name: activeWatchParty.display_name, message: message
+        });
+        if (result.error) throw result.error;
+        input.value = '';
+        setWatchPartyStatus('');
+    } catch (error) {
+        setWatchPartyStatus(error.message || 'Your message could not be sent.', true);
+    } finally {
+        watchPartySending = false;
+        button.disabled = false;
+        input.focus();
+    }
+};
+
+window.leaveWatchParty = async function() {
+    if (!activeWatchParty) return;
+    const party = activeWatchParty;
+    setWatchPartyStatus('Leaving party…');
+    try {
+        if (watchPartyPresenceChannel) {
+            await watchPartyPresenceChannel.untrack();
+            await supabaseClient.removeChannel(watchPartyPresenceChannel);
+        }
+        if (watchPartyChannel) await supabaseClient.removeChannel(watchPartyChannel);
+        const result = await supabaseClient.from('watch_party_participants')
+            .delete().eq('party_id', party.id).eq('user_id', party.user_id);
+        if (result.error) throw result.error;
+    } catch (error) {
+        console.warn('Could not fully leave Watch Party:', error);
+    }
+    activeWatchParty = null;
+    watchPartyChannel = null;
+    watchPartyPresenceChannel = null;
+    watchPartyMessages = [];
+    watchPartyPanel.querySelector('.watch-party-room').hidden = true;
+    watchPartyPanel.querySelector('.watch-party-lobby').hidden = false;
+    setWatchPartyStatus('You left the party.');
+};
+
 
 window.openCastModal = async (personId) => {
     const overlay = document.getElementById('cast-modal-overlay');
