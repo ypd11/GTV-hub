@@ -3675,10 +3675,11 @@ window.loadPlayerSource = (playbackOptions = {}) => {
         const query = new URLSearchParams();
         if (playbackOptions.autoplay !== false) query.set('autoPlay', 'true');
         if (Number.isFinite(Number(playbackOptions.progress)) && playbackOptions.progress > 0) query.set('progress', String(playbackOptions.progress));
-        embedUrl += query.toString() ? '?' + query.toString() : '';
         if (type === 'tv') {
-            embedUrl += '&nextEpisode=true&episodeSelector=true';
+            query.set('nextEpisode', 'true');
+            query.set('episodeSelector', 'true');
         }
+        embedUrl += query.toString() ? '?' + query.toString() : '';
     } else if (baseUrl.includes('vidfast')) {
         embedUrl += '?autoPlay=true&theme=12B1D1';
     } else if (baseUrl.includes('player.videasy.net')) {
