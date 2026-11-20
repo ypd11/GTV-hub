@@ -1072,6 +1072,7 @@ function setupNewNavigation() {
     menuBtn.onclick = (e) => {
         e.stopPropagation();
         const dropdown = document.getElementById('nav-dropdown');
+        ensureCommunityProfileMenuItem(dropdown);
         dropdown.classList.toggle('active');
     };
     navLinks.appendChild(menuBtn);
@@ -4929,3 +4930,121 @@ window.triggerSearch = (query) => {
     input.value = query;
     handleSearchInput({ target: input });
 };
+
+
+// Community profile setup and editing
+const COMMUNITY_AVATAR_COUNT = 90;
+function communityAvatarUrl(avatarId) {
+    const id = Math.max(1, Math.min(COMMUNITY_AVATAR_COUNT, Number(avatarId) || 1));
+    return './assets/avatars/avatar_' + id + '.webp';
+}
+function ensureCommunityProfileMenuItem(dropdown) {
+    if (!dropdown || !cloudProfileMode || !authUser || dropdown.querySelector('.community-profile-menu-item')) return;
+    const item = document.createElement('div');
+    item.className = 'dropdown-item community-profile-menu-item';
+    item.innerHTML = '<span class="material-icons">account_circle</span> Community Profile';
+    item.addEventListener('click', function() {
+        dropdown.classList.remove('active');
+        window.openCommunityProfileSettings();
+    });
+    const anchor = dropdown.querySelector('.dropdown-item[onclick*="randomPick"]');
+    if (anchor) dropdown.insertBefore(item, anchor);
+    else dropdown.appendChild(item);
+}
+window.openCommunityProfileSettings = async function () {
+    if (!cloudProfileMode || !authUser || !supabaseClient) { showToast('Sign in to create a community profile.'); return; }
+    document.getElementById('community-profile-modal')?.remove();
+    const modal = document.createElement('div');
+    modal.id = 'community-profile-modal';
+    modal.className = 'community-profile-overlay';
+    let avatarOptions = '';
+    for (let id = 1; id <= COMMUNITY_AVATAR_COUNT; id++) {
+        avatarOptions += '<button type="button" class="community-avatar-option' + (id === 1 ? ' selected' : '') + '" data-avatar-id="' + id + '" aria-label="Avatar ' + id + '" aria-pressed="' + (id === 1) + '"><img src="' + communityAvatarUrl(id) + '" alt="" loading="lazy" decoding="async"></button>';
+    }
+    modal.innerHTML =
+      '<div class="community-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="community-profile-title">' +
+        '<div class="community-profile-header"><div><span class="community-profile-kicker">YOUR COMMUNITY IDENTITY</span><h2 id="community-profile-title">Create your profile</h2><p>Choose how other people see you in the community.</p></div>' +
+        '<button type="button" class="community-profile-close" aria-label="Close" onclick="closeCommunityProfileSettings()"><span class="material-icons">close</span></button></div>' +
+        '<form id="community-profile-form" class="community-profile-form">' +
+          '<div class="community-profile-avatar-row"><img id="community-profile-preview" src="./assets/avatars/avatar_1.webp" alt="Selected avatar"><div><strong>Choose your avatar</strong><span>Pick one that feels like you.</span></div></div>' +
+          '<div class="community-avatar-grid" id="community-avatar-grid" aria-label="Choose an avatar">' + avatarOptions + '</div>' +
+          '<input type="hidden" id="community-avatar-id" value="1">' +
+          '<label class="community-profile-label" for="community-display-name">Display name</label><input id="community-display-name" class="community-profile-input" type="text" maxlength="40" placeholder="How should we call you?" required>' +
+          '<label class="community-profile-label" for="community-username">Username</label><div class="community-username-field"><span>@</span><input id="community-username" class="community-profile-input" type="text" minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]{3,20}" autocomplete="username" placeholder="your_username" required></div>' +
+          '<p class="community-profile-hint">3–20 characters. Letters, numbers and underscores only.</p>' +
+          '<label class="community-profile-label" for="community-bio">Bio <span>Optional</span></label><textarea id="community-bio" class="community-profile-input community-profile-bio" maxlength="160" rows="3" placeholder="A little about you and what you like watching..."></textarea>' +
+          '<label class="community-profile-visibility"><input id="community-profile-public" type="checkbox"><span class="community-profile-switch"></span><span><strong>Make my profile public</strong><small>Other people can find your profile and follow you. You can change this anytime.</small></span></label>' +
+          '<p id="community-profile-message" class="community-profile-message" role="status"></p>' +
+          '<div class="community-profile-actions"><button type="button" class="community-profile-cancel" onclick="closeCommunityProfileSettings()">Cancel</button><button type="submit" class="community-profile-save" id="community-profile-save">Create profile</button></div>' +
+        '</form></div>';
+    document.body.appendChild(modal);
+    document.body.classList.add('no-scroll');
+    modal.querySelector('#community-avatar-grid').addEventListener('click', function(event) {
+        const option = event.target.closest('[data-avatar-id]');
+        if (!option) return;
+        const id = Number(option.dataset.avatarId);
+        modal.querySelectorAll('.community-avatar-option').forEach(function(button) {
+            const active = Number(button.dataset.avatarId) === id;
+            button.classList.toggle('selected', active);
+            button.setAttribute('aria-pressed', String(active));
+        });
+        modal.querySelector('#community-avatar-id').value = String(id);
+        modal.querySelector('#community-profile-preview').src = communityAvatarUrl(id);
+    });
+    modal.querySelector('#community-profile-form').addEventListener('submit', saveCommunityProfile);
+    modal.addEventListener('click', function(event) { if (event.target === modal) closeCommunityProfileSettings(); });
+    const result = await supabaseClient.from('community_profiles').select('username,display_name,bio,avatar_id,is_public').eq('user_id', authUser.id).maybeSingle();
+    if (!document.getElementById('community-profile-modal')) return;
+    const message = modal.querySelector('#community-profile-message');
+    if (result.error) { message.textContent = 'Could not load your profile: ' + result.error.message; message.classList.add('error'); return; }
+    const data = result.data;
+    const metadata = authUser.user_metadata || {};
+    const defaultName = metadata.display_name || metadata.full_name || (authUser.email ? authUser.email.split('@')[0] : '');
+    modal.querySelector('#community-profile-title').textContent = data ? 'Edit your profile' : 'Create your profile';
+    modal.querySelector('#community-display-name').value = (data && data.display_name) || defaultName;
+    modal.querySelector('#community-username').value = (data && data.username) || '';
+    modal.querySelector('#community-bio').value = (data && data.bio) || '';
+    modal.querySelector('#community-profile-public').checked = !!(data && data.is_public);
+    const avatarId = Math.max(1, Math.min(COMMUNITY_AVATAR_COUNT, Number(data && data.avatar_id) || 1));
+    modal.querySelector('#community-avatar-id').value = String(avatarId);
+    modal.querySelector('#community-profile-preview').src = communityAvatarUrl(avatarId);
+    modal.querySelectorAll('.community-avatar-option').forEach(function(option) {
+        const active = Number(option.dataset.avatarId) === avatarId;
+        option.classList.toggle('selected', active);
+        option.setAttribute('aria-pressed', String(active));
+    });
+    modal.querySelector('#community-profile-save').textContent = data ? 'Save changes' : 'Create profile';
+};
+window.closeCommunityProfileSettings = function() {
+    const modal = document.getElementById('community-profile-modal');
+    if (modal) modal.remove();
+    document.body.classList.remove('no-scroll');
+};
+async function saveCommunityProfile(event) {
+    event.preventDefault();
+    if (!authUser || !supabaseClient) return;
+    const modal = document.getElementById('community-profile-modal');
+    const button = modal.querySelector('#community-profile-save');
+    const message = modal.querySelector('#community-profile-message');
+    const username = modal.querySelector('#community-username').value.trim().toLowerCase();
+    const displayName = modal.querySelector('#community-display-name').value.trim();
+    const bio = modal.querySelector('#community-bio').value.trim();
+    const avatarId = Number(modal.querySelector('#community-avatar-id').value);
+    const isPublic = modal.querySelector('#community-profile-public').checked;
+    message.textContent = '';
+    message.classList.remove('error');
+    if (!/^[a-z0-9_]{3,20}$/.test(username)) { message.textContent = 'Username must be 3–20 characters and use only letters, numbers or underscores.'; message.classList.add('error'); return; }
+    if (!displayName || displayName.length > 40 || bio.length > 160 || !Number.isInteger(avatarId) || avatarId < 1 || avatarId > COMMUNITY_AVATAR_COUNT) { message.textContent = 'Please check your profile details and try again.'; message.classList.add('error'); return; }
+    button.disabled = true;
+    button.textContent = 'Saving…';
+    const result = await supabaseClient.from('community_profiles').upsert({user_id:authUser.id,username:username,display_name:displayName,bio:bio,avatar_id:avatarId,is_public:isPublic},{onConflict:'user_id'});
+    button.disabled = false;
+    button.textContent = 'Save changes';
+    if (result.error) {
+        message.textContent = result.error.code === '23505' ? 'That username is already taken. Try another one.' : 'Could not save your profile: ' + result.error.message;
+        message.classList.add('error');
+        return;
+    }
+    closeCommunityProfileSettings();
+    showToast(isPublic ? 'Community profile saved and published.' : 'Community profile saved privately.');
+}
