@@ -3225,7 +3225,11 @@ body {
 .gtv-notice-icon .material-icons { font-size: 30px; }
 .gtv-notice-dialog h2 { margin: 0 0 11px; color: #f5f7fa; font-size: 1.35rem; letter-spacing: -.35px; }
 .gtv-notice-dialog p { margin: 0; color: #aab5c2; font-size: .9rem; line-height: 1.7; overflow-wrap: anywhere; }
-.gtv-notice-action { width: 100%; min-height: 46px; justify-content: center; margin-top: 24px; border-radius: 10px; }
+.gtv-notice-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 24px; }
+.gtv-notice-action { width: 100%; min-height: 46px; justify-content: center; margin: 0; border-radius: 10px; }
+.gtv-notice-secondary { min-height: 46px; padding: 0 16px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; background: rgba(255,255,255,.055); color: #d7deea; font: inherit; font-weight: 600; cursor: pointer; transition: background .18s ease, border-color .18s ease; }
+.gtv-notice-secondary:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.25); }
+@media (max-width: 380px) { .gtv-notice-actions { grid-template-columns: 1fr; } }
 @media (max-width: 480px) {
     .gtv-notice-dialog { padding: 32px 22px 24px; border-radius: 15px; }
     .gtv-notice-dialog h2 { font-size: 1.22rem; }
