@@ -878,29 +878,47 @@ async function loadAccountProfiles() {
     const localProfiles = safeJsonParse('gtv_profiles', []);
     const migrationKey = 'gtv_cloud_migrated_' + authUser.id;
     if (localProfiles.length && !localStorage.getItem(migrationKey)) {
-        const importLocal = confirm('We found profiles saved on this device. Would you like to import them into this account so they can sync across devices?');
-        if (importLocal) {
-            for (let i = 0; i < localProfiles.length && profiles.length < 5; i++) {
-                const old = localProfiles[i];
-                const { data: created, error: createError } = await supabaseClient
-                    .from('profiles')
-                    .insert({ user_id: authUser.id, name: old.name, color: old.color || '#3498db', position: profiles.length })
-                    .select('id,name,color,position').single();
-                if (createError) throw createError;
-                const oldId = old.id;
-                const payload = {
-                    profile_id: created.id,
-                    watchlist: safeJsonParse('gtv_watchlist_' + oldId, []),
-                    liked_content: safeJsonParse('gtv_liked_content_' + oldId, []),
-                    excluded_content: safeJsonParse('gtv_excluded_content_' + oldId, []),
-                    watch_history: safeJsonParse('gtv_watch_history_' + oldId, []),
-                    settings: {}
-                };
-                const { error: dataError } = await supabaseClient.from('profile_data').insert(payload);
-                if (dataError) throw dataError;
-                profiles.push(created);
+        const importableLocalProfiles = localProfiles.filter(profile =>
+            profile && typeof profile.name === 'string' && profile.name.trim().toLowerCase() !== 'default'
+        );
+        if (importableLocalProfiles.length && profiles.length < 5) {
+            const importLocal = await new Promise(resolve => {
+                window.showGtvNoticeDialog({
+                    icon: 'cloud_upload',
+                    title: 'Import your profiles?',
+                    message: 'We found profiles saved on this device. Import them into your GTV hub account to keep them in sync across your devices.',
+                    buttonLabel: 'Import profiles',
+                    secondaryButtonLabel: 'Not now',
+                    onAction: () => resolve(true),
+                    onSecondaryAction: () => resolve(false)
+                });
+            });
+            if (importLocal) {
+                const availableSlots = Math.max(0, 5 - profiles.length);
+                const profilesToImport = importableLocalProfiles.slice(0, availableSlots);
+                for (const old of profilesToImport) {
+                    const { data: created, error: createError } = await supabaseClient
+                        .from('profiles')
+                        .insert({ user_id: authUser.id, name: old.name, color: old.color || '#3498db', position: profiles.length })
+                        .select('id,name,color,position').single();
+                    if (createError) throw createError;
+                    const oldId = old.id;
+                    const payload = {
+                        profile_id: created.id,
+                        watchlist: safeJsonParse('gtv_watchlist_' + oldId, []),
+                        liked_content: safeJsonParse('gtv_liked_content_' + oldId, []),
+                        excluded_content: safeJsonParse('gtv_excluded_content_' + oldId, []),
+                        watch_history: safeJsonParse('gtv_watch_history_' + oldId, []),
+                        settings: {}
+                    };
+                    const { error: dataError } = await supabaseClient.from('profile_data').insert(payload);
+                    if (dataError) throw dataError;
+                    profiles.push(created);
+                }
+                if (importableLocalProfiles.length > profilesToImport.length) {
+                    showToast('Only the profiles that fit your account limit were imported. You can add the rest later.');
+                }
             }
-            if (importableLocalProfiles.length > Math.max(0, 5 - (profiles.length - importableLocalProfiles.length))) showToast('Only the profiles that fit your account limit were imported. You can add more later if space becomes available.');
         }
         localStorage.setItem(migrationKey, 'true');
     }
