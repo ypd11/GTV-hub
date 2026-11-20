@@ -143,8 +143,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     setupBranding();
     await initializeAuthentication();
-    history.replaceState({ gtvHubNavigation: true, gtvHubIndex: 0 }, '', window.location.href);
-    history.pushState({ gtvHubNavigation: true, gtvHubIndex: 1 }, '', window.location.href);
+    history.replaceState({ gtvhubNavigation: true, gtvhubIndex: 0 }, '', window.location.href);
+    history.pushState({ gtvhubNavigation: true, gtvhubIndex: 1 }, '', window.location.href);
     appHistoryIndex = 1;
     setupNewNavigation();
     setupMobileCheck();
@@ -154,11 +154,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         navigator.serviceWorker.register('./sw.js').catch(console.error);
     }
     
-    // Browser Back navigates through GTV Hub screens instead of leaving the app.
+    // Browser Back navigates through GTV hub screens instead of leaving the app.
     window.addEventListener('popstate', (event) => {
         const state = event.state;
-        if (state && state.gtvHubNavigation) {
-            const nextIndex = Number(state.gtvHubIndex) || 0;
+        if (state && state.gtvhubNavigation) {
+            const nextIndex = Number(state.gtvhubIndex) || 0;
             if (nextIndex < appHistoryIndex) {
                 appHistoryIndex = nextIndex;
                 if (navigationStack.length) {
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     // Keep the app open when Back reaches its root screen.
                     appHistoryIndex = 1;
-                    history.pushState({ gtvHubNavigation: true, gtvHubIndex: appHistoryIndex }, '', window.location.href);
+                    history.pushState({ gtvhubNavigation: true, gtvhubIndex: appHistoryIndex }, '', window.location.href);
                 }
                 return;
             }
@@ -238,11 +238,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 else if (playerCont.webkitRequestFullscreen) playerCont.webkitRequestFullscreen();
             }
         } catch (error) {
-            console.warn('GTV Hub: fullscreen request was denied.', error);
+            console.warn('GTV hub: fullscreen request was denied.', error);
         }
     };
 
-    // Small hint shown whenever GTV Hub enters fullscreen.
+    // Small hint shown whenever GTV hub enters fullscreen.
     const fullscreenHint = document.createElement('div');
     fullscreenHint.id = 'player-fullscreen-hint';
     fullscreenHint.className = 'player-fullscreen-hint';
@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     playerCont.insertBefore(header, playerCont.firstChild);
 
-    // Auto-hide GTV Hub controls, including while the pointer remains over
+    // Auto-hide GTV hub controls, including while the pointer remains over
     // the cross-origin video iframe (whose internal pointer movement is inaccessible).
     let controlsHideTimer = null;
     const scheduleControlsHide = () => {
@@ -352,7 +352,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     playerCont.addEventListener('click', showPlayerControls);
     playerCont.addEventListener('keydown', showPlayerControls);
 
-    // F toggles GTV Hub fullscreen while the player is open.
+    // F toggles GTV hub fullscreen while the player is open.
     document.addEventListener('keydown', (e) => {
         if (e.key.toLowerCase() !== 'f' || e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
 
@@ -489,6 +489,14 @@ let authDialogPreviousNoScroll = false;
 let authDialogPreviousProfileDisplay = null;
 let passwordRecoveryPending = window.location.hash.includes('type=recovery') || new URLSearchParams(window.location.search).get('type') === 'recovery';
 
+// Remove the initial startup cover only after the first real app screen is ready.
+function dismissStartupScreen() {
+    const startup = document.getElementById('startup-screen');
+    if (!startup || startup.classList.contains('is-leaving')) return;
+    startup.classList.add('is-leaving');
+    window.setTimeout(() => startup.remove(), 300);
+}
+
 function showAuthMessage(message, isError = false) {
     const el = document.getElementById('auth-message');
     if (!el) return;
@@ -514,10 +522,10 @@ function renderAuthView(mode = 'login', message = '', isError = false, asDialog 
     const signup = mode === 'signup';
     const reset = mode === 'reset';
     const updatePassword = mode === 'update-password';
-    document.getElementById('auth-title').textContent = reset ? 'Reset your password' : (updatePassword ? 'Choose a new password' : (signup ? 'Create your account' : 'Welcome to GTV Hub'));
+    document.getElementById('auth-title').textContent = reset ? 'Reset your password' : (updatePassword ? 'Choose a new password' : (signup ? 'Create your account' : 'Welcome to GTV hub'));
     document.getElementById('auth-subtitle').textContent = reset
         ? 'We’ll email you a link to choose a new password.'
-        : (updatePassword ? 'Choose a new password for your GTV Hub account.' : (signup ? 'Create an account to keep your profiles and watchlist in sync.' : 'Sign in to sync your profiles and watchlist across devices.'));
+        : (updatePassword ? 'Choose a new password for your GTV hub account.' : (signup ? 'Create an account to keep your profiles and watchlist in sync.' : 'Sign in to sync your profiles and watchlist across devices.'));
     document.getElementById('auth-password').style.display = reset ? 'none' : '';
     document.querySelector('label[for="auth-password"]').style.display = reset ? 'none' : '';
     document.getElementById('auth-password').required = !reset;
@@ -530,6 +538,7 @@ function renderAuthView(mode = 'login', message = '', isError = false, asDialog 
     document.querySelector('.auth-divider').style.display = (reset || updatePassword || authDialogMode) ? 'none' : '';
     document.querySelector('.auth-guest-btn').style.display = (reset || updatePassword || authDialogMode) ? 'none' : '';
     showAuthMessage(message, isError);
+    if (!authDialogMode) dismissStartupScreen();
 }
 
 window.openAccountSignIn = () => {
@@ -669,7 +678,7 @@ window.submitAuthForm = async (event) => {
                 window.showGtvNoticeDialog({
                     icon: 'mark_email_read',
                     title: 'Check your email',
-                    message: 'Your account registration was successful. We sent a confirmation link to ' + email + '. Open that email and confirm your address before signing in to GTV Hub.',
+                    message: 'Your account registration was successful. We sent a confirmation link to ' + email + '. Open that email and confirm your address before signing in to GTV hub.',
                     buttonLabel: 'Got it'
                 });
             }
@@ -857,7 +866,7 @@ function setupBranding() {
     const style = document.createElement('style');
     style.textContent = `
         :root {
-            --accent: #3498db; /* GTV/Hub style blue accent */
+            --accent: #3498db; /* GTV/hub style blue accent */
         }
     `;
     document.head.appendChild(style);
@@ -1275,6 +1284,7 @@ window.renderProfileScreen = () => {
     accountBtn.textContent = cloudProfileMode ? 'Sign Out' : 'Sign In';
     accountBtn.onclick = cloudProfileMode ? signOutAccount : openAccountSignIn;
     accountBtn.style.display = isManagingProfiles ? 'none' : 'block';
+    dismissStartupScreen();
 };
 
 window.toggleManageProfiles = () => {
@@ -3638,7 +3648,7 @@ window.openAboutView = () => {
             <!-- Hero Header -->
             <div style="text-align: center; margin-bottom: 60px; position: relative;">
                 <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; background: var(--accent); filter: blur(100px); opacity: 0.2; z-index: -1;"></div>
-                <img src="../icon.png" alt="GTV Hub" style="width: 100px; height: 100px; border-radius: 24px; margin-bottom: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+                <img src="../icon.png" alt="GTV hub" style="width: 100px; height: 100px; border-radius: 24px; margin-bottom: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
                 <h1 style="font-size: 3.5rem; font-weight: 800; margin: 0 0 10px 0; letter-spacing: -1px; background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">GTV <span style="font-weight: 300;">hub</span></h1>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 30px;">
                     <span style="background: rgba(255,255,255,0.1); padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; border: 1px solid rgba(255,255,255,0.1);">v2.1.0</span>
@@ -3713,7 +3723,7 @@ window.openAboutView = () => {
                 <p style="color: #aaa; margin: 0 0 30px 0; max-width: 500px; margin-left: auto; margin-right: auto; font-size: 1.1rem;">
                     We are constantly working to improve GTV hub. Let us know if you have suggestions or spot any bugs.
                 </p>
-                <a href="mailto:exeinn.info@gmail.com?subject=GTV Hub Feedback" style="text-decoration:none;">
+                <a href="mailto:exeinn.info@gmail.com?subject=GTV hub Feedback" style="text-decoration:none;">
                     <button class="feedback-btn" style="background: #fff; color: #000; border: none; padding: 15px 35px; font-size: 1rem;">
                         <span class="material-icons" style="color: #000;">mail</span> Send Feedback
                     </button>
@@ -4335,12 +4345,12 @@ function captureAndPushState() {
     if (state) {
         navigationStack.push(state);
         appHistoryIndex += 1;
-        history.pushState({ gtvHubNavigation: true, gtvHubIndex: appHistoryIndex }, '', window.location.href);
+        history.pushState({ gtvhubNavigation: true, gtvhubIndex: appHistoryIndex }, '', window.location.href);
     }
 }
 
 window.handleBack = (fromPopState = false) => {
-    if (!fromPopState && navigationStack.length > 0 && history.state?.gtvHubNavigation) {
+    if (!fromPopState && navigationStack.length > 0 && history.state?.gtvhubNavigation) {
         history.back();
         return;
     }
@@ -4484,14 +4494,14 @@ function updateUrl(id, type) {
     newUrl.searchParams.delete('movie');
     newUrl.searchParams.delete('tv');
     newUrl.searchParams.set(type === 'movie' ? 'movie' : 'tv', id);
-    window.history.replaceState({ ...(history.state || {}), gtvHubNavigation: true, gtvHubIndex: appHistoryIndex, view: 'details', id, type }, '', newUrl);
+    window.history.replaceState({ ...(history.state || {}), gtvhubNavigation: true, gtvhubIndex: appHistoryIndex, view: 'details', id, type }, '', newUrl);
 }
 
 function resetUrl() {
     const newUrl = new URL(window.location);
     newUrl.searchParams.delete('movie');
     newUrl.searchParams.delete('tv');
-    window.history.replaceState({ ...(history.state || {}), gtvHubNavigation: true, gtvHubIndex: appHistoryIndex }, '', newUrl.pathname);
+    window.history.replaceState({ ...(history.state || {}), gtvhubNavigation: true, gtvhubIndex: appHistoryIndex }, '', newUrl.pathname);
 }
 
 window.shareContent = (title) => {
