@@ -558,8 +558,83 @@ window.closeAccountSignIn = () => {
     document.body.classList.toggle('no-scroll', authDialogPreviousNoScroll);
 };
 
+let gtvNoticeDialogAction = null;
+let gtvNoticePreviousNoScroll = false;
+
+window.showGtvNoticeDialog = (options = {}) => {
+    let overlay = document.getElementById('gtv-notice-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'gtv-notice-overlay';
+        overlay.className = 'gtv-notice-overlay';
+        overlay.innerHTML = `
+            <section class="gtv-notice-dialog" role="dialog" aria-modal="true" aria-labelledby="gtv-notice-title">
+                <button class="gtv-notice-close" type="button" aria-label="Close dialog"><span class="material-icons">close</span></button>
+                <div class="gtv-notice-icon"><span class="material-icons" id="gtv-notice-icon">info</span></div>
+                <h2 id="gtv-notice-title"></h2>
+                <p id="gtv-notice-message"></p>
+                <button class="play-btn gtv-notice-action" id="gtv-notice-action" type="button">Got it</button>
+            </section>`;
+        overlay.addEventListener('click', (event) => {
+            if (event.target === overlay || event.target.closest('.gtv-notice-close')) {
+                window.closeGtvNoticeDialog();
+            }
+        });
+        overlay.querySelector('#gtv-notice-action').addEventListener('click', () => {
+            const action = gtvNoticeDialogAction;
+            window.closeGtvNoticeDialog();
+            if (typeof action === 'function') action();
+        });
+        document.body.appendChild(overlay);
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && overlay.classList.contains('active')) {
+                window.closeGtvNoticeDialog();
+            }
+        });
+    }
+
+    gtvNoticePreviousNoScroll = document.body.classList.contains('no-scroll');
+    document.getElementById('gtv-notice-icon').textContent = options.icon || 'info';
+    document.getElementById('gtv-notice-title').textContent = options.title || 'A quick note';
+    document.getElementById('gtv-notice-message').textContent = options.message || '';
+    const actionButton = document.getElementById('gtv-notice-action');
+    actionButton.textContent = options.buttonLabel || 'Got it';
+    actionButton.style.display = options.buttonLabel === false ? 'none' : '';
+    gtvNoticeDialogAction = typeof options.onAction === 'function' ? options.onAction : null;
+    overlay.classList.add('active');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('no-scroll');
+    actionButton.focus();
+};
+
+window.closeGtvNoticeDialog = () => {
+    const overlay = document.getElementById('gtv-notice-overlay');
+    if (!overlay || !overlay.classList.contains('active')) return;
+    overlay.classList.remove('active');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.classList.toggle('no-scroll', gtvNoticePreviousNoScroll);
+    gtvNoticeDialogAction = null;
+};
+
+window.showFeatureMaintenanceDialog = (featureName = 'This feature', onContinue = null) => {
+    window.showGtvNoticeDialog({
+        icon: 'build',
+        title: featureName + ' is being improved',
+        message: 'We’re currently working on this feature. Some parts of the experience are still being finalized. Thank you for your patience!',
+        buttonLabel: 'Continue',
+        onAction: onContinue
+    });
+};
+
 window.toggleAuthMode = () => {
-    renderAuthView(authMode === 'signup' || authMode === 'reset' || authMode === 'update-password' ? 'login' : 'signup', '', false, authDialogMode);
+    if (authMode === 'signup' || authMode === 'reset' || authMode === 'update-password') {
+        renderAuthView('login', '', false, authDialogMode);
+        return;
+    }
+
+    window.showFeatureMaintenanceDialog('Account registration', () => {
+        renderAuthView('signup', '', false, authDialogMode);
+    });
 };
 
 window.submitAuthForm = async (event) => {
@@ -586,7 +661,16 @@ window.submitAuthForm = async (event) => {
                 authUser = data.user;
                 await enterAccount();
             } else {
-                renderAuthView('login', 'Account created. Check your email and confirm your address, then sign in here.', false, authDialogMode);
+                const wasDialog = authDialogMode;
+                renderAuthView('login', '', false, wasDialog);
+                document.getElementById('auth-password').value = '';
+                document.getElementById('auth-confirm-password').value = '';
+                window.showGtvNoticeDialog({
+                    icon: 'mark_email_read',
+                    title: 'Check your email',
+                    message: 'Your account registration was successful. We sent a confirmation link to ' + email + '. Open that email and confirm your address before signing in to GTV Hub.',
+                    buttonLabel: 'Got it'
+                });
             }
         } else if (authMode === 'login') {
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
