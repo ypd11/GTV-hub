@@ -3,29 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#08090b">
+  <meta name="theme-color" content="#101319">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <title>Email confirmation · GTV hub</title>
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0; min-height: 100vh; display: grid; place-items: center;
-      padding: 24px; background: #08090b; color: #f5f5f5;
+      padding: 24px; background: radial-gradient(ellipse at 12% 12%, rgba(52,152,219,.18), transparent 48%), radial-gradient(ellipse at 88% 88%, rgba(155,89,182,.20), transparent 48%), #08090b; color: #f5f5f5;
       font-family: 'Outfit', sans-serif;
     }
     main {
       width: min(100%, 420px); padding: 42px 30px; text-align: center;
-      background: #141619; border: 1px solid rgba(255,255,255,.09);
+      background: radial-gradient(ellipse at 100% 0%, rgba(155,89,182,.12), transparent 48%), linear-gradient(155deg, #171c24, #101319 72%); border: 1px solid rgba(255,255,255,.10);
       border-radius: 22px; box-shadow: 0 24px 80px rgba(0,0,0,.38);
     }
     .brand {
-      margin-bottom: 30px; font-size: 26px; font-weight: 800; letter-spacing: -1px;
+      margin-bottom: 30px; font-size: 29px; font-weight: 800; letter-spacing: -1px;
       background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%);
       -webkit-background-clip: text; background-clip: text;
       -webkit-text-fill-color: transparent; color: transparent;
       text-shadow: 0 0 30px rgba(52,152,219,.18);
     }
-    .brand span { font-weight: 300; }
+    .brand span { font-weight: 300; -webkit-text-fill-color: transparent; }
     .icon {
       width: 68px; height: 68px; margin: 0 auto 22px; display: grid; place-items: center;
       border-radius: 50%; background: rgba(46,204,113,.12); color: #2ecc71; font-size: 32px;
@@ -34,12 +34,12 @@
     p { margin: 0; color: #aeb4bd; line-height: 1.65; }
     .actions { display: grid; gap: 11px; margin-top: 28px; }
     .actions a {
-      display: block; padding: 14px 20px; border-radius: 10px;
+      display: block; padding: 14px 20px; border-radius: 50px;
       color: white; text-decoration: none; font-weight: 700;
       transition: background .2s ease, border-color .2s ease, transform .2s ease;
     }
-    .primary-link { background: #3498db; border: 1px solid #3498db; }
-    .primary-link:hover { background: #2585c5; transform: translateY(-1px); }
+    .primary-link { background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%); border: 1px solid transparent; box-shadow: 0 7px 22px rgba(91,105,205,.25); }
+    .primary-link:hover { background: linear-gradient(135deg, #2585c5 0%, #8750a4 100%); transform: translateY(-1px); box-shadow: 0 9px 28px rgba(115,105,210,.34); }
     .secondary-link { background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.13); }
     .secondary-link:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.25); }
     .address { display: block; margin-top: 5px; font-size: .78rem; font-weight: 500; opacity: .78; }
