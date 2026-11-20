@@ -1130,7 +1130,6 @@ function setupNewNavigation() {
     dropdown.id = 'nav-dropdown';
     dropdown.className = 'nav-dropdown';
     dropdown.innerHTML = `
-        <div class="dropdown-item" onclick="openWatchPartyJoin(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">groups</span> Join Watch Party</div>
         <div class="dropdown-item" onclick="openProfilePicker(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">people</span> Switch Profile</div>
         <div class="dropdown-item" onclick="openCategories(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">category</span> Categories</div>
             <div class="dropdown-item" onclick="openPeople(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">person_search</span> People</div>
@@ -1143,6 +1142,26 @@ function setupNewNavigation() {
             ? '<div class="dropdown-item" onclick="signOutAccount(); document.getElementById(\'nav-dropdown\').classList.remove(\'active\');"><span class="material-icons">logout</span> Sign Out</div>'
             : '<div class="dropdown-item" onclick="openAccountSignIn()"><span class="material-icons">login</span> Sign In</div>'}
     `;
+    // Add this as a real, explicitly wired menu control rather than relying on
+    // an inline handler. Keep it first so it is immediately visible.
+    const joinPartyItem = document.createElement('div');
+    joinPartyItem.className = 'dropdown-item watch-party-menu-item';
+    joinPartyItem.setAttribute('role', 'button');
+    joinPartyItem.setAttribute('tabindex', '0');
+    joinPartyItem.innerHTML = '<span class="material-icons">groups</span><span>Join Watch Party</span>';
+    const openJoinParty = (event) => {
+        if (event) event.stopPropagation();
+        dropdown.classList.remove('active');
+        window.openWatchPartyJoin();
+    };
+    joinPartyItem.addEventListener('click', openJoinParty);
+    joinPartyItem.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openJoinParty(event);
+        }
+    });
+    dropdown.insertBefore(joinPartyItem, dropdown.firstChild);
     document.body.appendChild(dropdown);
 
     // Search Modal (Inject into body)
@@ -4029,10 +4048,12 @@ window.createWatchParty = async function() {
         const identity = await window.ensureWatchPartySession();
         const displayName = getWatchPartyDisplayName(identity.isAnonymous);
         if (!displayName) { setWatchPartyStatus('Party creation cancelled.'); return; }
-        const syncSourceIndex = playerSources.findIndex(source => source.includes('vidking.net'));
-        if (syncSourceIndex >= 0 && currentSourceIdx !== syncSourceIndex) {
-            setWatchPartyStatus('Switching to Vidking for synchronized playback…');
-            window.selectPlayerSource(syncSourceIndex);
+        // Never switch providers while creating a party: changing the iframe
+        // source interrupts (and can completely stop) the movie the host is watching.
+        // Playback synchronization is best-effort with the provider already selected.
+        const currentProvider = playerSources[currentSourceIdx] || '';
+        if (!currentProvider.includes('vidking.net')) {
+            setWatchPartyStatus('Creating party without interrupting playback. This provider may have limited play/pause/seek synchronization.');
         }
         const media = getCurrentWatchPartyMedia();
         const result = await supabaseClient.rpc('create_watch_party', {
