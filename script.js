@@ -4982,6 +4982,9 @@ window.triggerSearch = (query) => {
 let communityCurrentUsername = '';
 let communityDirectoryRequest = 0;
 let communityProfileRequest = 0;
+let communityFeedOffset = 0;
+let communityFeedHasMore = false;
+let communityFeedRequest = 0;
 function communityEscape(value){return escapeHtml(String(value==null?'':value));}
 function communitySetPage(page){
  ['dashboard','details-view','category-view','people-view','person-profile-view','community-view','community-profile-view'].forEach(id=>{const el=document.getElementById(id);if(el)setElementVisible(el,id===page,'block');});
@@ -4991,9 +4994,71 @@ function communitySetUrl(hash){const url=new URL(window.location.href);url.searc
 window.openCommunityDirectory=async function(fromHistory,directLink){
  if(!fromHistory&&!directLink)captureAndPushState();communitySetPage('community-view');communitySetUrl('community');
  const host=document.getElementById('community-view-content');
- host.innerHTML=`<div class="community-page-heading"><div><span class="community-page-kicker">THE GTV HUB COMMUNITY</span><h1>Find your people.</h1><p>Discover profiles and connect with other viewers.</p></div><div class="community-heading-icon"><span class="material-icons">groups</span></div></div><form class="community-search" id="community-search-form"><span class="material-icons">search</span><input id="community-search-input" type="search" maxlength="40" placeholder="Search by username..." autocomplete="off"><button type="submit">Search</button></form><div class="community-results-heading"><h2 id="community-results-title">Recently joined</h2><span id="community-results-count"></span></div><div id="community-directory-list" class="community-directory-grid"><div class="community-loading">Loading community...</div></div>`;
- document.getElementById('community-search-form').addEventListener('submit',e=>{e.preventDefault();loadCommunityDirectory(document.getElementById('community-search-input').value);});await loadCommunityDirectory('');
+ host.innerHTML=`<div class="community-page-heading"><div><span class="community-page-kicker">THE GTV HUB COMMUNITY</span><h1>Find your people.</h1><p>Discover profiles and connect with other viewers.</p></div><div class="community-heading-icon"><span class="material-icons">groups</span></div></div>
+ <section class="community-feed-section"><div class="community-section-heading"><div><span class="community-page-kicker">FROM YOUR COMMUNITY</span><h2>Activity feed</h2></div><button type="button" class="community-feed-refresh" onclick="loadCommunityFeed(true)"><span class="material-icons">refresh</span> Refresh</button></div><div id="community-post-composer"></div><div id="community-feed-list" class="community-feed-list"><div class="community-loading">Loading activity...</div></div><button type="button" id="community-feed-more" class="community-feed-more" style="display:none" onclick="loadCommunityFeed(false)">Load more</button></section>
+ <div class="community-directory-divider"></div><form class="community-search" id="community-search-form"><span class="material-icons">search</span><input id="community-search-input" type="search" maxlength="40" placeholder="Search by username..." autocomplete="off"><button type="submit">Search</button></form><div class="community-results-heading"><h2 id="community-results-title">Recently joined</h2><span id="community-results-count"></span></div><div id="community-directory-list" class="community-directory-grid"><div class="community-loading">Loading community...</div></div>`;
+ document.getElementById('community-search-form').addEventListener('submit',e=>{e.preventDefault();loadCommunityDirectory(document.getElementById('community-search-input').value);});
+ await Promise.all([loadCommunityDirectory(''),loadCommunityFeed(true)]);
 };
+function renderCommunityActivityCards(activities,profiles,emptyMessage){
+ const hostProfiles=new Map((profiles||[]).map(p=>[p.user_id,p]));
+ if(!activities||!activities.length)return '<div class="community-feed-empty"><span class="material-icons">dynamic_feed</span><strong>No activity yet</strong><p>'+communityEscape(emptyMessage||'Updates shared by this community will appear here.')+'</p></div>';
+ return activities.map(item=>{
+  const profile=hostProfiles.get(item.user_id);if(!profile)return '';
+  const labels={watching:'Currently watching',watched:'Finished watching',recommendation:'Recommendation',update:'Community update'};
+  const icons={watching:'play_circle',watched:'task_alt',recommendation:'thumb_up',update:'chat_bubble_outline'};
+  const date=item.created_at?new Date(item.created_at):null;
+  const dateLabel=date&&!isNaN(date.getTime())?date.toLocaleDateString(undefined,{month:'short',day:'numeric',year:date.getFullYear()!==new Date().getFullYear()?'numeric':undefined}):'';
+  return '<article class="community-activity-card"><button type="button" class="community-activity-author" onclick="openCommunityProfile(\''+communityEscape(profile.username)+'\')"><img src="'+communityAvatarUrl(profile.avatar_id)+'" alt="" loading="lazy"><span><strong>'+communityEscape(profile.display_name||profile.username)+'</strong><small>@'+communityEscape(profile.username)+'</small></span></button><div class="community-activity-meta"><span><i class="material-icons">'+icons[item.activity_type]+'</i>'+labels[item.activity_type]+'</span><time>'+communityEscape(dateLabel)+'</time></div><p>'+communityEscape(item.message)+'</p></article>';
+ }).join('');
+}
+async function loadCommunityFeed(reset){
+ const host=document.getElementById('community-feed-list'),composer=document.getElementById('community-post-composer'),more=document.getElementById('community-feed-more');if(!host||!supabaseClient)return;
+ const request=++communityFeedRequest;if(reset){communityFeedOffset=0;communityFeedHasMore=false;host.innerHTML='<div class="community-loading">Loading activity...</div>';}
+ if(!authUser){composer.innerHTML='<div class="community-feed-signin"><span class="material-icons">lock</span><div><strong>Your community feed starts here.</strong><p>Sign in to follow viewers and see the updates they share.</p></div><button type="button" onclick="openAccountSignIn()">Sign in</button></div>';host.innerHTML='<div class="community-feed-empty"><span class="material-icons">dynamic_feed</span><strong>Follow people to build your feed</strong><p>Sign in and follow community profiles to see their activity here.</p></div>';if(more)more.style.display='none';return;}
+ const ownProfile=await supabaseClient.from('community_profiles').select('user_id,username,display_name,avatar_id,is_public').eq('user_id',authUser.id).maybeSingle();
+ if(request!==communityFeedRequest)return;
+ if(ownProfile.error){composer.innerHTML='<div class="community-feed-error">Could not load your community profile.</div>';host.innerHTML='';return;}
+ if(!ownProfile.data||!ownProfile.data.is_public){composer.innerHTML='<div class="community-feed-signin"><span class="material-icons">edit_note</span><div><strong>Share with the community</strong><p>Create a public community profile to publish activity updates.</p></div><button type="button" onclick="openCommunityProfileSettings()">Set up profile</button></div>';}
+ else if(reset||!composer.dataset.ready){composer.dataset.ready='true';composer.innerHTML='<form class="community-post-composer" id="community-post-form" onsubmit="submitCommunityPost(event)"><div class="community-composer-top"><img src="'+communityAvatarUrl(ownProfile.data.avatar_id)+'" alt=""><strong>Share an update</strong></div><select id="community-post-type" aria-label="Activity type"><option value="watching">I\'m currently watching</option><option value="watched">I\'ve finished watching</option><option value="recommendation">I recommend</option><option value="update">Community update</option></select><textarea id="community-post-message" maxlength="280" rows="3" required placeholder="What would you like to share? (280 characters max)"></textarea><div class="community-composer-bottom"><span>Only share what you choose to publish.</span><button type="submit" id="community-post-submit"><span class="material-icons">send</span> Share</button></div></form>';}
+ const follows=await supabaseClient.from('follows').select('following_id').eq('follower_id',authUser.id).limit(100);
+ if(request!==communityFeedRequest)return;
+ if(follows.error){host.innerHTML='<div class="community-feed-error">Could not load the people you follow.</div>';return;}
+ const userIds=Array.from(new Set([authUser.id,...(follows.data||[]).map(row=>row.following_id)]));
+ const offset=reset?0:communityFeedOffset;
+ const result=await supabaseClient.from('community_activity').select('id,user_id,activity_type,message,created_at').in('user_id',userIds).order('created_at',{ascending:false}).range(offset,offset+19);
+ if(request!==communityFeedRequest)return;
+ if(result.error){host.innerHTML='<div class="community-feed-error">Could not load the activity feed. Please make sure the community activity database setup has been applied.</div>';if(more)more.style.display='none';return;}
+ const activities=result.data||[],profileIds=Array.from(new Set(activities.map(item=>item.user_id)));
+ let profiles=[];
+ if(profileIds.length){const pr=await supabaseClient.from('community_profiles').select('user_id,username,display_name,avatar_id').in('user_id',profileIds).eq('is_public',true);if(pr.error){host.innerHTML='<div class="community-feed-error">Could not load community members.</div>';return;}profiles=pr.data||[];}
+ if(request!==communityFeedRequest)return;
+ const markup=renderCommunityActivityCards(activities,profiles,'Updates from people you follow will appear here. Share your first update or follow more viewers.');
+ if(reset)host.innerHTML=markup;else host.insertAdjacentHTML('beforeend',markup);
+ communityFeedOffset=offset+activities.length;communityFeedHasMore=activities.length===20;
+ if(more)more.style.display=communityFeedHasMore?'block':'none';
+}
+window.submitCommunityPost=async function(event){
+ event.preventDefault();if(!authUser||!supabaseClient){showToast('Sign in to share an update.');return;}
+ const form=document.getElementById('community-post-form'),button=document.getElementById('community-post-submit'),message=document.getElementById('community-post-message'),type=document.getElementById('community-post-type');
+ if(!form||!button||!message||!type)return;const body=message.value.trim();
+ if(!body||body.length>280){showToast('Write an update of up to 280 characters.');return;}
+ button.disabled=true;button.textContent='Sharing…';
+ const profile=await supabaseClient.from('community_profiles').select('is_public').eq('user_id',authUser.id).maybeSingle();
+ if(profile.error||!profile.data||!profile.data.is_public){button.disabled=false;button.innerHTML='<span class="material-icons">send</span> Share';showToast('A public community profile is required to post.');return;}
+ const result=await supabaseClient.from('community_activity').insert({user_id:authUser.id,activity_type:type.value,message:body});
+ button.disabled=false;button.innerHTML='<span class="material-icons">send</span> Share';
+ if(result.error){showToast('Could not share your update. Please try again.');return;}
+ form.reset();showToast('Your update has been shared.');await loadCommunityFeed(true);
+};
+async function loadCommunityProfileActivity(userId,profile){
+ const host=document.getElementById('community-profile-activity-list');if(!host||!supabaseClient)return;
+ host.innerHTML='<div class="community-loading">Loading activity...</div>';
+ const result=await supabaseClient.from('community_activity').select('id,user_id,activity_type,message,created_at').eq('user_id',userId).order('created_at',{ascending:false}).limit(20);
+ if(!document.getElementById('community-profile-activity-list'))return;
+ if(result.error){host.innerHTML='<div class="community-feed-error">Could not load activity right now.</div>';return;}
+ host.innerHTML=renderCommunityActivityCards(result.data||[],[profile],'This viewer has not shared any activity yet.');
+}
 async function loadCommunityDirectory(searchTerm){
  const host=document.getElementById('community-directory-list');if(!host||!supabaseClient)return;const req=++communityDirectoryRequest;host.innerHTML='<div class="community-loading">Loading community...</div>';
  const term=String(searchTerm||'').trim().replace(/[%_,()]/g,' ').slice(0,40);let q=supabaseClient.from('community_profiles').select('user_id,username,display_name,bio,avatar_id,created_at').eq('is_public',true).not('username','is',null).order('created_at',{ascending:false}).limit(30);if(term)q=q.ilike('username','%'+term+'%');
@@ -5016,7 +5081,8 @@ window.openCommunityProfile=async function(username,fromHistory,directLink){
  const [fr,fg,follow]=await Promise.all([supabaseClient.from('follows').select('follower_id',{count:'exact',head:true}).eq('following_id',p.user_id),supabaseClient.from('follows').select('following_id',{count:'exact',head:true}).eq('follower_id',p.user_id),authUser&&!own?supabaseClient.from('follows').select('follower_id').eq('follower_id',authUser.id).eq('following_id',p.user_id).maybeSingle():Promise.resolve({data:null,error:null})]);
  if(req!==communityProfileRequest||communityCurrentUsername!==clean)return;const followers=fr.count||0,following=fg.count||0,isFollowing=!!follow.data;
  let action='';if(own)action='<button class="community-follow-button is-own" type="button" onclick="openCommunityProfileSettings()"><span class="material-icons">edit</span> Edit profile</button>';else if(authUser)action='<button class="community-follow-button '+(isFollowing?'is-following':'')+'" type="button" onclick="toggleCommunityFollow(\''+communityEscape(p.username)+'\','+isFollowing+')"><span class="material-icons">'+(isFollowing?'check':'person_add')+'</span> '+(isFollowing?'Following':'Follow')+'</button>';else action='<p class="community-signin-hint">Sign in to follow this profile.</p>';
- host.innerHTML=`<div class="category-header-block community-profile-header-block" style="padding: 0 4%; margin-bottom: 30px; display: flex; align-items: center; gap: 15px;"><button class="back-btn-simple" onclick="openCommunityDirectory()"><span class="material-icons">arrow_back</span></button><h1 class="community-profile-page-title">Community</h1></div><div class="community-profile-page"><div class="community-profile-hero"><img class="community-profile-large-avatar" src="${communityAvatarUrl(p.avatar_id)}" alt=""><div class="community-profile-identity"><span class="community-page-kicker">COMMUNITY PROFILE</span><h1>${communityEscape(p.display_name||p.username)}</h1><div class="community-profile-handle">@${communityEscape(p.username)}</div><p>${communityEscape(p.bio||'This viewer has not added a bio yet.')}</p><div class="community-profile-stats"><span><strong>${followers}</strong> followers</span><span><strong>${following}</strong> following</span></div>${action}</div></div><div class="community-profile-lower"><span class="material-icons">movie_filter</span><div><strong>More community features are on the way.</strong><p>For now, you can follow viewers whose taste you enjoy.</p></div></div><button class="community-share-link" type="button" onclick="shareCommunityProfile('${communityEscape(p.username)}')"><span class="material-icons">link</span> Copy profile link</button></div>`;
+ host.innerHTML=`<div class="category-header-block community-profile-header-block" style="padding: 0 4%; margin-bottom: 30px; display: flex; align-items: center; gap: 15px;"><button class="back-btn-simple" onclick="openCommunityDirectory()"><span class="material-icons">arrow_back</span></button><h1 class="community-profile-page-title">Community</h1></div><div class="community-profile-page"><div class="community-profile-hero"><img class="community-profile-large-avatar" src="${communityAvatarUrl(p.avatar_id)}" alt=""><div class="community-profile-identity"><span class="community-page-kicker">COMMUNITY PROFILE</span><h1>${communityEscape(p.display_name||p.username)}</h1><div class="community-profile-handle">@${communityEscape(p.username)}</div><p>${communityEscape(p.bio||'This viewer has not added a bio yet.')}</p><div class="community-profile-stats"><span><strong>${followers}</strong> followers</span><span><strong>${following}</strong> following</span></div>${action}</div></div><section class="community-profile-activity"><div class="community-section-heading"><div><span class="community-page-kicker">SHARED WITH THE COMMUNITY</span><h2>Activity</h2></div></div><div id="community-profile-activity-list" class="community-feed-list"><div class="community-loading">Loading activity...</div></div></section><button class="community-share-link" type="button" onclick="shareCommunityProfile('${communityEscape(p.username)}')"><span class="material-icons">link</span> Copy profile link</button></div>`;
+ await loadCommunityProfileActivity(p.user_id,p);
 };
 window.toggleCommunityFollow=async function(username,current){
  if(!authUser||!supabaseClient){showToast('Sign in to follow community profiles.');return;}const target=await supabaseClient.from('community_profiles').select('user_id,is_public').eq('username',username).maybeSingle();if(target.error||!target.data||!target.data.is_public){showToast('This profile is no longer available.');return;}
