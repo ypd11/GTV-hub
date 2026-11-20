@@ -3799,12 +3799,19 @@ body {
 }
 
 
-/* Account action on Who's watching? matches the branded sign-in action. */
+/* Account actions on Who's watching? share a consistent width. */
 #manage-profiles-btn,
 #profile-account-btn {
     width: 240px;
     max-width: 100%;
 }
+
+#manage-profiles-btn {
+    white-space: nowrap;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
 #profile-account-btn {
     width: 240px;
     max-width: 100%;
@@ -3821,6 +3828,7 @@ body {
     box-shadow: 0 7px 22px rgba(91,105,205,.25);
     transition: box-shadow .2s ease, transform .2s ease;
 }
+
 #profile-account-btn:hover,
 #profile-account-btn:focus-visible {
     box-shadow: 0 9px 28px rgba(115,105,210,.36);
