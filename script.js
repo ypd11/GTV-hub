@@ -3761,10 +3761,24 @@ window.initializeWatchPartyPanel = function() {
         inviteUrl.hash = '';
         inviteUrl.searchParams.set('party', activeWatchParty.invite_code);
         try {
-            await navigator.clipboard.writeText(inviteUrl.toString());
-            showToast('Invite link copied');
-        } catch (_) {
-            setWatchPartyStatus('Share this link: ' + inviteUrl.toString());
+            if (navigator.share) {
+                await navigator.share({
+                    title: 'Join my GTV hub Watch Party',
+                    text: 'Join my Watch Party on GTV hub.',
+                    url: inviteUrl.toString()
+                });
+            } else {
+                await navigator.clipboard.writeText(inviteUrl.toString());
+                showToast('Invite link copied');
+            }
+        } catch (error) {
+            if (error && error.name === 'AbortError') return;
+            try {
+                await navigator.clipboard.writeText(inviteUrl.toString());
+                showToast('Invite link copied');
+            } catch (_) {
+                window.prompt('Copy this Watch Party invite link:', inviteUrl.toString());
+            }
         }
     };
     panel.querySelector('.watch-party-message-form').onsubmit = event => {
