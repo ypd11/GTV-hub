@@ -3683,3 +3683,13 @@ body {
     display: block;
     margin-bottom: 8px;
 }
+
+/* Ensure both parts of the desktop dialog logo render with the full brand gradient. */
+#auth-view.auth-dialog .auth-aside .auth-brand,
+#auth-view.auth-dialog .auth-aside .auth-brand span {
+    background-image: linear-gradient(135deg, #3498db 0%, #9b59b6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
