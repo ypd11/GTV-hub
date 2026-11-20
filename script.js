@@ -3741,50 +3741,77 @@ window.openInfoView = (title, content) => {
 
 window.openHelpView = () => {
     openInfoView('Help Center', `
-        <div style="max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.7; color: #ccc;">
-        <h3 style="color:#fff; margin-bottom:10px;">Getting Started</h3>
-        <p>Welcome to GTV hub! Browse movies and TV shows, discover cast members, keep a watchlist, and continue watching across sessions. You can use the app as a guest or create an account if you want your profiles and supported viewing data to sync across devices.</p>
+        <div style="max-width: 860px; margin: 0 auto; padding: 28px 22px 50px; line-height: 1.85; color: #d0d0d0; font-size: 1.08rem;">
+            <h3 style="color:#fff; font-size:1.55rem; line-height:1.3; margin:0 0 14px;">Getting Started</h3>
+            <p style="margin:0 0 18px;">Welcome to GTV hub, a place to discover movies and TV shows, explore actors and filmmakers, build your own watchlist, and find something to watch. The home screen brings together featured picks, popular titles, trending selections, highly rated movies and shows, genre collections, and recommendations based on titles you like. You can browse without creating an account, or sign in to keep supported profile information synchronized across devices.</p>
 
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Guest Mode or an Account</h4>
-        <p>You do not need an account to use GTV hub. Choose <strong>Continue as Guest</strong> to use the app on the current browser and device. Guest profiles and their data are stored locally, so they are not automatically available on another device or browser.</p>
-        <p>You can also create an account with your email address and a password, then confirm your email if prompted. Sign in on another device to access the profiles and supported data saved to your account. You can switch between guest use and account sign-in from the profile or account controls. Signing out does not delete your account.</p>
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">1. Guest Mode, Accounts, and Signing In</h4>
+            <p style="margin:0 0 14px;">GTV hub supports two ways to use the app. <strong>Continue as Guest</strong> lets you start browsing without registering. Guest profiles and supported activity are saved in the browser on the device you are using. This is convenient if you use one device, but guest information does not automatically follow you to another browser or device.</p>
+            <p style="margin:0 0 14px;">You can also choose to <strong>create an account</strong> with your email address and a password. Follow the email confirmation step if one is sent, then sign in. Your account lets GTV hub store supported profile information in its cloud database so you can sign in on another device and continue with the same account and profile. Use the Sign In option in the account/profile area when you want to access your account.</p>
+            <p style="margin:0 0 14px;">Signing out ends the current signed-in session; it is not the same as deleting your account. If you return as a guest, you will see the guest data stored in that browser rather than automatically seeing the account's cloud profiles. To access cloud-saved profiles again, sign back into the same account.</p>
 
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Profiles</h4>
-        <p>Profiles let different viewers keep their own watchlists, viewing progress, preferences, and recommendations separate. Open the profile picker to switch viewers or choose <strong>Manage Profiles</strong> to add, edit, or delete profiles. When you are signed in, profiles created in your account are saved to your account; in guest mode, they remain on the current device.</p>
-        <p>Deleting a profile removes that profile and its associated profile data. Take care when confirming a deletion, especially when using an account with cloud-synced profiles.</p>
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">2. Profiles and Profile Management</h4>
+            <p style="margin:0 0 14px;">Profiles help keep each viewer's experience separate. Each profile can have its own watchlist, liked titles, hidden titles, viewing activity, and supported settings. When the profile screen appears, select the profile you want to use. Open <strong>Switch Profile</strong> from the menu whenever you want to change viewers.</p>
+            <p style="margin:0 0 14px;">Choose <strong>Manage Profiles</strong> to create a profile, change its name or appearance where available, or remove a profile you no longer need. If you are signed in, profiles belonging to your account are saved with that account. Guest profiles remain in the browser's local storage. Deleting a profile also deletes the data associated with that profile, so make sure you have selected the right one before confirming.</p>
+            <p style="margin:0 0 14px;">If you previously used GTV hub as a guest and are now creating an account, the app may offer to import eligible profiles from the current device. Review the profiles before confirming the import. Importing is intended to move supported profile information into your account so it can be synchronized.</p>
 
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">How to Watch</h4>
-        <p>Select a movie or TV show poster to open its details. From there, choose <strong>Play Now</strong> to start playback. For a TV show, choose a season and then the episode you want to watch. Use the player controls and the Back button to return to the title details.</p>
-        <p>GTV hub displays catalogue information and connects to external video players. Playback availability and quality depend on the selected third-party source, not only on the title appearing in the catalogue.</p>
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">3. Exploring the Home Screen</h4>
+            <p style="margin:0 0 14px;">The home screen is organized into rows and featured areas that make it easier to find something to watch. Depending on the selected Movies or TV Shows section and the information available from the catalogue, you may see featured titles, Trending Now, Top Rated, Popular on GTV, upcoming titles, genre collections, and other discovery rows.</p>
+            <p style="margin:0 0 14px;">The featured area highlights selected titles. Scroll through the page to browse more rows, and select a poster to open its details. Some rows include a See All option so you can open a larger collection of titles. Catalogue selections can change as the service refreshes its data.</p>
 
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Switching Playback Providers</h4>
-        <p>If a video does not load, displays an error, or buffers repeatedly, open the server/source selector in the player and try another available provider. Different providers may have different availability, quality, subtitles, advertisements, or loading times. Not every title is available from every source.</p>
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">4. Search for Movies, Shows, and People</h4>
+            <p style="margin:0 0 14px;">Select the search icon in the top navigation and enter at least a couple of characters. Search can find movies, TV shows, and people using the catalogue's search service. Choose a result to open its details or profile. Search results can be expanded with <strong>Load More</strong> when more pages are available.</p>
+            <p style="margin:0 0 14px;">Recent searches may appear when the search field is empty. You can remove an individual search or clear the search history. Search history is stored in the browser, so it is specific to that browser rather than a shared account-wide search list.</p>
 
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">My Watchlist and Viewing Activity</h4>
-        <p>Use <strong>Add to Watchlist</strong> on a title to save it for later. Open <strong>My Watchlist</strong> from the main menu to revisit saved movies and shows. Like or otherwise interact with titles where those controls are available to help shape recommendations. Continue Watching and viewing history help you return to content you have already started.</p>
-        <p>Guest activity is stored on the current device. When signed in, supported profile data is synchronized with your account so it can follow you to other devices.</p>
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">5. Categories, Genres, and Moods</h4>
+            <p style="margin:0 0 14px;">Open <strong>Categories</strong> from the main menu to explore curated ways of browsing. You can jump into collections such as Trending Now, Top Rated, and other catalogue categories, or choose a mood/genre collection to discover titles with a particular feel. Select a category to see its available movies or shows, then select any poster for more information.</p>
 
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Search, Categories, and People</h4>
-        <p>Use the search field to find a movie or show by title. Browse Categories to explore genres and collections, or open People to discover actors and other people associated with films and series. Select a person to view their credits and related information.</p>
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">6. Movie and TV Show Details</h4>
+            <p style="margin:0 0 14px;">A title's details page brings together the information available for that movie or series, such as its overview, release information, genres, ratings, artwork, cast, and related titles. For TV shows, browse the available seasons and episodes and choose the episode you want to play.</p>
+            <p style="margin:0 0 14px;">The <strong>You May Also Like</strong> area can help you find related titles. Select cast members to explore their profiles and other work. Not every title has complete metadata, artwork, trailers, or episode information, because those details depend on the external catalogue.</p>
 
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Settings and Custom TMDB API Key</h4>
-        <p>Open Settings from the main menu to adjust the app's available preferences, such as region, default content tab, and reduced-motion behavior. GTV hub uses TMDB for catalogue metadata, posters, and cast information. If you have your own TMDB API key, you can enter it in Settings. Keep your key private, particularly on shared devices.</p>
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">7. Playing Movies and Episodes</h4>
+            <p style="margin:0 0 14px;">Select <strong>Play Now</strong> on a movie or choose an episode on a TV show's details page. GTV hub provides the catalogue interface and opens a player supplied by an external playback provider. The title appearing in GTV hub does not guarantee that every provider has a working stream for it.</p>
+            <p style="margin:0 0 14px;">The player may offer a server/source selector. If playback fails, try another available source. Providers can differ in availability, video quality, subtitles, loading speed, and player behavior. Some may be temporarily unavailable or may not carry a particular movie or episode.</p>
+            <p style="margin:0 0 14px;">Playback is handled by third-party services. Their players may have separate controls, privacy policies, advertisements, or popups. GTV hub cannot guarantee the availability or behavior of those external players.</p>
 
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Trailers</h4>
-        <p>Where available, select the <strong>Trailer</strong> option on a movie or show details page to view a trailer. Trailer playback may also rely on an external service.</p>
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">8. Watchlist, Likes, and Recommendations</h4>
+            <p style="margin:0 0 14px;">Select <strong>Add to Watchlist</strong> on a title to save it for later. Open <strong>My Watchlist</strong> from the menu to see your saved titles. The watchlist page lets you search your saved items, filter by Movies or TV Shows, and sort the list using the available sorting options. Remove titles when you no longer want to keep them.</p>
+            <p style="margin:0 0 14px;">Use the Like control on a title to tell GTV hub what you enjoy. Liked titles can be used to build recommendation rows such as <strong>Because you liked…</strong> on the home screen. You can also rate a title where the rating option is available. Likes and ratings are separate actions: liking a title helps guide discovery, while rating lets you record your own score in the app's available rating feature.</p>
 
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Hidden Content</h4>
-        <p>If you do not want a title to appear in your lists or recommendations, use the hide option when available. Open <strong>Hidden Content</strong> from the menu to review hidden titles and manage them. Hiding a title does not remove it from the third-party catalogue or playback providers.</p>
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">9. Continue Watching and Viewing History</h4>
+            <p style="margin:0 0 14px;">The <strong>Continue Watching</strong> row helps you return to shows or movies you have already started when viewing activity is available. For series, it can help you get back to the relevant episode rather than searching for the title again. The information is associated with the active profile, so switching profiles changes the viewing activity you see.</p>
+            <p style="margin:0 0 14px;">Guest viewing information is kept locally on the device. Supported viewing information for signed-in profiles is synchronized through your account. If an item does not appear, check that you are using the expected profile and account.</p>
 
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Ads, Popups, and External Players</h4>
-        <p>Video providers are independent third parties. Their players may display advertisements, popups, redirects, or their own controls and privacy notices. GTV hub does not control those third-party experiences. Close unexpected tabs and avoid entering personal or payment information into unfamiliar pages.</p>
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">10. Hidden Content</h4>
+            <p style="margin:0 0 14px;">If you do not want a title included in your browsing experience, use the hide option when available. Open <strong>Hidden Content</strong> from the main menu to review titles you have hidden. You can unhide an item to allow it to appear in your lists again. Hiding a title only affects your GTV hub experience; it does not remove the title or video from an external catalogue or provider.</p>
 
-        <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Troubleshooting</h4>
-        <p><strong>Catalogue or images will not load:</strong> Check your internet connection, then refresh the page. If you use a custom TMDB API key, verify that it is entered correctly.</p>
-        <p><strong>A video will not play:</strong> Try another playback provider, refresh the player, and check whether the title is available from a different source. A missing poster or episode thumbnail can indicate incomplete catalogue information, but it does not always prove that playback is unavailable.</p>
-        <p><strong>Your profiles or watchlist are missing:</strong> Make sure you selected the right profile and, if you expect cloud data, that you are signed in to the correct account. Guest data belongs to the browser and device where it was created.</p>
-        <p><strong>Changes are not appearing on another device:</strong> Confirm that you are signed in on both devices and using the same account and profile. Guest data does not sync between devices.</p>
-        <p style="margin-top:15px; color:#aaa; font-size:0.9em;">If you still need help or want to report a problem, use the feedback link in the About section.</p>
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">11. People and Cast Discovery</h4>
+            <p style="margin:0 0 14px;">Choose <strong>People</strong> in the top navigation to discover popular actors and search for a person by name. Open a person's profile to see the available biography, photos, notable work, and filmography. You can browse their credits and open a movie or show directly from the person's profile. The amount of information varies by person and by the catalogue data available.</p>
+
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">12. Random Pick and Trailers</h4>
+            <p style="margin:0 0 14px;">Not sure what to watch? Choose <strong>Random Pick</strong> from the menu to let GTV hub select a movie or show for you. When a trailer is available for a title, its details page may show a <strong>Trailer</strong> button that opens the trailer player. Trailer availability depends on the catalogue and the external video service hosting it.</p>
+
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">13. Settings and TMDB API Keys</h4>
+            <p style="margin:0 0 14px;">Open <strong>Settings</strong> from the main menu to adjust the preferences currently offered by the app. These include options such as your region, the default Movies or TV Shows tab, reduced motion, and managing catalogue API keys. The exact options shown may change between releases.</p>
+            <p style="margin:0 0 14px;">GTV hub uses The Movie Database (TMDB) for catalogue information, including movie and TV details, posters, and cast information. If you have your own TMDB API key, you can add and manage it in Settings. Keep personal API keys private, especially on shared devices. Changing the API key affects catalogue requests; it does not change which playback providers are available.</p>
+
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">14. Account Data, Local Data, and Devices</h4>
+            <p style="margin:0 0 14px;">GTV hub uses browser storage for local preferences, session information, and locally cached data. In guest mode, profile information stays in that browser unless you clear it or use an available import process. When signed in, supported profile information is also saved to the account's cloud data so it can be loaded on another device after you sign in with the same account.</p>
+            <p style="margin:0 0 14px;">For the best cross-device experience, sign in on each device and select the same profile. Clearing browser data can remove guest information and local cached information. It does not necessarily delete cloud data already associated with your account.</p>
+
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">15. Troubleshooting</h4>
+            <p style="margin:0 0 12px;"><strong>The home screen or images do not load:</strong> Check your internet connection and refresh the page. Catalogue information comes from an external service, so temporary service interruptions can affect results.</p>
+            <p style="margin:0 0 12px;"><strong>A movie or episode will not play:</strong> Try another playback provider, reload the player, and check whether another source has the title. A missing image can mean catalogue information is incomplete, but it does not always mean playback is impossible.</p>
+            <p style="margin:0 0 12px;"><strong>My watchlist or profiles are missing:</strong> Check which profile is selected. If you expect cloud data, make sure you are signed in to the correct account. Guest data is tied to the browser and device where it was created.</p>
+            <p style="margin:0 0 12px;"><strong>My data is not appearing on another device:</strong> Guest data does not sync between devices. Sign in with the same account on both devices and select the same profile.</p>
+            <p style="margin:0 0 12px;"><strong>Search returns no results:</strong> Try a shorter title or a different spelling. Some people, movies, and shows may not be present in the catalogue.</p>
+            <p style="margin:0 0 12px;"><strong>The app looks out of date after an update:</strong> Refresh the page. If an older version continues to appear, close and reopen the site or clear the site's cached files in your browser.</p>
+
+            <h4 style="color:#fff; font-size:1.22rem; margin:32px 0 10px;">16. Ads, Popups, and External Services</h4>
+            <p style="margin:0 0 14px;">GTV hub uses external services for catalogue data and playback. Third-party video players may display advertisements, open new tabs, or use their own cookies and tracking technologies. Those experiences are controlled by the provider, not by GTV hub. Be cautious with unfamiliar popups and never enter sensitive information into a page unless you trust the service.</p>
+
+            <p style="margin-top:30px; padding-top:18px; border-top:1px solid rgba(255,255,255,0.1); color:#aaa; font-size:0.98rem;">Need more help or found a problem? Use the feedback link in the About section to contact the GTV hub team.</p>
         </div>
     `);
 };
@@ -3920,64 +3947,56 @@ window.openChangelogView = () => {
 
 window.openLegalView = () => {
     openInfoView('Legal & DMCA', `
-        <div style="max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; color: #ccc;">
-            <h4 style="color:#fff; margin-bottom:10px;">General Disclaimer</h4>
-            <p>GTV hub is a search engine and indexing platform. We do not host, upload, store, or transmit any video, film, or media files on our servers. We simply crawl and index content found on third-party websites and public domains.</p>
-            <p>We have no control over the content found on external sites. If you find any content that violates your rights, please understand that removing it from GTV hub will not remove it from the source. You must contact the hosting provider directly.</p>
+        <div style="max-width: 800px; margin: 0 auto; padding: 24px 22px 40px; line-height: 1.75; color: #ccc; font-size:1.02rem;">
+            <h3 style="color:#fff; font-size:1.35rem; margin:0 0 12px;">General Disclaimer</h3>
+            <p>GTV hub is an interface for discovering movies and TV shows. It retrieves catalogue information, such as titles, descriptions, posters, ratings, and cast details, from third-party services including The Movie Database (TMDB). It may also provide access to video players or playback sources operated by independent third parties.</p>
+            <p>GTV hub does not host or upload the movie or television video files played through those external providers. Playback is handled by the selected third-party service, and GTV hub does not control that provider's servers, content availability, advertisements, or policies. A title appearing in the catalogue does not mean that a working stream is available.</p>
+            <p>GTV hub does not claim ownership of third-party metadata, artwork, trademarks, or video content. Such material remains the property of its respective owners and is subject to the terms and policies of the services that provide it.</p>
 
-            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">DMCA Compliance</h4>
-            <p>GTV hub respects the intellectual property rights of others and expects its users to do the same. It is our policy to respond to clear notices of alleged copyright infringement that comply with the Digital Millennium Copyright Act (DMCA).</p>
-            <p>If you believe that your copyrighted work has been copied in a way that constitutes copyright infringement and is accessible on this site, please notify us. However, since we do not host the files, we strongly recommend contacting the actual video hosting site to have the content removed permanently from the internet.</p>
+            <h4 style="color:#fff; font-size:1.18rem; margin-top:28px; margin-bottom:10px;">Third-Party Services and Links</h4>
+            <p>When you search or browse, your browser may request information from external catalogue services. When you select a playback source, your browser may connect to an external video provider. Those services operate independently and may collect information, use cookies, display advertisements, or apply their own terms and privacy policies. Review the relevant provider's policies when using an external service.</p>
+            <p>GTV hub is not responsible for the content, availability, accuracy, security, or practices of third-party websites and services. The presence of a link or embedded player does not mean that GTV hub owns, operates, or endorses that provider.</p>
 
-            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">Third-Party Links</h4>
-            <p>This site contains links to other sites on the Internet. We are not responsible for the accuracy, legality, or decency of material contained on those sites. The inclusion of any link does not imply endorsement by GTV hub.</p>
-        </div>
-    `);
-};
+            <h4 style="color:#fff; font-size:1.18rem; margin-top:28px; margin-bottom:10px;">Copyright and DMCA Notices</h4>
+            <p>GTV hub respects intellectual property rights. If you believe that material displayed or linked through GTV hub infringes your copyright, you may contact us at <a href="mailto:exeinn.info@gmail.com?subject=Copyright%20or%20DMCA%20Notice" style="color:var(--accent);">exeinn.info@gmail.com</a> with the subject line <strong>Copyright or DMCA Notice</strong>.</p>
+            <p>To help us review your notice, include a description of the copyrighted work, the specific GTV hub page or title involved, your contact information, and an explanation of why you believe the material infringes your rights. If you are acting on behalf of the rights holder, explain your authority to do so. Please provide enough detail for us to identify the relevant reference.</p>
+            <p>Because GTV hub does not host the video files played by external providers, removing or changing a reference within GTV hub cannot remove the underlying file from the third-party service. For removal of a video itself, you should also contact the website or provider that hosts it. We can review the way a title is referenced or made accessible through GTV hub, but cannot control a third party's response.</p>
 
-window.openTermsView = () => {
-    openInfoView('Terms of Use', `
-        <div style="max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; color: #ccc;">
-            <h4 style="color:#fff; margin-bottom:10px;">1. Acceptance of Terms</h4>
-            <p>By accessing and using GTV hub ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. In addition, when using these particular services, you shall be subject to any posted guidelines or rules applicable to such services.</p>
-
-            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">2. Description of Service</h4>
-            <p>GTV hub is a browsing interface for movie and TV metadata provided by The Movie Database (TMDB) and playback options supplied by third-party video providers. GTV hub does not host or upload the video files played through those external providers.</p>
-
-            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">3. User Responsibilities</h4>
-            <p>You agree to use the Service only for lawful purposes. You are prohibited from violating or attempting to violate the security of the Service, including, without limitation, accessing data not intended for you or logging into a server or account which you are not authorized to access.</p>
-
-            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">4. Intellectual Property</h4>
-            <p>The metadata, posters, and images displayed are the property of their respective owners (TMDB and its contributors). GTV hub claims no ownership over this content. Video content is hosted by third parties; GTV hub has no control over and assumes no responsibility for the content, privacy policies, or practices of any third-party sites or services.</p>
-
-            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">5. Disclaimer of Warranties</h4>
-            <p>The Service is provided on an "AS IS" and "AS AVAILABLE" basis. GTV hub makes no representations or warranties of any kind, express or implied, as to the operation of their services, or the information, content, or materials included therein.</p>
-
-            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">6. Limitation of Liability</h4>
-            <p>In no event shall GTV hub be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability.</p>
+            <h4 style="color:#fff; font-size:1.18rem; margin-top:28px; margin-bottom:10px;">Account and User Data</h4>
+            <p>GTV hub offers both guest access and optional registered accounts. Account authentication and cloud profile synchronization are handled through Supabase. Information about local guest storage, account data, and third-party services is described in the <span style="color:var(--accent); cursor:pointer; text-decoration:underline;" onclick="openPrivacyView()">Privacy Policy</span>.</p>
         </div>
     `);
 };
 
 window.openPrivacyView = () => {
     openInfoView('Privacy Policy', `
-        <div style="max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; color: #ccc;">
+        <div style="max-width: 800px; margin: 0 auto; padding: 24px 22px 40px; line-height: 1.75; color: #ccc; font-size:1.02rem;">
             <p>Last updated: ${new Date().toLocaleDateString()}</p>
-            
-            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">1. Guest Use and Accounts</h4>
-            <p>You can use GTV hub without registering. If you choose guest mode, profile information and supported app data are stored in your browser's local storage on that device. Guest data is not automatically synchronized to other devices.</p>
-            <p>You may optionally create an account using an email address and password. Account authentication and cloud profile synchronization are provided through Supabase. When you are signed in, information associated with your profiles and supported features may be stored in the app's cloud database and synchronized across devices. This can include profile details, watchlists, viewing activity, likes, and supported preferences. The email address you provide is used for account authentication and related account messages.</p>
 
-            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">2. Local Storage and Cookies</h4>
-            <p>GTV hub uses your browser's <strong>Local Storage</strong> to keep app preferences, session-related information, and locally cached profile data. In guest mode, your profile data remains on the current device. For signed-in users, local storage may also contain a local copy or cache of data that is synchronized with the account database. Therefore, not all information is limited to your device.</p>
-            <p>Clearing browser storage may remove guest data and locally cached information. It does not necessarily delete information already saved to a signed-in account. Use the account and profile controls in GTV hub for account-related actions.</p>
+            <h3 style="color:#fff; font-size:1.35rem; margin:20px 0 12px;">1. Guest Access and Registered Accounts</h3>
+            <p><strong>GTV hub supports registered user accounts as well as guest access.</strong> Creating an account is optional: you can browse as a guest, or register with an email address and password to use account-based profiles and cloud synchronization. An account is needed for the cross-device account experience; guest data does not automatically sync between devices.</p>
+            <p>If you register, your email address is processed by Supabase for account authentication and related account functions, such as confirmation and password recovery. When you sign in, GTV hub uses your authenticated account to associate your profiles and supported profile data with you.</p>
 
-            <h4 style="color:#fff; margin-top:25px; margin-bottom:10px;">3. Third-Party Services</h4>
-            <p>Our Service interacts with third-party APIs and services. These services may collect their own data according to their privacy policies:</p>
-            <ul style="list-style-type: disc; padding-left: 20px; margin-top: 5px;">
-                <li><strong>The Movie Database (TMDB):</strong> Used for fetching movie/TV show data.</li>
-                <li><strong>Third-party video providers:</strong> When you select a playback source, your browser connects to that provider. The provider may process connection information, use cookies, or display advertisements according to its own policies.</li>
+            <h4 style="color:#fff; font-size:1.18rem; margin-top:28px; margin-bottom:10px;">2. Information and Profile Data</h4>
+            <p>Depending on how you use GTV hub, information stored for a profile may include its name and appearance, watchlist, liked titles, hidden titles, viewing activity, and supported settings. Some information is kept in browser storage so the app can work on that device. For signed-in users, supported profile information is also stored in the cloud database and associated with the account so it can be synchronized when the user signs in elsewhere.</p>
+            <p>Guest profile information is stored locally in the browser on the device where it is created. It is not automatically uploaded as a cloud profile unless you use an available account import or migration flow. If you sign out, locally stored guest information and cached information may remain in that browser.</p>
+
+            <h4 style="color:#fff; font-size:1.18rem; margin-top:28px; margin-bottom:10px;">3. Local Storage and Cookies</h4>
+            <p>GTV hub uses browser <strong>Local Storage</strong> to retain app preferences, session-related information, guest profiles, and locally cached profile data. For guest users, profile data is kept on the current device. For signed-in users, the browser may also keep a local copy or cache of information that is synchronized with the account database. It would therefore be incorrect to say that all GTV hub data stays only on your device.</p>
+            <p>Clearing browser storage may remove guest profiles, preferences, and locally cached information. It does not necessarily delete data already stored in your signed-in account. Deleting an individual profile removes that profile and its associated profile data. Account-level actions are separate from clearing browser storage.</p>
+
+            <h4 style="color:#fff; font-size:1.18rem; margin-top:28px; margin-bottom:10px;">4. Third-Party Services</h4>
+            <p>GTV hub relies on third-party services to provide parts of the experience. These services process requests according to their own terms and privacy policies:</p>
+            <ul style="list-style-type:disc; padding-left:22px; margin:8px 0 14px;">
+                <li><strong>Supabase:</strong> Provides account authentication and cloud database services for signed-in profiles and supported profile data.</li>
+                <li><strong>The Movie Database (TMDB):</strong> Provides catalogue information such as movie and TV metadata, artwork, and cast details. Requests to TMDB may include information needed to retrieve the requested catalogue data.</li>
+                <li><strong>Third-party video providers:</strong> When you choose an external playback source, your browser connects to that provider. The provider may process connection information, use cookies, show advertisements, or apply other technologies under its own policies.</li>
             </ul>
+            <p>GTV hub does not control the data practices of these independent services. Consult their privacy policies for details about how they handle information.</p>
+
+            <h4 style="color:#fff; font-size:1.18rem; margin-top:28px; margin-bottom:10px;">5. Your Choices</h4>
+            <p>You can choose whether to use GTV hub as a guest or create an account. You can manage profiles and remove individual profiles using the app's profile controls. You can also clear browser storage, bearing in mind that doing so may remove local guest data and cached information but does not necessarily delete cloud data associated with a signed-in account.</p>
+            <p>Use care when accessing your account on a shared device, and sign out when you have finished. Do not share your password or private API keys with other people.</p>
         </div>
     `);
 };
