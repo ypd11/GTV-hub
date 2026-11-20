@@ -9,7 +9,7 @@
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" href="./icon.png" type="image/png">
     <link rel="apple-touch-icon" href="./icon.png">
-    <link rel="stylesheet" href="style.css?v=35">
+    <link rel="stylesheet" href="style.css?v=36">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons&amp;v=30" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;800&display=swap" rel="stylesheet">
 </head>
@@ -38,27 +38,15 @@
     </div>
 </nav>
 
-<!-- Account Authentication View -->
-<section id="auth-view" class="auth-view" style="display:none;">
+<!-- Account Authentication Dialog -->
+<section id="auth-view" class="auth-view auth-dialog" style="display:none;" aria-hidden="true">
     <div class="auth-layout">
-        <aside class="auth-aside">
-            <div class="brand-logo auth-brand">GTV<span> hub</span></div>
-            <div class="auth-aside-copy">
-                <span class="auth-eyebrow">YOUR ENTERTAINMENT, IN SYNC</span>
-                <h2>Pick up where<br>you left off.</h2>
-                <p>Keep your profiles, watchlist and viewing progress together across your devices.</p>
-                <div class="auth-feature"><span class="material-icons">devices</span><span>One account. Your GTV hub everywhere.</span></div>
-            </div>
-            <div class="auth-aside-orb auth-aside-orb-one"></div>
-            <div class="auth-aside-orb auth-aside-orb-two"></div>
-            <span class="auth-aside-footer">MOVIES · SERIES · YOUR WAY</span>
-        </aside>
         <main class="auth-main">
+            <button id="auth-dialog-close" class="auth-dialog-close" type="button" onclick="closeAccountSignIn()" aria-label="Close sign in"><span class="material-icons">close</span></button>
             <div class="auth-panel">
-                <button id="auth-dialog-close" class="auth-dialog-close" type="button" onclick="closeAccountSignIn()" aria-label="Close sign in" style="display:none;"><span class="material-icons">close</span></button>
                 <div class="brand-logo auth-mobile-brand">GTV<span> hub</span></div>
                 <div class="auth-heading">
-                    <h1 id="auth-title">Welcome to GTV hub</h1>
+                    <h1 id="auth-title">Welcome to <span class="auth-title-brand">GTV hub</span></h1>
                     <p id="auth-subtitle">Sign in to sync your profiles and watchlist across devices.</p>
                 </div>
                 <form id="auth-form" class="auth-form" onsubmit="submitAuthForm(event)">
@@ -159,6 +147,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=34"></script>
+<script src="script.js?v=35"></script>
 </body>
 </html>
