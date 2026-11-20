@@ -3664,7 +3664,8 @@ async function addToHistory(id, type, season = null, episode = null) {
 
 window.loadPlayerSource = (playbackOptions = {}) => {
     const { id, type, season, episode } = window.currentPlayInfo;
-    const baseUrl = playerSources[currentSourceIdx];  
+    const baseUrl = playerSources[currentSourceIdx];
+    if (iframe) iframe.style.pointerEvents = activeWatchParty && !activeWatchParty.is_host && baseUrl.includes('vidking.net') ? 'none' : '';
 
     let embedUrl = type === 'movie' 
         ? `${baseUrl}/movie/${id}`
@@ -3916,7 +3917,10 @@ async function connectWatchPartyRealtime() {
     });
     watchPartyPresenceChannel
         .on('presence', { event: 'sync' }, renderWatchPartyPresence)
-        .on('presence', { event: 'join' }, renderWatchPartyPresence)
+        .on('presence', { event: 'join' }, state => {
+            renderWatchPartyPresence();
+            if (activeWatchParty && activeWatchParty.is_host) broadcastWatchPartyAction('source', { url: playerSources[currentSourceIdx] });
+        })
         .on('presence', { event: 'leave' }, renderWatchPartyPresence)
         .subscribe(async status => {
             if (status === 'SUBSCRIBED' && activeWatchParty) {
@@ -4011,6 +4015,11 @@ window.createWatchParty = async function() {
         const identity = await window.ensureWatchPartySession();
         const displayName = getWatchPartyDisplayName(identity.isAnonymous);
         if (!displayName) { setWatchPartyStatus('Party creation cancelled.'); return; }
+        const syncSourceIndex = playerSources.findIndex(source => source.includes('vidking.net'));
+        if (syncSourceIndex >= 0 && currentSourceIdx !== syncSourceIndex) {
+            setWatchPartyStatus('Switching to Vidking for synchronized playback…');
+            window.selectPlayerSource(syncSourceIndex);
+        }
         const media = getCurrentWatchPartyMedia();
         const result = await supabaseClient.rpc('create_watch_party', {
             p_media_type: media.media_type, p_tmdb_id: media.tmdb_id, p_title: media.title,
@@ -4093,6 +4102,7 @@ window.leaveWatchParty = async function() {
         console.warn('Could not fully leave Watch Party:', error);
     }
     activeWatchParty = null;
+    if (iframe) iframe.style.pointerEvents = '';
     watchPartyChannel = null;
     watchPartyPresenceChannel = null;
     watchPartyMessages = [];
