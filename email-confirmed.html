@@ -17,30 +17,43 @@
       background: #141619; border: 1px solid rgba(255,255,255,.09);
       border-radius: 22px; box-shadow: 0 24px 80px rgba(0,0,0,.38);
     }
-    .brand { margin-bottom: 30px; font-size: 1.8rem; font-weight: 800; letter-spacing: -1.2px; }
-    .brand span { color: #3498db; }
+    .brand {
+      margin-bottom: 30px; font-size: 2rem; font-weight: 800; letter-spacing: -1.2px;
+      background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      text-shadow: 0 0 30px rgba(52,152,219,.18);
+    }
     .icon {
       width: 68px; height: 68px; margin: 0 auto 22px; display: grid; place-items: center;
       border-radius: 50%; background: rgba(46,204,113,.12); color: #2ecc71; font-size: 32px;
     }
     h1 { margin: 0 0 12px; font-size: 1.55rem; }
     p { margin: 0; color: #aeb4bd; line-height: 1.65; }
-    a {
-      display: block; margin-top: 28px; padding: 14px 20px; border-radius: 10px;
-      background: #3498db; color: white; text-decoration: none; font-weight: 700;
-      transition: background .2s ease, transform .2s ease;
+    .actions { display: grid; gap: 11px; margin-top: 28px; }
+    .actions a {
+      display: block; padding: 14px 20px; border-radius: 10px;
+      color: white; text-decoration: none; font-weight: 700;
+      transition: background .2s ease, border-color .2s ease, transform .2s ease;
     }
-    a:hover { background: #2585c5; transform: translateY(-1px); }
+    .primary-link { background: #3498db; border: 1px solid #3498db; }
+    .primary-link:hover { background: #2585c5; transform: translateY(-1px); }
+    .secondary-link { background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.13); }
+    .secondary-link:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.25); }
+    .address { display: block; margin-top: 5px; font-size: .78rem; font-weight: 500; opacity: .78; }
     .error .icon { background: rgba(231,76,60,.12); color: #e74c3c; }
   </style>
 </head>
 <body>
   <main id="confirmation-card">
-    <div class="brand">GTV <span>hub</span></div>
+    <div class="brand">GTV hub</div>
     <div class="icon" aria-hidden="true">✓</div>
     <h1 id="confirmation-title">Email confirmed!</h1>
-    <p id="confirmation-message">Your email address has been verified. You can now return to GTV Hub and sign in to your account.</p>
-    <a href="/">Continue to GTV Hub</a>
+    <p id="confirmation-message">Your email address has been verified. You can now sign in to GTV Hub. Both addresses lead to the same service and use the same account.</p>
+    <div class="actions">
+      <a class="primary-link" href="https://gtvhub.net/">Open GTV Hub<span class="address">gtvhub.net</span></a>
+      <a class="secondary-link" href="https://gtvhub.pages.dev/">Use the Pages address<span class="address">gtvhub.pages.dev</span></a>
+    </div>
   </main>
   <script>
     const params = new URLSearchParams(window.location.search);
