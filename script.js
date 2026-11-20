@@ -592,7 +592,6 @@ function renderAuthView(mode = 'login', message = '', isError = false, asDialog 
     authDialogMode = true;
     const authView = document.getElementById('auth-view');
     authView.classList.add('auth-dialog');
-    authView.classList.toggle('auth-reset-mode', reset || updatePassword);
     setElementVisible(authView, true, 'flex');
 
     const closeButton = document.getElementById('auth-dialog-close');
@@ -602,6 +601,7 @@ function renderAuthView(mode = 'login', message = '', isError = false, asDialog 
     const signup = mode === 'signup';
     const reset = mode === 'reset';
     const updatePassword = mode === 'update-password';
+    authView.classList.toggle('auth-reset-mode', reset || updatePassword);
     document.getElementById('auth-title').innerHTML = reset ? 'Reset your password' : (updatePassword ? 'Choose a new password' : (signup ? 'Create your account' : 'Your entertainment, all in one place.'));
     document.getElementById('auth-subtitle').textContent = reset
         ? 'We’ll email you a link to choose a new password.'
@@ -651,6 +651,7 @@ window.closeAccountSignIn = () => {
 };
 
 let gtvNoticeDialogAction = null;
+let gtvNoticeDialogCancel = null;
 let gtvNoticePreviousNoScroll = false;
 
 window.showGtvNoticeDialog = (options = {}) => {
@@ -665,7 +666,10 @@ window.showGtvNoticeDialog = (options = {}) => {
                 <div class="gtv-notice-icon"><span class="material-icons" id="gtv-notice-icon">info</span></div>
                 <h2 id="gtv-notice-title"></h2>
                 <p id="gtv-notice-message"></p>
-                <button class="play-btn gtv-notice-action" id="gtv-notice-action" type="button">Got it</button>
+                <div class="gtv-notice-actions">
+                    <button class="play-btn gtv-notice-action" id="gtv-notice-action" type="button">Got it</button>
+                    <button class="gtv-notice-secondary" id="gtv-notice-secondary" type="button">Not now</button>
+                </div>
             </section>`;
         overlay.addEventListener('click', (event) => {
             if (event.target === overlay || event.target.closest('.gtv-notice-close')) {
@@ -674,8 +678,12 @@ window.showGtvNoticeDialog = (options = {}) => {
         });
         overlay.querySelector('#gtv-notice-action').addEventListener('click', () => {
             const action = gtvNoticeDialogAction;
+            gtvNoticeDialogCancel = null;
             window.closeGtvNoticeDialog();
             if (typeof action === 'function') action();
+        });
+        overlay.querySelector('#gtv-notice-secondary').addEventListener('click', () => {
+            window.closeGtvNoticeDialog();
         });
         document.body.appendChild(overlay);
         document.addEventListener('keydown', (event) => {
@@ -690,9 +698,13 @@ window.showGtvNoticeDialog = (options = {}) => {
     document.getElementById('gtv-notice-title').textContent = options.title || 'A quick note';
     document.getElementById('gtv-notice-message').textContent = options.message || '';
     const actionButton = document.getElementById('gtv-notice-action');
+    const secondaryButton = document.getElementById('gtv-notice-secondary');
     actionButton.textContent = options.buttonLabel || 'Got it';
     actionButton.style.display = options.buttonLabel === false ? 'none' : '';
+    secondaryButton.textContent = options.secondaryButtonLabel || 'Not now';
+    secondaryButton.style.display = options.secondaryButtonLabel ? '' : 'none';
     gtvNoticeDialogAction = typeof options.onAction === 'function' ? options.onAction : null;
+    gtvNoticeDialogCancel = typeof options.onSecondaryAction === 'function' ? options.onSecondaryAction : null;
     overlay.classList.add('active');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('no-scroll');
@@ -706,6 +718,9 @@ window.closeGtvNoticeDialog = () => {
     overlay.setAttribute('aria-hidden', 'true');
     document.body.classList.toggle('no-scroll', gtvNoticePreviousNoScroll);
     gtvNoticeDialogAction = null;
+    const cancel = gtvNoticeDialogCancel;
+    gtvNoticeDialogCancel = null;
+    if (typeof cancel === 'function') cancel();
 };
 
 window.showFeatureMaintenanceDialog = (featureName = 'This feature', onContinue = null) => {
@@ -767,7 +782,7 @@ window.submitAuthForm = async (event) => {
             authUser = data.user;
             await enterAccount();
         } else if (authMode === 'reset') {
-            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password.html' });
             if (error) throw error;
             renderAuthView('login', 'Password reset email sent. Check your inbox.', false, authDialogMode);
         }
@@ -885,7 +900,7 @@ async function loadAccountProfiles() {
                 if (dataError) throw dataError;
                 profiles.push(created);
             }
-            if (localProfiles.length > 5) showToast('Only the first five profiles were imported. You can add the rest later if space becomes available.');
+            if (importableLocalProfiles.length > Math.max(0, 5 - (profiles.length - importableLocalProfiles.length))) showToast('Only the profiles that fit your account limit were imported. You can add more later if space becomes available.');
         }
         localStorage.setItem(migrationKey, 'true');
     }
