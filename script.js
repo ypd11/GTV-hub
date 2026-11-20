@@ -1650,6 +1650,7 @@ window.selectProfile = async (id) => {
                 <div class="dropdown-profile-avatar" style="background:${escapeHtml(color)};">${initial}</div>
                 <div class="dropdown-profile-name">${escapeHtml(currentProfile.name)}</div>
             </div>
+            <div class="dropdown-item" onclick="openWatchPartyJoin(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">groups</span> Join Watch Party</div>
             <div class="dropdown-item" onclick="openProfilePicker(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">people</span> Switch Profile</div>
             <div class="dropdown-item" onclick="openCategories(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">category</span> Categories</div>
             <div class="dropdown-item" onclick="openPeople(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">person_search</span> People</div>
