@@ -120,6 +120,7 @@ let currentSourceIdx = 0;
 let isManualBack = false;
 let appHistoryIndex = 0;
 let pendingDeepLink = null;
+let pendingWatchPartyCode = null;
 let currentPersonCredits = { knownFor: [], filmography: [] };
 
 if (localStorage.getItem('gtv_reduced_motion') === 'true') {
@@ -140,6 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (movieId || tvId) {
         pendingDeepLink = { movieId, tvId };
     }
+    pendingWatchPartyCode = (urlParams.get('party') || urlParams.get('watchparty') || '').trim();
 
     setupBranding();
     await initializeAuthentication();
@@ -147,6 +149,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     history.pushState({ gtvhubNavigation: true, gtvhubIndex: 1 }, '', window.location.href);
     appHistoryIndex = 1;
     setupNewNavigation();
+    window.initializeWatchPartyPanel(document.body);
+    if (pendingWatchPartyCode) {
+        const inviteCode = pendingWatchPartyCode;
+        pendingWatchPartyCode = null;
+        window.openWatchPartyJoin(inviteCode);
+    }
     setupMobileCheck();
     
     // Register Service Worker for Caching
@@ -839,7 +847,13 @@ window.ensureWatchPartySession = async function() {
     let user = sessionData && sessionData.session ? sessionData.session.user : null;
     if (!user) {
         const { data, error } = await supabaseClient.auth.signInAnonymously();
-        if (error) throw error;
+        if (error) {
+            const message = String(error.message || '').toLowerCase();
+            if (error.code === 'anonymous_provider_disabled' || message.includes('anonymous sign-ins are disabled') || message.includes('anonymous sign-ins disabled')) {
+                throw new Error('Guest Watch Parties are not enabled in the Supabase project connected to GTV hub. In Supabase, open Authentication → Sign In / Providers → Anonymous Sign-Ins and enable it. Make sure you are changing project fvjlovsvihuzrajzndap. You can also join using a regular GTV hub account.');
+            }
+            throw error;
+        }
         user = data && data.user;
     }
 
@@ -1121,6 +1135,7 @@ function setupNewNavigation() {
             <div class="dropdown-item" onclick="openPeople(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">person_search</span> People</div>
         <div class="dropdown-item" onclick="randomPick();"><span class="material-icons">shuffle</span> Random Pick</div>
         <div class="dropdown-item" onclick="openWatchlist();"><span class="material-icons">list</span> My Watchlist</div>
+        <div class="dropdown-item" onclick="openWatchPartyJoin(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">groups</span> Join Watch Party</div>
         <div class="dropdown-item" onclick="openHiddenContent();"><span class="material-icons">visibility_off</span> Hidden Content</div>
         <div class="dropdown-item" onclick="openSettingsView(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">settings</span> Settings</div>
         <div class="dropdown-item" onclick="openChangelogView(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">history</span> Changelog</div>
@@ -3707,7 +3722,7 @@ let watchPartyPanel = null;
 let watchPartyMessages = [];
 let watchPartySending = false;
 
-window.initializeWatchPartyPanel = function(playerCont) {
+window.initializeWatchPartyPanel = function() {
     if (document.getElementById('watch-party-panel')) {
         watchPartyPanel = document.getElementById('watch-party-panel');
         return;
@@ -3716,11 +3731,14 @@ window.initializeWatchPartyPanel = function(playerCont) {
     panel.id = 'watch-party-panel';
     panel.className = 'watch-party-panel';
     panel.setAttribute('aria-label', 'Watch Party');
-    panel.innerHTML = '<div class="watch-party-top"><div><span class="watch-party-eyebrow">GTV hub</span><h2>Watch Party</h2></div><button type="button" class="watch-party-close" aria-label="Close Watch Party"><span class="material-icons">close</span></button></div>' +
-        '<div class="watch-party-content"><div class="watch-party-lobby"><p class="watch-party-intro">Watch together and chat in real time.</p><button type="button" class="watch-party-primary watch-party-create">Create a party</button><div class="watch-party-divider"><span>or join with a code</span></div><form class="watch-party-join-form"><input class="watch-party-code" maxlength="32" autocomplete="off" placeholder="Enter invite code" aria-label="Invite code" required><button type="submit" class="watch-party-secondary">Join</button></form><p class="watch-party-note">Everyone can join with a GTV hub account or as a guest.</p></div>' +
-        '<div class="watch-party-room" hidden><div class="watch-party-room-summary"><div><span class="watch-party-eyebrow">INVITE CODE</span><strong class="watch-party-invite-code"></strong></div><button type="button" class="watch-party-copy" title="Copy invite code"><span class="material-icons">content_copy</span></button></div><div class="watch-party-participants"><span class="material-icons">groups</span><span class="watch-party-participant-count">1 here</span><span class="watch-party-participant-names"></span></div><div class="watch-party-chat" aria-live="polite"><div class="watch-party-empty">Messages will appear here. Say hello!</div></div><form class="watch-party-message-form"><input class="watch-party-message-input" maxlength="1000" autocomplete="off" placeholder="Write a message…" aria-label="Chat message" required><button type="submit" aria-label="Send message"><span class="material-icons">send</span></button></form><button type="button" class="watch-party-leave">Leave party</button></div><p class="watch-party-status" role="status" aria-live="polite"></p></div>';
-    playerCont.appendChild(panel);
+    panel.innerHTML = '<div class="watch-party-dialog"><div class="watch-party-top"><div><span class="watch-party-eyebrow">GTV hub</span><h2>Watch Party</h2></div><button type="button" class="watch-party-close" aria-label="Close Watch Party"><span class="material-icons">close</span></button></div>' +
+        '<div class="watch-party-content"><div class="watch-party-lobby"><p class="watch-party-intro">Bring everyone together for a movie night. Create a room or join one with an invite code.</p><button type="button" class="watch-party-primary watch-party-create"><span class="material-icons">add</span> Create a party</button><div class="watch-party-divider"><span>OR JOIN A PARTY</span></div><form class="watch-party-join-form"><input class="watch-party-code" maxlength="32" autocomplete="off" placeholder="Enter party code" aria-label="Party invite code" required><button type="submit" class="watch-party-secondary">Join</button></form><p class="watch-party-note">You can join with your GTV hub account or continue as a guest.</p></div>' +
+        '<div class="watch-party-room" hidden><div class="watch-party-room-summary"><div><span class="watch-party-eyebrow">PARTY INVITE CODE</span><strong class="watch-party-invite-code"></strong></div><button type="button" class="watch-party-copy" title="Copy invite code"><span class="material-icons">content_copy</span></button></div><button type="button" class="watch-party-share-link"><span class="material-icons">link</span> Copy invite link</button><div class="watch-party-participants"><span class="material-icons">groups</span><span class="watch-party-participant-count">1 here</span><span class="watch-party-participant-names"></span></div><div class="watch-party-chat" aria-live="polite"><div class="watch-party-empty">Messages will appear here. Say hello!</div></div><form class="watch-party-message-form"><input class="watch-party-message-input" maxlength="1000" autocomplete="off" placeholder="Write a message…" aria-label="Chat message" required><button type="submit" aria-label="Send message"><span class="material-icons">send</span></button></form><button type="button" class="watch-party-leave">Leave party</button></div><p class="watch-party-status" role="status" aria-live="polite"></p></div></div>';
+    document.body.appendChild(panel);
     watchPartyPanel = panel;
+    panel.addEventListener('click', event => {
+        if (event.target === panel) panel.classList.remove('active');
+    });
     panel.querySelector('.watch-party-close').onclick = () => panel.classList.remove('active');
     panel.querySelector('.watch-party-create').onclick = () => window.createWatchParty();
     panel.querySelector('.watch-party-join-form').onsubmit = event => {
@@ -3734,6 +3752,19 @@ window.initializeWatchPartyPanel = function(playerCont) {
             showToast('Invite code copied');
         } catch (_) {
             setWatchPartyStatus('Invite code: ' + activeWatchParty.invite_code);
+        }
+    };
+    panel.querySelector('.watch-party-share-link').onclick = async () => {
+        if (!activeWatchParty) return;
+        const inviteUrl = new URL(window.location.href);
+        inviteUrl.search = '';
+        inviteUrl.hash = '';
+        inviteUrl.searchParams.set('party', activeWatchParty.invite_code);
+        try {
+            await navigator.clipboard.writeText(inviteUrl.toString());
+            showToast('Invite link copied');
+        } catch (_) {
+            setWatchPartyStatus('Share this link: ' + inviteUrl.toString());
         }
     };
     panel.querySelector('.watch-party-message-form').onsubmit = event => {
@@ -3750,6 +3781,17 @@ window.toggleWatchPartyPanel = function() {
     panel.classList.toggle('active', opening);
     if (opening && !activeWatchParty) panel.querySelector('.watch-party-code').focus();
     if (opening && window.showGtvPlayerControls) window.showGtvPlayerControls();
+};
+
+window.openWatchPartyJoin = function(inviteCode = '') {
+    const panel = document.getElementById('watch-party-panel');
+    if (!panel) return;
+    if (activeWatchParty) { panel.classList.add('active'); return; }
+    panel.classList.add('active');
+    const input = panel.querySelector('.watch-party-code');
+    input.value = String(inviteCode || '').trim();
+    setWatchPartyStatus(inviteCode ? 'Invite code found. Check it and press Join to enter the party.' : 'Enter the invite code shared with you.');
+    setTimeout(() => input.focus(), 0);
 };
 
 function setWatchPartyStatus(message, isError = false) {
@@ -3884,7 +3926,7 @@ async function openWatchPartyRoom(party, user, displayName) {
     try {
         await loadWatchPartyMessages();
         await connectWatchPartyRealtime();
-        setWatchPartyStatus('You’re in. Share the invite code with friends.');
+        setWatchPartyStatus('You’re in. Copy the invite link and send it to your friends.');
     } catch (error) {
         setWatchPartyStatus(error.message || 'Could not connect to the party.', true);
     }
