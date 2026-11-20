@@ -519,10 +519,10 @@ function renderAuthView(mode = 'login', message = '', isError = false, asDialog 
     const signup = mode === 'signup';
     const reset = mode === 'reset';
     const updatePassword = mode === 'update-password';
-    document.getElementById('auth-title').innerHTML = reset ? 'Reset your password' : (updatePassword ? 'Choose a new password' : (signup ? 'Create your account' : 'Welcome to <span class="auth-title-brand">GTV hub</span>'));
+    document.getElementById('auth-title').innerHTML = reset ? 'Reset your password' : (updatePassword ? 'Choose a new password' : (signup ? 'Create your account' : 'Your entertainment, all in one place.'));
     document.getElementById('auth-subtitle').textContent = reset
         ? 'We’ll email you a link to choose a new password.'
-        : (updatePassword ? 'Choose a new password for your GTV hub account.' : (signup ? 'Create an account to keep your profiles and watchlist in sync.' : 'Sign in to sync your profiles and watchlist across devices.'));
+        : (updatePassword ? 'Choose a new password for your GTV hub account.' : (signup ? 'Create an account to keep your profiles and watchlist in sync.' : 'Sign in to continue where you left off.'));
     document.getElementById('auth-password').style.display = reset ? 'none' : '';
     document.querySelector('label[for="auth-password"]').style.display = reset ? 'none' : '';
     document.getElementById('auth-password').required = !reset;
