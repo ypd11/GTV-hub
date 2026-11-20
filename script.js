@@ -2924,6 +2924,8 @@ function setPeopleView(view) {
     setElementVisible(categoryView, view === 'category', 'block');
     setElementVisible(document.getElementById('people-view'), view === 'people', 'block');
     setElementVisible(document.getElementById('person-profile-view'), view === 'person', 'block');
+    setElementVisible(document.getElementById('community-view'), false);
+    setElementVisible(document.getElementById('community-profile-view'), false);
     setElementVisible(playerContainer, false);
 }
 
@@ -3231,6 +3233,8 @@ window.switchTab = (tab) => {
     setElementVisible(document.getElementById('person-profile-view'), false);
     setElementVisible(detailsView, false);
     setElementVisible(categoryView, false);
+    setElementVisible(document.getElementById('community-view'), false);
+    setElementVisible(document.getElementById('community-profile-view'), false);
     setElementVisible(dashboard, true, 'block');
     currentTab = tab;
     activeNavigationSection = tab;
