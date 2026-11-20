@@ -592,6 +592,7 @@ function renderAuthView(mode = 'login', message = '', isError = false, asDialog 
     authDialogMode = true;
     const authView = document.getElementById('auth-view');
     authView.classList.add('auth-dialog');
+    authView.classList.toggle('auth-reset-mode', reset || updatePassword);
     setElementVisible(authView, true, 'flex');
 
     const closeButton = document.getElementById('auth-dialog-close');
@@ -605,6 +606,9 @@ function renderAuthView(mode = 'login', message = '', isError = false, asDialog 
     document.getElementById('auth-subtitle').textContent = reset
         ? 'We’ll email you a link to choose a new password.'
         : (updatePassword ? 'Choose a new password for your GTV hub account.' : (signup ? 'Create an account to keep your profiles and watchlist in sync.' : 'Sign in to continue where you left off.'));
+    document.getElementById('auth-email').style.display = updatePassword ? 'none' : '';
+    document.querySelector('label[for="auth-email"]').style.display = updatePassword ? 'none' : '';
+    document.getElementById('auth-email').required = !updatePassword;
     document.getElementById('auth-password').style.display = reset ? 'none' : '';
     document.querySelector('label[for="auth-password"]').style.display = reset ? 'none' : '';
     document.getElementById('auth-password').required = !reset;
