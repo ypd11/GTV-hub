@@ -3800,9 +3800,14 @@ body {
 
 
 /* Account action on Who's watching? matches the branded sign-in action. */
+#manage-profiles-btn,
 #profile-account-btn {
-    width: 100%;
-    max-width: 260px;
+    width: 240px;
+    max-width: 100%;
+}
+#profile-account-btn {
+    width: 240px;
+    max-width: 100%;
     min-height: 48px;
     justify-content: center;
     margin-left: auto;
