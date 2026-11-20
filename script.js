@@ -808,6 +808,13 @@ window.continueAsGuest = () => {
     initApp();
 };
 
+function isAnonymousSupabaseUser(user) {
+    return !!user && (
+        user.is_anonymous === true ||
+        (user.app_metadata && user.app_metadata.provider === 'anonymous')
+    );
+}
+
 async function initializeAuthentication() {
     if (!window.supabase || !window.supabase.createClient) {
         renderAuthView('login', 'Could not load the sign-in service. Check your connection and refresh.', true);
