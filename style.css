@@ -3296,3 +3296,13 @@ body {
         radial-gradient(ellipse at 100% 0%, rgba(155,89,182,.10), transparent 45%),
         linear-gradient(155deg, #171c24, #101319 70%);
 }
+
+
+#auth-view .auth-title-brand {
+    background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    font-weight: 700;
+}
