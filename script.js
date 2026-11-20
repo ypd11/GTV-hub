@@ -1086,7 +1086,6 @@ function setupNewNavigation() {
     menuBtn.onclick = (e) => {
         e.stopPropagation();
         const dropdown = document.getElementById('nav-dropdown');
-        ensureCommunityProfileMenuItem(dropdown);
         dropdown.classList.toggle('active');
     };
     navLinks.appendChild(menuBtn);
@@ -1099,7 +1098,7 @@ function setupNewNavigation() {
         <div class="dropdown-item" onclick="openProfilePicker(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">people</span> Switch Profile</div>
         <div class="dropdown-item" onclick="openCategories(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">category</span> Categories</div>
             <div class="dropdown-item" onclick="openPeople(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">person_search</span> People</div>
-        <div class="dropdown-item" onclick="openCommunityDirectory(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">groups</span> Community</div>
+        <div class="dropdown-item" onclick="openCommunityHome(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">groups</span> Community</div>
         <div class="dropdown-item" onclick="randomPick();"><span class="material-icons">shuffle</span> Random Pick</div>
         <div class="dropdown-item" onclick="openWatchlist();"><span class="material-icons">list</span> My Watchlist</div>
         <div class="dropdown-item" onclick="openHiddenContent();"><span class="material-icons">visibility_off</span> Hidden Content</div>
@@ -1600,7 +1599,7 @@ window.selectProfile = async (id) => {
             <div class="dropdown-item" onclick="openProfilePicker(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">people</span> Switch Profile</div>
             <div class="dropdown-item" onclick="openCategories(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">category</span> Categories</div>
             <div class="dropdown-item" onclick="openPeople(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">person_search</span> People</div>
-            <div class="dropdown-item" onclick="openCommunityDirectory(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">groups</span> Community</div>
+            <div class="dropdown-item" onclick="openCommunityHome(); document.getElementById('nav-dropdown').classList.remove('active');"><span class="material-icons">groups</span> Community</div>
             <div class="dropdown-item" onclick="randomPick();"><span class="material-icons">shuffle</span> Random Pick</div>
             <div class="dropdown-item" onclick="openWatchlist();"><span class="material-icons">list</span> My Watchlist</div>
             <div class="dropdown-item" onclick="openHiddenContent();"><span class="material-icons">visibility_off</span> Hidden Content</div>
@@ -4997,7 +4996,9 @@ async function loadCommunityDirectory(searchTerm){
 window.openCommunityProfile=async function(username,fromHistory,directLink){
  const clean=String(username||'').trim().toLowerCase();if(!/^[a-z0-9_]{3,20}$/.test(clean))return;if(!fromHistory&&!directLink)captureAndPushState();communityCurrentUsername=clean;communitySetPage('community-profile-view');communitySetUrl('profile/'+encodeURIComponent(clean));
  const host=document.getElementById('community-profile-content'),req=++communityProfileRequest;host.innerHTML='<div class="community-profile-loading"><div class="spinner"></div><span>Loading profile...</span></div>';if(!supabaseClient){host.innerHTML='<div class="community-empty">Community profiles are unavailable right now.</div>';return;}
- const result=await supabaseClient.from('community_profiles').select('user_id,username,display_name,bio,avatar_id,is_public,created_at').eq('username',clean).maybeSingle();if(req!==communityProfileRequest||communityCurrentUsername!==clean)return;
+ let result=await supabaseClient.from('community_profiles').select('user_id,username,display_name,bio,avatar_id,is_public,created_at').eq('username',clean).maybeSingle();
+ if ((!result.data || result.error) && authUser) result=await supabaseClient.from('community_profiles').select('user_id,username,display_name,bio,avatar_id,is_public,created_at').eq('user_id',authUser.id).maybeSingle();
+ if(req!==communityProfileRequest||communityCurrentUsername!==clean)return;
  if(result.error||!result.data){host.innerHTML='<div class="community-profile-not-found"><button class="community-back-link" onclick="openCommunityDirectory()"><span class="material-icons">arrow_back</span> Community</button><span class="material-icons">person_off</span><h1>Profile unavailable</h1><p>This profile does not exist, or it is private.</p></div>';return;}
  const p=result.data,own=!!(authUser&&authUser.id===p.user_id);
  const [fr,fg,follow]=await Promise.all([supabaseClient.from('follows').select('follower_id',{count:'exact',head:true}).eq('following_id',p.user_id),supabaseClient.from('follows').select('following_id',{count:'exact',head:true}).eq('follower_id',p.user_id),authUser&&!own?supabaseClient.from('follows').select('follower_id').eq('follower_id',authUser.id).eq('following_id',p.user_id).maybeSingle():Promise.resolve({data:null,error:null})]);
@@ -5021,19 +5022,23 @@ function communityAvatarUrl(avatarId) {
     const id = Math.max(1, Math.min(COMMUNITY_AVATAR_COUNT, Number(avatarId) || 1));
     return './assets/avatars/avatar_' + id + '.webp';
 }
-function ensureCommunityProfileMenuItem(dropdown) {
-    if (!dropdown || !cloudProfileMode || !authUser || dropdown.querySelector('.community-profile-menu-item')) return;
-    const item = document.createElement('div');
-    item.className = 'dropdown-item community-profile-menu-item';
-    item.innerHTML = '<span class="material-icons">account_circle</span> Community Profile';
-    item.addEventListener('click', function() {
-        dropdown.classList.remove('active');
-        window.openCommunityProfileSettings();
-    });
-    const anchor = dropdown.querySelector('.dropdown-item[onclick*="randomPick"]');
-    if (anchor) dropdown.insertBefore(item, anchor);
-    else dropdown.appendChild(item);
-}
+window.openCommunityHome = async function() {
+    if (!cloudProfileMode || !authUser || !supabaseClient) {
+        window.openCommunityDirectory();
+        return;
+    }
+    const result = await supabaseClient.from('community_profiles')
+        .select('username').eq('user_id', authUser.id).maybeSingle();
+    if (result.error) {
+        showToast('Could not load your community profile. Please try again.');
+        return;
+    }
+    if (result.data && result.data.username) {
+        await window.openCommunityProfile(result.data.username);
+    } else {
+        await window.openCommunityProfileSettings();
+    }
+};
 window.openCommunityProfileSettings = async function () {
     if (!cloudProfileMode || !authUser || !supabaseClient) { showToast('Sign in to create a community profile.'); return; }
     document.getElementById('community-profile-modal')?.remove();
@@ -5130,4 +5135,5 @@ async function saveCommunityProfile(event) {
     }
     closeCommunityProfileSettings();
     showToast(isPublic ? 'Community profile saved and published.' : 'Community profile saved privately.');
+    await window.openCommunityProfile(username, true, true);
 }
