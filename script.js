@@ -4302,7 +4302,7 @@ window.confirmDeleteAccount = () => {
         '<div style="font-size:0.92rem; line-height:1.65; color:#ccc;">' +
             '<p>For your security, enter your account password to continue deleting your GTV hub account.</p>' +
             '<div style="position:relative; margin-top:16px;">' +
-                '<input id="delete-account-password" type="password" autocomplete="current-password" placeholder="Account password" ' +
+                '<input id="delete-account-password" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute(\'readonly\')" data-1p-ignore="true" data-lpignore="true" data-bwignore="true" data-form-type="other" placeholder="Account password" ' +
                     'style="box-sizing:border-box; width:100%; padding:13px 48px 13px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.16); background:rgba(255,255,255,0.06); color:#fff; font:inherit; outline:none;">' +
                 '<button type="button" onclick="toggleDeletePasswordVisibility()" aria-label="Show password" ' +
                     'style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:transparent; border:0; color:#aaa; cursor:pointer; padding:6px;">' +
