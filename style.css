@@ -3957,3 +3957,55 @@ body {
 .community-profile-actions button.community-action-outline{border:1px solid rgba(255,255,255,.38);border-radius:50px;background:transparent;color:#f0f4f8}
 .community-profile-actions button.community-action-outline:hover{background:rgba(255,255,255,.09);border-color:#fff}
 @media(max-width:700px){.community-heading-avatar-button{min-width:0;gap:8px}.community-heading-avatar-button img{width:58px;height:58px;flex-basis:58px}.community-heading-avatar-copy strong{max-width:125px;font-size:.82rem}.community-heading-avatar-copy small{font-size:.68rem}}
+
+
+/* Match the main search modal's clear button and keep the community identity visible */
+.community-search .community-search-clear{
+    width:36px;height:36px;min-width:36px;flex:0 0 36px;
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:0;border:0;border-radius:50%;
+    background:rgba(255,255,255,.1);color:#aaa;
+    cursor:pointer;transition:all .2s ease;
+}
+.community-search .community-search-clear:hover,
+.community-search .community-search-clear:focus-visible{
+    background:rgba(255,255,255,.2);color:#fff;
+    transform:rotate(90deg);outline:none;
+}
+.community-search .community-search-clear .material-icons{font-size:20px;line-height:1}
+.community-heading-avatar-button{
+    position:relative;z-index:2;
+    min-height:86px;min-width:230px;
+    height:auto!important;width:auto!important;
+    display:flex!important;flex-direction:row;align-items:center;justify-content:flex-end;
+    gap:13px;padding:5px 0;
+    overflow:visible;opacity:1!important;visibility:visible!important;
+    color:#f1f5f9!important;font-size:initial;line-height:normal;
+}
+.community-heading-avatar-copy{
+    display:flex!important;flex:0 1 auto;flex-direction:column;align-items:flex-end;
+    justify-content:center;gap:4px;text-align:right;
+    opacity:1!important;visibility:visible!important;
+}
+.community-heading-avatar-copy strong{
+    display:block!important;max-width:190px;
+    color:#f1f5f9!important;font-size:.9rem;font-weight:700;
+    line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    opacity:1!important;visibility:visible!important;
+}
+.community-heading-avatar-copy small{
+    display:block!important;color:#aab6c3!important;
+    font-size:.73rem;font-weight:500;line-height:1.3;white-space:nowrap;
+    opacity:1!important;visibility:visible!important;
+}
+.community-heading-avatar-button img{
+    display:block!important;width:76px!important;height:76px!important;
+    min-width:76px;flex:0 0 76px;object-fit:contain;
+    opacity:1!important;visibility:visible!important;
+}
+@media(max-width:700px){
+    .community-heading-avatar-button{min-width:0;min-height:68px;gap:8px}
+    .community-heading-avatar-copy strong{max-width:125px;font-size:.82rem}
+    .community-heading-avatar-copy small{font-size:.68rem}
+    .community-heading-avatar-button img{width:58px!important;height:58px!important;min-width:58px;flex-basis:58px}
+}
