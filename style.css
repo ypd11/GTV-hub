@@ -4238,3 +4238,12 @@ body {
  .community-main-content{width:90%}
  .community-hero-copy h1{font-size:2.25rem}
 }
+
+
+/* Ensure the refreshed avatar control overrides legacy directory sizing rules */
+.community-heading-avatar-button{width:76px!important;height:76px!important;min-width:76px!important;min-height:76px!important;display:grid!important;flex-direction:initial!important}
+.community-heading-avatar-button img{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;flex:initial!important}
+@media(max-width:700px){
+ .community-heading-avatar-button{width:62px!important;height:62px!important;min-width:62px!important;min-height:62px!important;flex-basis:62px!important}
+ .community-heading-avatar-button img{width:100%!important;height:100%!important}
+}
