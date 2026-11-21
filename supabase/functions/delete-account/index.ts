@@ -23,7 +23,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authorization = req.headers.get("Authorization");
-    const accessToken = authorization?.replace(/^Bearer\\s+/i, "");
+    const accessToken = authorization?.replace(/^Bearer\s+/i, "");
     if (!accessToken) {
       return new Response(JSON.stringify({ error: "You must be signed in to delete your account." }), {
         status: 401,
