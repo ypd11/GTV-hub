@@ -4209,6 +4209,18 @@ window.openSettingsView = () => {
                 </div>
             </div>
 
+            ${cloudProfileMode && authUser ? `
+            <div class="settings-section">
+                <h3 class="settings-header">Account</h3>
+                <div class="setting-item mobile-stack">
+                    <div class="setting-label">
+                        <span>Delete Account</span>
+                        <span class="setting-desc">Permanently erase your GTV hub account and all associated cloud data, including your profiles, community profile, posts, and follows.</span>
+                    </div>
+                    <button onclick="confirmDeleteAccount()" class="play-btn" style="background:#e74c3c; font-size:0.8rem; border:none;">Delete Account</button>
+                </div>
+            </div>
+            ` : ''}
             <div class="settings-section">
                 <h3 class="settings-header">Info</h3>
                 
@@ -4280,6 +4292,66 @@ window.openSettingsView = () => {
     `;
     
     openInfoView('Settings', html);
+};
+
+window.confirmDeleteAccount = () => {
+    if (!authUser || !cloudProfileMode || !supabaseClient) return;
+    showModal(
+        'Delete your account?',
+        '<div style="font-size:0.92rem; line-height:1.65; color:#ccc;">' +
+            '<p>This will permanently delete your GTV hub account from our server.</p>' +
+            '<p><strong style="color:#fff;">Everything associated with your account will be erased</strong>, including your saved viewing profiles and their data, your community profile, posts, and follow relationships.</p>' +
+            '<p>You will be signed out, and this action cannot be undone. You will not be able to recover your account or its data.</p>' +
+            '<p style="color:#ff7777; margin-bottom:0;">This does not clear guest data or browser settings stored locally on this device.</p>' +
+        '</div>',
+        [
+            { text: 'Cancel', secondary: true },
+            { text: 'Permanently Delete', className: 'play-btn remove-confirm-btn', action: () => { deleteCurrentAccount(); } }
+        ]
+    );
+};
+
+window.deleteCurrentAccount = async () => {
+    if (!authUser || !cloudProfileMode || !supabaseClient) return;
+    showToast('Deleting your account…');
+    try {
+        const { error } = await supabaseClient.functions.invoke('delete-account', { body: {} });
+        if (error) throw error;
+
+        // Remove locally cached copies of this account's cloud profile data.
+        (profiles || []).forEach(profile => {
+            if (!profile || !profile.id) return;
+            localStorage.removeItem('gtv_watchlist_' + profile.id);
+            localStorage.removeItem('gtv_liked_content_' + profile.id);
+            localStorage.removeItem('gtv_excluded_content_' + profile.id);
+            localStorage.removeItem('gtv_watch_history_' + profile.id);
+        });
+
+        await supabaseClient.auth.signOut({ scope: 'local' });
+        authUser = null;
+        cloudProfileMode = false;
+        guestMode = true;
+        currentProfile = null;
+        profiles = safeJsonParse('gtv_profiles', []);
+        watchlist = [];
+        likedContent = [];
+        excludedContent = [];
+        profileSettings = {};
+        cloudDataLoading = false;
+        authDialogMode = false;
+        authReturnToApp = false;
+        setElementVisible(document.getElementById('auth-view'), false);
+        document.getElementById('auth-view').classList.remove('auth-dialog');
+        document.body.classList.remove('no-scroll');
+        const nav = document.querySelector('.top-nav');
+        if (nav) nav.style.display = 'none';
+        if (profiles.length) renderProfileScreen();
+        else initApp();
+        showToast('Your account and cloud data have been deleted.');
+    } catch (error) {
+        console.error('Account deletion failed:', error);
+        showToast(error.message || 'Could not delete your account. Please try again.');
+    }
 };
 
 window.saveSetting = (key, value) => {
