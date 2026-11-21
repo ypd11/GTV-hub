@@ -4271,3 +4271,11 @@ body {
  .community-avatar-edit-indicator{display:none!important;opacity:0!important}
  .community-heading-avatar-button img{filter:none!important}
 }
+
+
+/* Keep the avatar on the left and community actions beside it on mobile */
+@media(max-width:700px){
+ .community-hero-actions{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;align-self:flex-start;width:100%;gap:12px}
+ .community-heading-avatar-button{order:-1}
+ .community-header-icon-button{order:0}
+}
