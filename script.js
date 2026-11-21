@@ -4306,7 +4306,7 @@ window.confirmDeleteAccount = () => {
         '</div>',
         [
             { text: 'Cancel', secondary: true },
-            { text: 'Permanently Delete', className: 'play-btn remove-confirm-btn', action: () => { deleteCurrentAccount(); } }
+            { text: 'Delete', className: 'play-btn remove-confirm-btn', action: () => { deleteCurrentAccount(); } }
         ]
     );
 };
