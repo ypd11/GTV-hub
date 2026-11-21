@@ -4295,6 +4295,90 @@ window.openSettingsView = () => {
 };
 
 window.confirmDeleteAccount = () => {
+    if (!authUser || !authUser.email || !cloudProfileMode || !supabaseClient) return;
+
+    showModal(
+        'Confirm your password',
+        '<div style="font-size:0.92rem; line-height:1.65; color:#ccc;">' +
+            '<p>For your security, enter your account password to continue deleting your GTV hub account.</p>' +
+            '<div style="position:relative; margin-top:16px;">' +
+                '<input id="delete-account-password" type="password" autocomplete="current-password" placeholder="Account password" ' +
+                    'style="box-sizing:border-box; width:100%; padding:13px 48px 13px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.16); background:rgba(255,255,255,0.06); color:#fff; font:inherit; outline:none;">' +
+                '<button type="button" onclick="toggleDeletePasswordVisibility()" aria-label="Show password" ' +
+                    'style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:transparent; border:0; color:#aaa; cursor:pointer; padding:6px;">' +
+                    '<span class="material-icons" id="delete-account-password-toggle-icon">visibility</span>' +
+                '</button>' +
+            '</div>' +
+            '<p id="delete-account-password-error" role="alert" style="display:none; color:#ff7777; margin-bottom:0;"></p>' +
+        '</div>',
+        [
+            { text: 'Cancel', secondary: true },
+            { text: 'Continue', className: 'play-btn', action: () => { verifyDeleteAccountPassword(); return false; } }
+        ]
+    );
+
+    setTimeout(() => {
+        const input = document.getElementById('delete-account-password');
+        if (input) input.focus();
+    }, 0);
+};
+
+window.toggleDeletePasswordVisibility = () => {
+    const input = document.getElementById('delete-account-password');
+    const icon = document.getElementById('delete-account-password-toggle-icon');
+    if (!input || !icon) return;
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    icon.textContent = show ? 'visibility_off' : 'visibility';
+};
+
+window.verifyDeleteAccountPassword = async () => {
+    const input = document.getElementById('delete-account-password');
+    const errorElement = document.getElementById('delete-account-password-error');
+    const password = input ? input.value : '';
+
+    if (!password) {
+        if (errorElement) {
+            errorElement.textContent = 'Enter your password to continue.';
+            errorElement.style.display = 'block';
+        }
+        return;
+    }
+
+    const buttons = document.querySelectorAll('#confirm-modal-overlay .confirmation-btns button');
+    buttons.forEach(button => { button.disabled = true; });
+    if (errorElement) errorElement.style.display = 'none';
+
+    try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: authUser.email,
+            password
+        });
+
+        if (error) throw error;
+        if (!data.user || data.user.id !== authUser.id) {
+            throw new Error('The password could not be verified for this account.');
+        }
+
+        const overlay = document.getElementById('confirm-modal-overlay');
+        setModalActive(overlay, false);
+        showDeleteAccountConfirmation();
+    } catch (error) {
+        if (errorElement) {
+            errorElement.textContent = error.message === 'Invalid login credentials'
+                ? 'That password is incorrect. Please try again.'
+                : (error.message || 'Could not verify your password. Please try again.');
+            errorElement.style.display = 'block';
+        }
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        buttons.forEach(button => { button.disabled = false; });
+    }
+};
+
+window.showDeleteAccountConfirmation = () => {
     if (!authUser || !cloudProfileMode || !supabaseClient) return;
     showModal(
         'Delete your account?',
@@ -4310,7 +4394,6 @@ window.confirmDeleteAccount = () => {
         ]
     );
 };
-
 window.deleteCurrentAccount = async () => {
     if (!authUser || !cloudProfileMode || !supabaseClient) return;
     showToast('Deleting your account…');
