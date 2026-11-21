@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gtv-hub-v81';
+const CACHE_NAME = 'gtv-hub-v82';
 const DYNAMIC_CACHE = 'gtv-dynamic-v2';
 const ASSETS = [
   './',
