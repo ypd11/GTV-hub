@@ -3942,3 +3942,18 @@ body {
 .community-profile-close{display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1}.community-profile-close .material-icons{display:block;font-size:21px;line-height:1}
 .community-profile-actions .community-action-outline,.community-profile-actions .community-action-primary{min-height:42px;padding:0 21px;border-radius:50px}.community-profile-edit-button{margin-top:2px}
 @media(max-width:700px){.community-heading-avatar-button{width:58px;height:58px;flex-basis:58px}}
+
+
+/* Community directory heading identity and clear-search control */
+.community-heading-avatar-button{width:auto;height:auto;min-width:76px;flex:0 0 auto;display:flex;flex-direction:row;align-items:center;justify-content:flex-end;gap:13px;padding:5px 0}
+.community-heading-avatar-copy{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right}
+.community-heading-avatar-copy strong{max-width:190px;overflow:hidden;text-overflow:ellipsis;color:#f1f5f9;font-size:.9rem;font-weight:700;white-space:nowrap}
+.community-heading-avatar-copy small{color:#9aa8b7;font-size:.73rem;font-weight:500;white-space:nowrap}
+.community-heading-avatar-button img{width:76px;height:76px;flex:0 0 76px}
+.community-search{position:relative}
+.community-search .community-search-clear{width:38px;height:38px;flex:0 0 38px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:0;border-radius:50%;background:transparent;color:#aab8c6;cursor:pointer;transition:background .18s,color .18s}
+.community-search .community-search-clear:hover{background:rgba(255,255,255,.09);color:#fff}
+.community-search .community-search-clear .material-icons{font-size:21px}
+.community-profile-actions button.community-action-outline{border:1px solid rgba(255,255,255,.38);border-radius:50px;background:transparent;color:#f0f4f8}
+.community-profile-actions button.community-action-outline:hover{background:rgba(255,255,255,.09);border-color:#fff}
+@media(max-width:700px){.community-heading-avatar-button{min-width:0;gap:8px}.community-heading-avatar-button img{width:58px;height:58px;flex-basis:58px}.community-heading-avatar-copy strong{max-width:125px;font-size:.82rem}.community-heading-avatar-copy small{font-size:.68rem}}
