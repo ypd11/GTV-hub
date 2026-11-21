@@ -4302,7 +4302,7 @@ window.confirmDeleteAccount = () => {
         '<div style="font-size:0.92rem; line-height:1.65; color:#ccc;">' +
             '<p>For your security, enter your account password to continue deleting your GTV hub account.</p>' +
             '<div style="position:relative; margin-top:16px;">' +
-                '<div id="delete-account-password" contenteditable="true" role="textbox" aria-label="Account password" aria-multiline="false" spellcheck="false" data-placeholder="Account password" oninput="captureDeletePasswordInput()" ' +
+                '<div id="delete-account-password" contenteditable="true" role="textbox" aria-label="Account password" aria-multiline="false" spellcheck="false" data-placeholder="Account password" onbeforeinput="handleDeletePasswordBeforeInput(event)" ' +
                     'style="box-sizing:border-box; width:100%; min-height:46px; padding:13px 48px 13px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.16); background:rgba(255,255,255,0.06); color:#fff; font:inherit; font-family:monospace; outline:none; white-space:nowrap; overflow:hidden;" tabindex="0"></div>' +
                 '<button type="button" onclick="toggleDeletePasswordVisibility()" aria-label="Show password" ' +
                     'style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:transparent; border:0; color:#aaa; cursor:pointer; padding:6px;">' +
@@ -4325,21 +4325,39 @@ window.confirmDeleteAccount = () => {
 };
 
 window.deleteAccountPasswordValue = '';
-
-window.captureDeletePasswordInput = () => {
-    const editor = document.getElementById('delete-account-password');
-    if (!editor) return;
-    const value = editor.textContent || '';
-    window.deleteAccountPasswordValue = value;
-    if (editor.dataset.passwordVisible !== 'true') {
-        editor.textContent = '•'.repeat(value.length);
-        const selection = window.getSelection();
-        const range = document.createRange();
-        range.selectNodeContents(editor);
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
-    }
+window.handleDeletePasswordBeforeInput = (event) => {
+ const editor = document.getElementById('delete-account-password');
+ if (!editor || editor.dataset.passwordVisible === 'true') return;
+ const selection = window.getSelection();
+ const range = selection && selection.rangeCount ? selection.getRangeAt(0) : null;
+ const offset = (node, position) => {
+  if (!range || !editor.contains(node)) return window.deleteAccountPasswordValue.length;
+  const before = document.createRange();
+  before.selectNodeContents(editor);
+  before.setEnd(node, position);
+  return before.toString().length;
+ };
+ let start = offset(range ? range.startContainer : editor, range ? range.startOffset : 0);
+ let end = offset(range ? range.endContainer : editor, range ? range.endOffset : 0);
+ const value = window.deleteAccountPasswordValue;
+ let inserted = '';
+ if (event.inputType === 'insertText' || event.inputType === 'insertCompositionText') inserted = event.data || '';
+ else if (event.inputType === 'insertFromPaste') inserted = event.data || '';
+ else if (event.inputType !== 'deleteContentBackward' && event.inputType !== 'deleteContentForward' && event.inputType !== 'deleteByCut') return;
+ event.preventDefault();
+ if (start === end && event.inputType === 'deleteContentBackward' && start > 0) start--;
+ if (start === end && event.inputType === 'deleteContentForward' && end < value.length) end++;
+ window.deleteAccountPasswordValue = value.slice(0, start) + inserted + value.slice(end);
+ editor.textContent = '•'.repeat(window.deleteAccountPasswordValue.length);
+ const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+ const node = walker.nextNode();
+ if (node) {
+  const next = document.createRange();
+  next.setStart(node, Math.min(start + inserted.length, node.length));
+  next.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(next);
+ }
 };
 
 window.toggleDeletePasswordVisibility = () => {
@@ -4358,6 +4376,7 @@ window.toggleDeletePasswordVisibility = () => {
     icon.textContent = show ? 'visibility_off' : 'visibility';
     editor.focus();
 };
+
 window.verifyDeleteAccountPassword = async () => {
     const input = document.getElementById('delete-account-password');
     const errorElement = document.getElementById('delete-account-password-error');
