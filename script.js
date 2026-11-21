@@ -4302,8 +4302,9 @@ window.confirmDeleteAccount = () => {
         '<div style="font-size:0.92rem; line-height:1.65; color:#ccc;">' +
             '<p>For your security, enter your account password to continue deleting your GTV hub account.</p>' +
             '<div style="position:relative; margin-top:16px;">' +
-                '<input id="delete-account-password" name="account-verification" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false" data-1p-ignore="true" data-lpignore="true" data-bwignore="true" data-form-type="other" placeholder="Account password" ' +
-                    'style="box-sizing:border-box; width:100%; padding:13px 48px 13px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.16); background:rgba(255,255,255,0.06); color:#fff; font:inherit; outline:none;">' +
+                '<input id="delete-account-password" name="account-verification" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore="true" data-lpignore="true" data-bwignore="true" data-form-type="other" placeholder="Account password" ' +
+                    'style="box-sizing:border-box; width:100%; padding:13px 48px 13px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.16); background:rgba(255,255,255,0.06); color:transparent; caret-color:#fff; font:inherit; font-family:monospace; outline:none; position:relative; z-index:1;" oninput="syncDeletePasswordMask()">' +
+                '<span id="delete-account-password-mask" aria-hidden="true" style="position:absolute; z-index:2; left:14px; right:48px; top:50%; transform:translateY(-50%); pointer-events:none; color:#fff; font-family:monospace; white-space:pre; overflow:hidden;"></span>' +
                 '<button type="button" onclick="toggleDeletePasswordVisibility()" aria-label="Show password" ' +
                     'style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:transparent; border:0; color:#aaa; cursor:pointer; padding:6px;">' +
                     '<span class="material-icons" id="delete-account-password-toggle-icon">visibility</span>' +
@@ -4323,12 +4324,22 @@ window.confirmDeleteAccount = () => {
     }, 0);
 };
 
+window.syncDeletePasswordMask = () => {
+    const input = document.getElementById('delete-account-password');
+    const mask = document.getElementById('delete-account-password-mask');
+    if (!input || !mask) return;
+    mask.textContent = input.dataset.passwordVisible === 'true' ? '' : '•'.repeat(input.value.length);
+};
+
 window.toggleDeletePasswordVisibility = () => {
     const input = document.getElementById('delete-account-password');
+    const mask = document.getElementById('delete-account-password-mask');
     const icon = document.getElementById('delete-account-password-toggle-icon');
-    if (!input || !icon) return;
-    const show = input.type === 'password';
-    input.type = show ? 'text' : 'password';
+    if (!input || !mask || !icon) return;
+    const show = input.dataset.passwordVisible !== 'true';
+    input.dataset.passwordVisible = show ? 'true' : 'false';
+    input.style.color = show ? '#fff' : 'transparent';
+    mask.style.display = show ? 'none' : 'block';
     icon.textContent = show ? 'visibility_off' : 'visibility';
 };
 
@@ -4372,6 +4383,7 @@ window.verifyDeleteAccountPassword = async () => {
         }
         if (input) {
             input.value = '';
+            syncDeletePasswordMask();
             input.focus();
         }
         buttons.forEach(button => { button.disabled = false; });
