@@ -4279,3 +4279,7 @@ body {
  .community-heading-avatar-button{order:-1}
  .community-header-icon-button{order:0}
 }
+
+
+/* The profile search dialog does not need a divider below its heading */
+.community-search-dialog .community-profile-header{border-bottom:0}
