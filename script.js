@@ -4980,6 +4980,7 @@ window.triggerSearch = (query) => {
 
 /* Community discovery and public profiles */
 let communityCurrentUsername = '';
+let communityProfileSearchRequest=0;
 let communityDirectoryRequest = 0;
 let communityProfileRequest = 0;
 let communityFeedOffset = 0;
@@ -4994,17 +4995,12 @@ function communitySetUrl(hash){const url=new URL(window.location.href);url.searc
 window.openCommunityDirectory=async function(fromHistory,directLink){
  if(!fromHistory&&!directLink)captureAndPushState();communitySetPage('community-view');communitySetUrl('community');
  const host=document.getElementById('community-view-content');
- host.innerHTML=`<section class="community-hero people-hero"><div class="people-hero-glow"></div><div class="community-hero-inner"><div class="community-hero-copy"><div class="people-eyebrow"><span class="material-icons">groups</span> CONNECTED BY STORIES</div><h1>A community of <span>viewers.</span></h1><p>Meet fellow viewers, share what you’re watching, and discover new favourites together.</p></div><div class="community-hero-actions"><button type="button" class="community-action-outline community-header-icon-button" onclick="openCommunityRecentMembers()" aria-label="Recently joined" title="Recently joined"><span class="material-icons">group_add</span></button><button type="button" class="community-heading-avatar-button" onclick="openCommunityProfileSettings()" aria-label="Edit your community profile" title="Edit community profile"><img id="community-heading-avatar" src="./assets/avatars/avatar_1.webp" alt="Your community avatar"><span class="community-avatar-edit-indicator"><span class="material-icons">edit</span></span></button></div></div></section>
- <div class="community-main-content"><form class="community-search" id="community-search-form"><span class="material-icons">search</span><input id="community-search-input" type="search" maxlength="40" placeholder="Search by username..." autocomplete="off"><button type="button" id="community-search-clear" class="community-search-clear" aria-label="Clear search" title="Clear search"><span class="material-icons">close</span></button></form>
- <div class="community-results-heading" id="community-results-heading" style="display:none"><h2 id="community-results-title">Search results</h2><span id="community-results-count"></span></div><div id="community-directory-list" class="community-directory-grid"></div><section class="community-feed-section"><div class="community-section-heading"><div><span class="community-page-kicker">FROM YOUR COMMUNITY</span><h2>Activity feed</h2></div><div class="community-feed-actions"><button type="button" class="community-action-outline" onclick="loadCommunityFeed(true)"><span class="material-icons">refresh</span> Refresh</button><button type="button" class="community-action-primary" onclick="openCommunityPostDialog()"><span class="material-icons">edit</span> Share an update</button></div></div><div id="community-feed-list" class="community-feed-list"><div class="community-loading">Loading activity...</div></div><button type="button" id="community-feed-more" class="community-action-outline community-feed-more" style="display:none" onclick="loadCommunityFeed(false)">Load more</button></section></div>
+ host.innerHTML=`<section class="community-hero people-hero"><div class="people-hero-glow"></div><div class="community-hero-inner"><div class="community-hero-copy"><div class="people-eyebrow"><span class="material-icons">groups</span> CONNECTED BY STORIES</div><h1>A community of <span>viewers.</span></h1><p>Meet fellow viewers, share what you’re watching, and discover new favourites together.</p></div><div class="community-hero-actions"><button type="button" class="community-action-outline community-header-icon-button" onclick="openCommunityRecentMembers()" aria-label="Recently joined" title="Recently joined"><span class="material-icons">group_add</span></button><button type="button" class="community-action-outline community-header-icon-button" onclick="openCommunitySearchDialog()" aria-label="Search profiles" title="Search profiles"><span class="material-icons">search</span></button><button type="button" class="community-heading-avatar-button" onclick="openCommunityProfileSettings()" aria-label="Edit your community profile" title="Edit community profile"><img id="community-heading-avatar" src="./assets/avatars/avatar_1.webp" alt="Your community avatar"><span class="community-avatar-edit-indicator"><span class="material-icons">edit</span></span></button></div></div></section>
+ <div class="community-main-content"><section class="community-feed-section"><div class="community-section-heading"><div><span class="community-page-kicker">FROM YOUR COMMUNITY</span><h2>Activity feed</h2></div><div class="community-feed-actions"><button type="button" class="community-action-outline" onclick="loadCommunityFeed(true)"><span class="material-icons">refresh</span> Refresh</button><button type="button" class="community-action-primary" onclick="openCommunityPostDialog()"><span class="material-icons">edit</span> Share an update</button></div></div><div id="community-feed-list" class="community-feed-list"><div class="community-loading">Loading activity...</div></div><button type="button" id="community-feed-more" class="community-action-outline community-feed-more" style="display:none" onclick="loadCommunityFeed(false)">Load more</button></section></div>
  `;
- const communitySearchInput=document.getElementById('community-search-input');
- const communitySearchClear=document.getElementById('community-search-clear');
- document.getElementById('community-search-form').addEventListener('submit',e=>{e.preventDefault();loadCommunityDirectory(communitySearchInput.value);});
- communitySearchClear.addEventListener('click',()=>{communitySearchInput.value='';loadCommunityDirectory('');communitySearchInput.focus();});
- const headingAvatar=document.getElementById('community-heading-avatar');
- if(headingAvatar&&authUser&&supabaseClient){const ownProfile=await supabaseClient.from('community_profiles').select('avatar_id').eq('user_id',authUser.id).maybeSingle();if(ownProfile.data&&headingAvatar.isConnected)headingAvatar.src=communityAvatarUrl(ownProfile.data.avatar_id);}
- await Promise.all([loadCommunityDirectory(''),loadCommunityFeed(true)]);
+  const headingAvatar=document.getElementById('community-heading-avatar');
+  if(headingAvatar&&authUser&&supabaseClient){const ownProfile=await supabaseClient.from('community_profiles').select('avatar_id').eq('user_id',authUser.id).maybeSingle();if(ownProfile.data&&headingAvatar.isConnected)headingAvatar.src=communityAvatarUrl(ownProfile.data.avatar_id);}
+  await loadCommunityFeed(true);
 };
 function renderCommunityActivityCards(activities,profiles,emptyMessage){
  const hostProfiles=new Map((profiles||[]).map(p=>[p.user_id,p]));
@@ -5070,6 +5066,29 @@ async function loadCommunityProfileActivity(userId,profile){
  if(result.error){host.innerHTML='<div class="community-feed-error">Could not load activity right now.</div>';return;}
  host.innerHTML=renderCommunityActivityCards(result.data||[],[profile],'This viewer has not shared any activity yet.');
 }
+
+window.openCommunitySearchDialog=function(){
+ if(document.getElementById('community-search-modal'))return;
+ const modal=document.createElement('div');modal.id='community-search-modal';modal.className='community-profile-overlay';
+ modal.innerHTML='<div class="community-profile-dialog community-recent-dialog community-search-dialog" role="dialog" aria-modal="true" aria-labelledby="community-search-title"><div class="community-profile-header"><div><span class="community-profile-kicker">COMMUNITY DIRECTORY</span><h2 id="community-search-title">Search profiles</h2><p>Find viewers by their username.</p></div><button type="button" class="community-profile-close" aria-label="Close" onclick="closeCommunitySearchDialog()"><span class="material-icons">close</span></button></div><form id="community-profile-search-form" class="community-profile-search-form"><span class="material-icons">search</span><input id="community-profile-search-input" type="search" maxlength="40" placeholder="Search by username..." autocomplete="off"><button type="submit" class="community-action-primary">Search</button></form><div id="community-profile-search-count" class="community-search-result-count"></div><div id="community-profile-search-results" class="community-recent-list"><div class="community-empty"><span class="material-icons">person_search</span><strong>Find a viewer</strong><p>Enter a username to search public profiles.</p></div></div></div>';
+ document.body.appendChild(modal);document.body.classList.add('no-scroll');modal.addEventListener('click',event=>{if(event.target===modal)closeCommunitySearchDialog();});
+ const form=modal.querySelector('#community-profile-search-form'),input=modal.querySelector('#community-profile-search-input'),results=modal.querySelector('#community-profile-search-results'),count=modal.querySelector('#community-profile-search-count');
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();const term=String(input.value||'').trim().replace(/[%_,()]/g,' ').slice(0,40);
+  if(!term){results.innerHTML='<div class="community-empty"><span class="material-icons">person_search</span><strong>Enter a username</strong><p>Type a username to find public profiles.</p></div>';count.textContent='';return;}
+  const request=++communityProfileSearchRequest;results.innerHTML='<div class="community-loading">Searching community...</div>';count.textContent='';
+  if(!supabaseClient){results.innerHTML='<div class="community-empty">Community profiles are unavailable right now.</div>';return;}
+  const result=await supabaseClient.from('community_profiles').select('user_id,username,display_name,bio,avatar_id,created_at').eq('is_public',true).not('username','is',null).ilike('username','%'+term+'%').order('created_at',{ascending:false}).limit(30);
+  if(!modal.isConnected||request!==communityProfileSearchRequest)return;
+  if(result.error){results.innerHTML='<div class="community-empty">Could not search community profiles. Please try again.</div>';return;}
+  const profiles=result.data||[];count.textContent=profiles.length+' '+(profiles.length===1?'profile found':'profiles found');
+  if(!profiles.length){results.innerHTML='<div class="community-empty"><span class="material-icons">person_search</span><strong>No profiles found</strong><p>Try another username.</p></div>';return;}
+  results.innerHTML=profiles.map(p=>'<button type="button" class="community-person-card" data-community-username="'+communityEscape(p.username)+'"><img src="'+communityAvatarUrl(p.avatar_id)+'" alt="" loading="lazy"><span class="community-person-info"><strong>'+communityEscape(p.display_name||p.username)+'</strong><span>@'+communityEscape(p.username)+'</span><small>'+communityEscape(p.bio||'No bio yet.')+'</small></span><span class="material-icons community-person-arrow">chevron_right</span></button>').join('');
+ });
+ results.addEventListener('click',event=>{const card=event.target.closest('[data-community-username]');if(!card)return;const username=card.dataset.communityUsername;closeCommunitySearchDialog();window.openCommunityProfile(username);});
+ input.focus();
+};
+window.closeCommunitySearchDialog=function(){const modal=document.getElementById('community-search-modal');if(modal)modal.remove();document.body.classList.remove('no-scroll');};
 window.openCommunityRecentMembers=async function(){
  if(document.getElementById('community-recent-modal'))return;
  const modal=document.createElement('div');modal.id='community-recent-modal';modal.className='community-profile-overlay';
