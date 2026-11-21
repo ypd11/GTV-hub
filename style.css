@@ -3995,3 +3995,189 @@ body {
     .community-heading-avatar-copy small{font-size:.68rem}
     .community-heading-avatar-button img{width:58px!important;height:58px!important;min-width:58px;flex-basis:58px}
 }
+
+
+/* Community directory typography, avatars and responsive layout */
+.community-heading-avatar-button,
+.community-person-card{
+    font-family:inherit;
+}
+.community-person-card>img{
+    border-radius:0;
+    background:transparent;
+}
+.community-search .community-search-clear{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 36px;
+    width:36px;
+    min-width:36px;
+    height:36px;
+    padding:0;
+    border:0;
+    border-radius:50%;
+    background:rgba(255,255,255,.1);
+    color:#aaa;
+    cursor:pointer;
+    transition:all .2s ease;
+}
+.community-search .community-search-clear:hover,
+.community-search .community-search-clear:focus-visible{
+    background:rgba(255,255,255,.2);
+    color:#fff;
+    transform:rotate(90deg);
+    outline:none;
+}
+.community-search .community-search-clear .material-icons{
+    font-size:20px;
+    line-height:1;
+}
+
+@media(max-width:700px){
+    .community-view,
+    .community-profile-view{
+        padding:88px 18px 44px;
+    }
+    .community-page-heading{
+        align-items:stretch;
+        flex-direction:column;
+        gap:12px;
+        margin-bottom:22px;
+    }
+    .community-page-heading>div{
+        min-width:0;
+    }
+    .community-page-heading h1{
+        margin-top:7px;
+        font-size:clamp(1.8rem,7vw,2.2rem);
+        letter-spacing:-1px;
+        line-height:1.12;
+    }
+    .community-page-heading p{
+        max-width:34rem;
+        font-size:.9rem;
+        line-height:1.5;
+    }
+    .community-heading-avatar-button{
+        align-self:flex-end;
+        min-width:0;
+        min-height:58px;
+        gap:9px;
+        padding:0;
+    }
+    .community-heading-avatar-copy strong{
+        max-width:min(52vw,190px);
+        font-size:.84rem;
+    }
+    .community-heading-avatar-copy small{
+        font-size:.72rem;
+    }
+    .community-heading-avatar-button img{
+        width:54px!important;
+        height:54px!important;
+        min-width:54px;
+        flex-basis:54px;
+    }
+    .community-search{
+        gap:9px;
+        margin-bottom:25px;
+        padding:7px 9px 7px 13px;
+        border-radius:12px;
+    }
+    .community-search input{
+        min-width:0;
+        font-size:.9rem;
+    }
+    .community-results-heading{
+        align-items:baseline;
+        gap:10px;
+        margin-bottom:12px;
+    }
+    .community-results-heading h2{
+        font-size:1.08rem;
+    }
+    .community-results-heading span{
+        text-align:right;
+        font-size:.74rem;
+    }
+    .community-directory-grid{
+        gap:10px;
+    }
+    .community-person-card{
+        gap:12px;
+        padding:12px;
+        border-radius:12px;
+    }
+    .community-person-card>img{
+        width:54px;
+        height:54px;
+        flex-basis:54px;
+    }
+    .community-person-info strong{
+        font-size:.92rem;
+    }
+    .community-person-info>span{
+        font-size:.76rem;
+    }
+    .community-person-info small{
+        margin-top:5px;
+        font-size:.74rem;
+    }
+    .community-section-heading{
+        gap:12px;
+        margin-bottom:14px;
+    }
+    .community-section-heading h2{
+        font-size:1.22rem;
+    }
+    .community-feed-actions{
+        flex-direction:column;
+        align-items:stretch;
+        gap:9px;
+    }
+    .community-feed-actions button{
+        flex:0 0 auto;
+        width:100%;
+    }
+    .community-activity-card{
+        padding:14px;
+        border-radius:12px;
+    }
+    .community-activity-meta{
+        align-items:flex-start;
+        flex-wrap:wrap;
+        gap:7px 12px;
+        line-height:1.4;
+    }
+    .community-directory-divider{
+        margin-bottom:24px;
+    }
+}
+@media(max-width:380px){
+    .community-view,
+    .community-profile-view{
+        padding-right:14px;
+        padding-left:14px;
+    }
+    .community-page-heading h1{
+        font-size:1.78rem;
+    }
+    .community-person-card{
+        gap:10px;
+        padding:10px;
+    }
+    .community-person-card>img{
+        width:48px;
+        height:48px;
+        flex-basis:48px;
+    }
+    .community-person-arrow{
+        font-size:20px;
+    }
+    .community-action-primary,
+    .community-action-outline{
+        padding-right:15px;
+        padding-left:15px;
+    }
+}
